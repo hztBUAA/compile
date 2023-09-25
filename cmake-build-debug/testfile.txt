@@ -1,0 +1,114 @@
+const int a=1;
+const int b=1,c=a;
+const int aa[2]={1,2};
+const int a2[2][2]={{1,2},{1,2}};
+int d=1;
+int e=1,f=1;
+int dd[2]={1,1};
+int d2[2][2]={{1,1},{1,1}};
+int g;
+int h,i;
+int gg[2];
+int hh[2],ii[2];
+int g2[2][2];
+int h2[3][3],i2[3][3];
+
+int gcd(int a, int b){
+    if(a!=0){
+        return gcd(b%a,a);
+    }
+    else {
+        return b;
+    }
+    return 0;
+}
+void f1(){
+    return;
+}
+int fu2(int x){
+    if(1){1;}
+    return x*x;
+}
+int f3(int x,int a[]){
+    return 0;
+}
+int f4(int x,int a[], int b[][2]){
+	gcd(1,1);
+    return x-x;
+}
+
+int main() {
+    printf("21371026\n"); 
+	int x;
+	x = getint();
+        printf("??\n");
+     printf("%d??\n",x);
+   {;;}
+  {
+        int e=c+d;
+        int f=fu2(1)/2+aa[0]*d2[1][1]+(aa[1]-c%2),d=3+3;
+    }
+{
+            d=-+-123321;
+        d=-+-d2[1][1];
+        d=(d+d*d);
+        f1();
+        d=fu2(1);
+        d=f3(1,dd)*fu2(1);
+        d=f4(1,d2[0],d2)+fu2(1);
+        d=c*c+c/1;
+        d=c/1-c%1;
+        d=(dd[1]-d2[1][1]%1)*3;
+        d=c*c+1*dd[1];
+        if(c==c||c!=c){1;}
+        if(d!=c&&dd[1]!=d2[1][1]){}
+        else{}
+    }
+     {
+        int i=1;
+        for(;;){break;}
+        for(i=1;;){break;}
+        for(;i==10;){break;}
+        for(;;i=i+1){break;}
+        for(i=1;i<=10;i=i+1){continue;}
+        for(;i==10;i=i+1){break;}
+        for(i=1;;i=i-1){if(3==2*dd[1]){6666-555;}break;}
+        for(i=1;i!=10;){break;}
+    }
+{   
+        {}
+        if(a==1 && d>c || c>0 && d>0){gcd(1,1);}
+        else {1;}
+        if(0&&aa[1]!=1){1;}
+        if(1||d>0){c;}
+        if(0&&1||!2&&(3+8)){
+            if(1||0){
+                ;
+            }
+        }
+        if(a<=b){1;}
+        if(b>=1&&b<=1){1;}
+        if(a>1||b<a){}
+        if(!c){(392-44)*12;}
+        if(0<1){1234+(d2[1][1]*2)/2;}
+        if(a==a){dd[1];}
+        if(a!=a){
+            1;
+            for(;;){333;break;}
+        }
+    }
+    {
+        int d=1;
+        int e=1,f=1;
+        int dd[2]={1,1};
+        int ee[2]={1,3},ff[2]={2,5};
+        int d2[2][2]={{1,1},{1,1}};
+        int e2[2][2]={{1,2},{1,2}},c2[2][2]={{1,2},{1,2}};
+        d=(3+5*8)/2+1*1;
+        dd[1]=aa[0]+1,dd[0]=1;
+        d2[1][1]=a2[0][0]+(a2[1][1]*aa[0]),d2[1][0]=5;
+    }
+   
+     
+    return 0;
+}
