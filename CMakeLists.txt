@@ -5,4 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(Lex main.cpp
         Lexer.cpp
-        Lexer.h)
+        Lexer.h
+        Parser.cpp
+        Parser.h
+        Error.cpp
+        Error.h
+)

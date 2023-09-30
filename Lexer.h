@@ -44,34 +44,42 @@ enum Type{
     EQL,
     NEQ,
     ASSIGN,
-    SEMICN,
-    COMMA,
-    LPARENT,
-    RPARENT,
-    LBRACK,
-    RBRACK,
-    LBRACE,
-    RBRACE
+    SEMICN,//;
+    COMMA,//,
+    LPARENT,// (
+    RPARENT,//)
+    LBRACK,// [
+    RBRACK,//]
+    LBRACE,//{
+    RBRACE//}
 };
 
 class Lexer {
 private:
-    ifstream &sourceFile;
-    ofstream &outputFile;
+
     bool enableOutput;
-    int line;
+
+
+
+
+    map<string, Type> wordCategory;
+    //私有化-构造函数
+    Lexer(ifstream & sourceFile,ofstream & outputFile);
+public:
+    //暴露给语法分析程序
     char ch;
     Type token_type;
     union Token{
         int number;
         string *symbol;///?  如果不是指针 似乎有关构造函数会出问题
     }token;
-    map<string, Type> wordCategory;
-    //私有化-构造函数
-    Lexer(ifstream & sourceFile,ofstream & outputFile);
-public:
+    int line;
+    ifstream &sourceFile;
+    ofstream &outputFile;
+
     static Lexer& initLexer(ifstream& sourceFile,ofstream & outputFile);//为什么要对外一个？
     //symbol  是符号  包括标识符、保留字、以及所有其他除了单引号、双引号之间的字符串
+
     void nextSymbol();
     //单引号之间的
     void nextChar();

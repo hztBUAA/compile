@@ -167,6 +167,7 @@ void Lexer::nextSymbol() {
                     }
                     //退出while时  ch指向这一行注释的最后一个待处理的字符   然后最后switch块再get一个 使得ch指向\n同时输入流去掉\n 下一次调用nextSymbol函数 会首先去掉它  这里会统一处理空白字符
                     token_type = NOTE;
+
                 }else{
                     token_type = DIV;
                 }
@@ -249,8 +250,13 @@ void Lexer::nextSymbol() {
         }
         token.symbol = &str;
         ch  =(char )sourceFile.get();//ok
+        //应该自觉过滤NOTE
+        while(token_type == NOTE){
+            token.symbol = &str;
+            ch  =(char )sourceFile.get();//ok
+            nextSymbol();
+        }
     }
-
 }
 /**
  * 文法中明确说明  没有‘abc’
@@ -296,19 +302,6 @@ void Lexer::analyze() {
 }
 
 void Lexer::printOutput() {
-//    //标准输出
-//    cout<<ENUM_TO_STRING(token_type)<<" ";
-//    if (token_type == INTCON){
-//        cout<<token.number<<endl;
-//    }else{
-//        if (token_type == STRCON){
-//            cout<<"\""+*token.symbol+"\""<<endl;
-//        }else{
-//            cout<<*token.symbol<<endl;//要加*号吗？
-//        }
-//
-//    }
-    //output.txt文件输出
     outputFile<<ENUM_TO_STRING(token_type)<<" ";
     if (token_type == INTCON){
         outputFile<<token.number<<endl;
@@ -319,6 +312,17 @@ void Lexer::printOutput() {
             outputFile<<*token.symbol<<endl;//要加*号吗？
         }
     }
+
+//    cout<<ENUM_TO_STRING(token_type)<<" ";
+//    if (token_type == INTCON){
+//        cout<<token.number<<endl;
+//    }else{
+//        if (token_type == STRCON){
+//            cout<<"\""+*token.symbol+"\""<<endl;
+//        }else{
+//            cout<<*token.symbol<<endl;//要加*号吗？
+//        }
+//    }
 }
 
 
