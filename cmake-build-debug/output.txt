@@ -1,6 +1,6 @@
 CONSTTK const
 INTTK int
-IDENFR b
+IDENFR b123123
 ASSIGN =
 INTCON 1
 <Number>

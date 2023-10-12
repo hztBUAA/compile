@@ -1,4 +1,4 @@
-const int b = 1;
+const int b123123 = 1;
 const int c[1] = {1};
 const int d[1][1] = {{1*2}};
 const int a1=1,a2[1]={1};

@@ -8,6 +8,8 @@ add_executable(Lex main.cpp
         Lexer.h
         Parser.cpp
         Parser.h
-        Error.cpp
-        Error.h
+        ErrorHandler.cpp
+        ErrorHandler.h
+        TableManager.cpp
+        TableManager.h
 )
