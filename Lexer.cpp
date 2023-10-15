@@ -17,7 +17,9 @@ Lexer &Lexer::initLexer(ifstream &sourceFile,ofstream & outputFile) {
 Lexer::Lexer(ifstream &sourceFile,ofstream & outputFile):sourceFile(sourceFile), outputFile(outputFile) {
     //初始化ch为读进来的待处理的第一个字符 get本来是对int类型的额
     ch = sourceFile.get();
-    line = 0;
+    line = 1;
+    line_lastWord = 1;
+    count_flag = false;
     enableOutput = true;
     wordCategory =  //直接这样生成？
             // 单词名称和类别码的映射  仅存放保留字
@@ -64,9 +66,15 @@ Lexer::Lexer(ifstream &sourceFile,ofstream & outputFile):sourceFile(sourceFile),
 }
 
 void Lexer::nextSymbol() {
+    line_lastWord = line;
     while(isspace(ch)){
+//        if (count_flag){ // 如何做到延迟加法
+//            line_lastWord++;
+//            count_flag = false;
+//        }
         if (ch == '\n'){ //除了字符串里面的换行符
             line++;
+//            count_flag = true;
         }
         ch = (char )sourceFile.get();
     }
@@ -238,7 +246,7 @@ void Lexer::nextSymbol() {
                 break;
             case '"':
                 ch = (char )sourceFile.get();
-                //调用nextString ch已经指向字符串的第一个字符 且输入流已经去除了第一个字符
+                //调用nextString ch已经指向字符串的第一个字符 且输入流已经去除了第一个字符"
                 nextString();//这个函数将token设置成了字符串形式   此时ch指向末尾的“  且输入流已经没有”
                 break;
             case EOF:
@@ -253,7 +261,7 @@ void Lexer::nextSymbol() {
         //应该自觉过滤NOTE
         while(token_type == NOTE){
             token.symbol = &str;
-            ch  =(char )sourceFile.get();//ok
+//            ch  =(char )sourceFile.get();//ok
             nextSymbol();
         }
     }
@@ -274,9 +282,14 @@ void Lexer::nextSymbol() {
  * 存在于printf（""）
  */
 void Lexer::nextString() {
+    printf_format_count = 0;
     str.clear();
+    //"  : 34
     while(ch == 32||ch == 33|| (ch >=35 && ch <= 126)){ //包括换行符
         str.append(1,ch);
+        if((char)sourceFile.peek() =='d' && ch == '%'){
+            printf_format_count++;
+        }
         ch = (char )sourceFile.get();//强制转换即可  最后反正都是英文
     }
     //留出错误处理的formatString格式
@@ -288,6 +301,9 @@ void Lexer::nextString() {
         //ILLEGAL
         //"中间出现不满足文法的格式字符串"
         token_type = ILLEGAL;
+        while(ch != '"'){
+            ch = (char )sourceFile.get();
+        }
     }
 }
 

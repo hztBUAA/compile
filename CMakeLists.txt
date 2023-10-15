@@ -12,4 +12,6 @@ add_executable(Lex main.cpp
         ErrorHandler.h
         TableManager.cpp
         TableManager.h
+        Semantic.cpp
+        Semantic.h
 )

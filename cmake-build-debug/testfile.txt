@@ -1,33 +1,21 @@
-const int b123123 = 1;
-const int c[1] = {1};
-const int d[1][1] = {{1*2}};
-const int a1=1,a2[1]={1};
-const int a3[2*1][1] = {{1},{1}};
-int _u;
-int y=1,z=1;
-int m;
-int m90,z3;
-int m98;
-int m1[1]={1},m2[1]={1};
-int m3[2*1],m4[1+1];
-int m5[2-1][1]={{1}},m6[1][1]={{1}};
-int m7[1][1],m8[1][1];
-int x1 = 1;
-int x2[1] = {b+1};
-int x3[1] = {b-1};
-int x4[1][1] = {{1+1}};
-int y2[1] = {1};
-int y3[1][1] = {{b*1}};
+
+//
+const int const_b = 1;
+const int const_b = 1
+
+;//不会出现一行里面既有重定义又缺少分号？
+const int const_c = 1
+
+
+
+int st_a = 1;
+int st_a = 2;
+
+void add_num_to_st_a(int num){
+	int num = 2;
+   st_aa = num;
+   printf("st_a = num, num = %d,st_a = %d\n", num, st_a);
+}
 int main(){
-    int z1 = b;
-    int z2[1] ={z1};
-    int z3[1][1] ={{b}};
-    int o1,o2;
-    int o3[1],o4[1][1];
-    o3[0] = -(x1*2);
-    o3[x1-1] = +(x1*2);
-    o4[x1-1][x1-1] = x1*2;
-    o4[0][0]=+1;
-    printf("21371023");
-    return 0;
+add()；
 }

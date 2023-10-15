@@ -4,6 +4,15 @@
 #ifndef LEX_PARSER_H
 #define LEX_PARSER_H
 #include "Lexer.h"
+#include "TableManager.h"
+#include "ErrorHandler.h"
+#include "Semantic.h"
+#define WORD_TYPE lexer.token_type
+#define GET_A_WORD lexer.nextSymbol()
+#define PEEK_A_LETTER lexer.sourceFile.peek()
+#define PRINT_WORD lexer.printOutput()
+#define WORD_DISPLAY (*lexer.token.symbol)
+#define INFO_ENTRY (tableManager.info)
 /**
  *Parser  的编写规则    注意：1.指向WORD   2.输出WORD
  * 依据文法说明
@@ -19,28 +28,31 @@ class Parser {
 private:
     bool enablePrint;
     bool isLValInStmt;
-    Lexer & lexer;
+    Lexer & lexer;   //为什么都要加 &
+    TableManager & tableManager;
+    ErrorHandler& errorHandler; //如果漏了&号  在构造函数报了warning
+    Semantic & semantic;
 public:
-    Parser(Lexer& lexer1):lexer(lexer1),enablePrint(true),isLValInStmt(false){};
+    Parser(Lexer& lexer1,TableManager& tableManager1,ErrorHandler &errorHandler1,Semantic& semantic1):lexer(lexer1),tableManager(tableManager1),errorHandler(errorHandler1),semantic(semantic1),enablePrint(true),isLValInStmt(false){};
     void Print_Grammar_Output(string s);
     void CompUnit();
 
     void Decl();
     void ConstDecl();
-    void ConstDef();
+    void ConstDef(vector<Entry*> & entries);
     void ConstInitVal();
     void VarDecl();
-    void VarDef();
+    void VarDef(vector<Entry*> & entries);
     void InitVal();
     void FuncDef();
     void MainFuncDef();
     void FuncType();
-    void FuncFParams();
-    void FuncFParam();
+    void FuncFParams(vector<Entry*> & entries);
+    void FuncFParam(vector<Entry*> & entries);
     void Block();
     void BlockItem();
     void Stmt();
-    void FormatString();
+  int FormatString(int printf_line);
 //    void NormalChar();
 //    void FormalChar();
     void ForStmt();

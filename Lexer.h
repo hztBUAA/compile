@@ -54,9 +54,24 @@ enum Type{
     RBRACE//}
 };
 
+enum PIECE{
+    CONSTDECL,
+    CONSTDEF,
+    VARDECL,
+    VARDEF,
+    FUNCDEF,
+    MAINFUNCDEF,
+    FUNCFPARAM,
+    STMT,
+    FORSTMT,
+    LVAL,
+    UNARYEXP,
+    FORMATSTRING
+};
+
 class Lexer {
 private:
-
+    bool count_flag;
     bool enableOutput;
 
 
@@ -73,7 +88,9 @@ public:
         int number;
         string *symbol;///?  如果不是指针 似乎有关构造函数会出问题
     }token;
+    int printf_format_count = 0;
     int line;
+    int line_lastWord;
     ifstream &sourceFile;
     ofstream &outputFile;
 
