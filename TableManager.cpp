@@ -49,7 +49,11 @@ void TableManager::insertIntoTable(vector<Entry *> & entries) const { //插入�
         cur->entries = new map<string,Entry*>;
     }
     for (auto & entry : entries) {
-        cur->entries->insert(pair<string,Entry*>(entry->ident, entry));
+        if(isRedefine(entry->ident)){
+            errorHandler.Insert_Error(REDEFINE);
+        }else{
+            cur->entries->insert(pair<string,Entry*>(entry->ident, entry));
+        }
     }
 }
 
@@ -59,31 +63,22 @@ void TableManager::insertIntoTable(vector<Entry *> & entries) const { //插入�
 //为什么一定需要有一个downTable函数呢  也就是为什么需要记录一个块里面的符号  是因为这个块我门不确定是否还会有内嵌块可能会用到这个块的变量 所以需要记录
 void TableManager::downTable(string& ident) { //进入以标识符唯一标识的符号表  似乎只有函数可能会用到  预先定义的
     if(cur->entries->find(ident) != cur->entries->end()){
-        cur = cur->entries->at(info->ident);
+        cur = cur->entries->at(ident);
     }
 }
 
-bool TableManager::isEverDefine(const string& ident,Kind kind,bool isLeft)  {
+bool TableManager::isEverDefine(const string& ident,Kind kind)  {
     Entry * temp = cur;
     Entry * e;
     while(temp != nullptr){//设置顶层entry的父节点为空
         if(temp->entries->find(ident) != temp->entries->end() ){//对于函数  形参放进了entries中   设置完参数后会将设置cur的函数的参数类型设置
             e = temp->entries->at(ident);
-
             if (e->kind == kind
-            || kind == FUNC_INT && e->kind == FUNC_VOID
-            || kind == VAR && e->kind == CONST
-            || kind == ARRAY_1_VAR && e->kind == ARRAY_1_CONST
-            || kind == ARRAY_2_VAR && e->kind == ARRAY_2_CONST){ //函数类型返回值的错误  先认为都是函数即可
-                if(isLeft &&
-                (kind == VAR && e->kind == CONST
-                   || kind == ARRAY_1_VAR && e->kind == ARRAY_1_CONST
-                   || kind == ARRAY_2_VAR && e->kind == ARRAY_2_CONST)){
-                    errorHandler.Print_Error(CONST_LEFT);//查找定义时直接完成左值不能是常量的报错
-                }
+            || kind == FUNC_INT && e->kind == FUNC_VOID){ //函数类型返回值的错误  先认为都是函数即可
                 return true;
             }
         }
+        temp = temp->Father_Entry;
     }
     return false;
 }

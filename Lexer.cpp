@@ -16,11 +16,11 @@ Lexer &Lexer::initLexer(ifstream &sourceFile,ofstream & outputFile) {
 //真正的构造器  被上面的调用
 Lexer::Lexer(ifstream &sourceFile,ofstream & outputFile):sourceFile(sourceFile), outputFile(outputFile) {
     //初始化ch为读进来的待处理的第一个字符 get本来是对int类型的额
-    ch = sourceFile.get();
+    ch = (char )sourceFile.get();
     line = 1;
     line_lastWord = 1;
     count_flag = false;
-    enableOutput = true;
+    enableOutput = false;
     wordCategory =  //直接这样生成？
             // 单词名称和类别码的映射  仅存放保留字
             {
@@ -66,7 +66,9 @@ Lexer::Lexer(ifstream &sourceFile,ofstream & outputFile):sourceFile(sourceFile),
 }
 
 void Lexer::nextSymbol() {
-    line_lastWord = line;
+    if (token_type != NOTE){
+        line_lastWord = line;
+    }
     while(isspace(ch)){
 //        if (count_flag){ // 如何做到延迟加法
 //            line_lastWord++;
@@ -158,6 +160,9 @@ void Lexer::nextSymbol() {
                     while(true){
                         while((ch = (char )sourceFile.peek())!= '*'){
                             ch = (char )sourceFile.get();
+                            if(ch == '\n'){
+                                line ++;
+                            }
                         }
                         ch = (char )sourceFile.get();//真正算上*
                         ch = (char )sourceFile.peek();
@@ -285,8 +290,15 @@ void Lexer::nextString() {
     printf_format_count = 0;
     str.clear();
     //"  : 34
-    while(ch == 32||ch == 33|| (ch >=35 && ch <= 126)){ //包括换行符
+    while(ch == 32||ch == 33|| (ch >=40 && ch <= 126) || ch == '%'){ //包括换行符
         str.append(1,ch);
+        if(ch == 92 && (char)sourceFile.peek() !='n' || ch == '%'&&(char)sourceFile.peek() !='d'){ //ch == \   \n
+            token_type = ILLEGAL;
+            while(ch != '"'){
+                ch = (char )sourceFile.get();
+            }
+            return;
+        }
         if((char)sourceFile.peek() =='d' && ch == '%'){
             printf_format_count++;
         }
@@ -318,16 +330,20 @@ void Lexer::analyze() {
 }
 
 void Lexer::printOutput() {
-    outputFile<<ENUM_TO_STRING(token_type)<<" ";
-    if (token_type == INTCON){
-        outputFile<<token.number<<endl;
-    }else{
-        if (token_type == STRCON){
-            outputFile<<"\""+*token.symbol+"\""<<endl;
+    if (enableOutput){
+        outputFile<<ENUM_TO_STRING(token_type)<<" ";
+        if (token_type == INTCON){
+            outputFile<<token.number<<endl;
         }else{
-            outputFile<<*token.symbol<<endl;//要加*号吗？
+            if (token_type == STRCON){
+                outputFile<<"\""+*token.symbol+"\""<<endl;
+            }else{
+                outputFile<<*token.symbol<<endl;//要加*号吗？
+            }
         }
     }
+
+
 
 //    cout<<ENUM_TO_STRING(token_type)<<" ";
 //    if (token_type == INTCON){

@@ -13,6 +13,7 @@
 #define PRINT_WORD lexer.printOutput()
 #define WORD_DISPLAY (*lexer.token.symbol)
 #define INFO_ENTRY (tableManager.info)
+
 /**
  *Parser  的编写规则    注意：1.指向WORD   2.输出WORD
  * 依据文法说明
@@ -26,17 +27,22 @@
 
 class Parser {
 private:
+
     bool enablePrint;
     bool isLValInStmt;
+    bool func_rParams_not_define = false;
+    int printf_line;//for printf arguments error
+    int Exp_type;//0 1 2-------为了鉴别函数实参类型是整数 一级地址 二级地址
+    string func_name;//保存函数调用时的名字  懒得再传进去名字了
     Lexer & lexer;   //为什么都要加 &
     TableManager & tableManager;
     ErrorHandler& errorHandler; //如果漏了&号  在构造函数报了warning
     Semantic & semantic;
 public:
-    Parser(Lexer& lexer1,TableManager& tableManager1,ErrorHandler &errorHandler1,Semantic& semantic1):lexer(lexer1),tableManager(tableManager1),errorHandler(errorHandler1),semantic(semantic1),enablePrint(true),isLValInStmt(false){};
+    Parser(Lexer& lexer1,TableManager& tableManager1,ErrorHandler &errorHandler1,Semantic& semantic1):lexer(lexer1),tableManager(tableManager1),errorHandler(errorHandler1),semantic(semantic1),enablePrint(false),isLValInStmt(false){};
     void Print_Grammar_Output(string s);
     void CompUnit();
-
+    int Kind2Exp_type (Kind kind);
     void Decl();
     void ConstDecl();
     void ConstDef(vector<Entry*> & entries);
@@ -44,7 +50,7 @@ public:
     void VarDecl();
     void VarDef(vector<Entry*> & entries);
     void InitVal();
-    void FuncDef();
+    void FuncDef(Kind func_type);
     void MainFuncDef();
     void FuncType();
     void FuncFParams(vector<Entry*> & entries);
@@ -52,7 +58,7 @@ public:
     void Block();
     void BlockItem();
     void Stmt();
-  int FormatString(int printf_line);
+  void FormatString();
 //    void NormalChar();
 //    void FormalChar();
     void ForStmt();
@@ -63,7 +69,7 @@ public:
     void Number();
     void UnaryExp();
     void UnaryOp();
-    void FuncRParams();
+    void FuncRParams(int func_ident_line);
     void MulExp();
     void AddExp();
     void RelExp();
@@ -71,7 +77,7 @@ public:
     void LAndExp();
     void LOrExp();
     void ConstExp();
-
+    bool inArguments(vector<Entry *> arguments,string ident);
 
 };
 

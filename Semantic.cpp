@@ -22,8 +22,8 @@
 
 
 
-bool Semantic::isEverDefined(const string& ident , Kind kind,bool isLeft) {
-    return tableManager.isEverDefine(ident,kind,isLeft);
+bool Semantic::isEverDefined(const string& ident , Kind kind,bool isLeft) { //这里的isLEFT就懒得去掉了 已经没用了这个参数  判断左值不能为常量采取单独判断写法
+    return tableManager.isEverDefine(ident,kind);
 }
 
 //生成一个entry
@@ -33,9 +33,9 @@ Entry *Semantic::fillInfoEntry(string ident, Kind kind) const {
     entry->kind = kind;
     entry->loop_count = 0;
     entry->fParams = nullptr;
-    entry->entries = nullptr;
+    entry->entries = new map<string , Entry*>;//所有都要确定entries不要为空   因为函数创建表项时没有单独设置它
     entry->Father_Entry = tableManager.cur;
-    entry->return_error = true;//只有在扫描时是正确的才可以解除错误
+    entry->return_error = true;//只有在扫描时是正确的才可以解除错误   int函数最后要return
     return entry;
 }
 

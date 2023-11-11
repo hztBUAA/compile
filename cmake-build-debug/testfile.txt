@@ -1,21 +1,10 @@
-
-//
-const int const_b = 1;
-const int const_b = 1
-
-;//不会出现一行里面既有重定义又缺少分号？
-const int const_c = 1
-
-
-
-int st_a = 1;
-int st_a = 2;
-
-void add_num_to_st_a(int num){
-	int num = 2;
-   st_aa = num;
-   printf("st_a = num, num = %d,st_a = %d\n", num, st_a);
+int a;
+int foo(int a, int a) {
+    return 0;
 }
-int main(){
-add()；
+int main()
+{
+    int b = 0;
+    foo(b);
+    return 0;
 }

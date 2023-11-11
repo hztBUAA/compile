@@ -28,8 +28,9 @@ enum Kind{
 
     FOR,
     IF,
-    ELSE
+    ELSE,
 
+    BLOCK
     //函数形式参数 采取用vector计数
 };
 //struct Id_Type{
@@ -76,7 +77,7 @@ public:
 
     [[nodiscard]] bool isRedefine(const string& ident) const;//检查重定义的错误
     //检查未定义就引用的错误
-    bool isEverDefine(const string& ident,Kind kind,bool isLeft) ;
+    bool isEverDefine(const string& ident,Kind kind) ;
 
     void insertIntoTable(vector<Entry*> &entries) const;//插入当前层的符号表  统一都是插入到这一级Entry的entries
     void insertIntoTable(Entry * entry) const;//插入entry层

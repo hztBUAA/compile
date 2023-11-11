@@ -14,7 +14,6 @@ void Parser::Print_Grammar_Output(string s) {
         //cout << s << endl;
         lexer.outputFile << s << endl;
     }
-
 }
 
 
@@ -44,17 +43,26 @@ void Parser::CompUnit() {
                  * 无需peek   a letter 读取完ident后    ch已经指向下一个字符了
                  */
                 //lexer.ch = PEEK_A_LETTER;
+                int pre_line = lexer.line;
                 while(isspace(lexer.ch)){
+                    if(lexer.ch == '\n'){
+                        lexer.line++;
+                    }
                     lexer.ch = (char )lexer.sourceFile.get();
                 }
                 if (lexer.ch == '('){//FuncDef 从名字<ident>开始  还没有输出functype
                     //FUNCTYPE
                     FuncType();
-                    FuncDef();
+                    FuncDef(FUNC_INT);
                 }else if(lexer.ch == ',' || lexer.ch == ';'  || lexer.ch == '=' || lexer.ch == '['){
                     Decl();//变量声明部分  入口是ident
                 }else{
-                    //Error
+                    //Error  缺少;
+                    PRINT_WORD;//print ident
+                    GET_A_WORD;
+                    lexer.line_lastWord = pre_line;
+                    errorHandler.Insert_Error(SEMICOLON_MISSING);
+
                 }
             }
         }else if(WORD_TYPE == VOIDTK){
@@ -64,7 +72,7 @@ void Parser::CompUnit() {
             if(WORD_TYPE != IDENFR){
                 //ERROR
             }
-            FuncDef();
+            FuncDef(FUNC_VOID);
         }
         else if (WORD_TYPE == NOTE){
             GET_A_WORD;
@@ -84,12 +92,13 @@ void Parser::Decl(){
         /**
          * 问题-1
          */
-        while (isspace(lexer.ch)){
-            lexer.ch = lexer.sourceFile.get();
-        }
-        if(lexer.ch == ',' || lexer.ch == ';'  || lexer.ch == '=' || lexer.ch == '['){
-            VarDecl();//变量声明部分
-        }
+//        while (isspace(lexer.ch)){
+//            lexer.ch = lexer.sourceFile.get();
+//        }
+//        if(lexer.ch == ',' || lexer.ch == ';'  || lexer.ch == '=' || lexer.ch == '['){
+//            VarDecl();//变量声明部分
+//        }
+        VarDecl();
     }else{
         //Error
     }
@@ -107,16 +116,16 @@ void Parser::VarDecl() {
    }
     if (WORD_TYPE != SEMICN){
         //Error;  缺少分号
-        errorHandler.Print_Error(SEMICOLON_MISSING);
+        errorHandler.Insert_Error(SEMICOLON_MISSING);
 //        semantic.skip(VARDECL);
-        semantic.recordEntries(entries);
+//        semantic.recordEntries(entries);
         return;
     }
 
     //不缺少分号 会运行到这儿
     PRINT_WORD;//PRINT ;
     Print_Grammar_Output("<VarDecl>");
-    semantic.recordEntries(entries);
+//    semantic.recordEntries(entries);
     GET_A_WORD;//POINT TO NEXT
 }
 
@@ -131,8 +140,8 @@ void Parser::VarDef(vector<Entry*> &entries) {
     string ident = WORD_DISPLAY;
     int op = 0;
     //定义：先在这一层找   找到就报错REDEFINE然后跳到；        没找到就填表
-    if(tableManager.isRedefine(ident)){
-        errorHandler.Print_Error(REDEFINE);
+    if(tableManager.isRedefine(ident) || inArguments(entries,ident)){
+        errorHandler.Insert_Error(REDEFINE);
         error = true;
     }//重定义错误，局部化处理
 
@@ -148,8 +157,8 @@ void Parser::VarDef(vector<Entry*> &entries) {
             GET_A_WORD;
         }else{
             //Error  缺少右中括号
-            errorHandler.Print_Error(RBRACK_MISSING);
-            error =true;
+            errorHandler.Insert_Error(RBRACK_MISSING);
+//            error =true;
         }
     }
     Entry * entry;
@@ -173,6 +182,7 @@ void Parser::VarDef(vector<Entry*> &entries) {
     }
     if(!error){
         entries.push_back(entry);
+        semantic.recordEntries(entry);
     }
     Print_Grammar_Output("<VarDef>");
 }
@@ -200,15 +210,15 @@ void Parser::ConstDecl() {
     }
     if (WORD_TYPE != SEMICN){
         //Error
-        errorHandler.Print_Error(SEMICOLON_MISSING);
+        errorHandler.Insert_Error(SEMICOLON_MISSING);
 //        semantic.skip(CONSTDECL);
-        semantic.recordEntries(entries);
+//        semantic.recordEntries(entries);
         return;
     }
 
     PRINT_WORD;//PRINT ;
     Print_Grammar_Output("<ConstDecl>");
-    tableManager.insertIntoTable(entries);
+//    tableManager.insertIntoTable(entries);
     GET_A_WORD;//point to next word
 }
 
@@ -219,8 +229,8 @@ void Parser::ConstDef(vector<Entry*>& entries) {
     bool error = false;
     string ident = WORD_DISPLAY;
     //定义：先在这一层找   找到就报错REDEFINE  没找到就填表
-    if(tableManager.isRedefine(ident)){
-        errorHandler.Print_Error(REDEFINE);
+    if(tableManager.isRedefine(ident) || inArguments(entries,ident)){
+        errorHandler.Insert_Error(REDEFINE);
         error = true;
     }
 
@@ -237,8 +247,8 @@ void Parser::ConstDef(vector<Entry*>& entries) {
             GET_A_WORD;
         }else{
             //Error
-            errorHandler.Print_Error(RBRACK_MISSING);
-            error = true;
+            errorHandler.Insert_Error(RBRACK_MISSING);
+//            error = true;
         }
     }
     Entry * entry;
@@ -268,6 +278,7 @@ void Parser::ConstDef(vector<Entry*>& entries) {
     //已经指向下一个word  ,  or ;
     if(!error){
         entries.push_back(entry);
+    semantic.recordEntries(entry);
     }
     Print_Grammar_Output("<ConstDef>");
 }
@@ -301,6 +312,7 @@ void Parser::ConstExp() {
 void Parser::AddExp() {
     MulExp();
     if (WORD_TYPE == PLUS || WORD_TYPE == MINU){
+        Exp_type =0;
         while(WORD_TYPE == PLUS || WORD_TYPE == MINU){
             if (!isLValInStmt)
                 Print_Grammar_Output("<AddExp>");
@@ -319,6 +331,7 @@ void Parser::AddExp() {
 void Parser::MulExp() {
     UnaryExp();
     if (WORD_TYPE == MULT || WORD_TYPE == DIV || WORD_TYPE == MOD){
+        Exp_type = 0;
         while(WORD_TYPE == MULT || WORD_TYPE == DIV || WORD_TYPE == MOD){
             if (!isLValInStmt)
                 Print_Grammar_Output("<MulExp>");
@@ -335,45 +348,107 @@ void Parser::MulExp() {
     //已经指向下一个
 }
 void Parser::UnaryExp() {
+    int func_ident_line;
     if (WORD_TYPE == LPARENT || WORD_TYPE == INTCON){
         PrimaryExp();
     }else if(WORD_TYPE == IDENFR){
+        string ident = WORD_DISPLAY;
+        Entry * temp = tableManager.cur;
+        bool not_define_error = true;
+        while(temp != nullptr){
+            if(temp->entries->find(ident) != temp->entries->end()){
+                not_define_error = false;
+                break;
+            }
+            temp = temp->Father_Entry;
+        }
+        if (not_define_error){
+            errorHandler.Insert_Error(NOT_DEFINE);
+//        cout << "1   "+to_string(errorHandler.error_line);
+        }
         //lexer.ch = PEEK_A_LETTER;   为了去除所有的空白字符  用peek无法做到
         //之所以不用GET_A_WORD   是因为  这样会丢失ident    造成约束不一致
         //GET_A_WORD总是从ch当前属于的字符进行划分
+        lexer.line_lastWord = lexer.line;
+        func_ident_line = lexer.line;
         while(isspace(lexer.ch)){
+            if(lexer.ch == '\n'){
+                lexer.line++;
+            }
             lexer.ch = (char )lexer.sourceFile.get();
         }
         if(lexer.ch == '('){
+            Entry * func;
+            bool err = false;
+            Exp_type = 0;//函数调用时只可能返回值  且实参里真正有Exp是不可能的  所以没用
             int RParams_count = 0;
             //进入FuncRParams
             PRINT_WORD;//PRINT IDENT
             string ident = WORD_DISPLAY;
+
+            //函数未定义
             if( ! semantic.isEverDefined(ident,FUNC_INT, false)){//先认为是int函数   不做过多要求
-                errorHandler.Print_Error(NOT_DEFINE);
+                errorHandler.Insert_Error(NOT_DEFINE,func_ident_line);
+                 err =true;
             }
             //无论是否报错  都继续  报了错就是正常的
             GET_A_WORD;//算上 （
             PRINT_WORD;//PRINT (
-            GET_A_WORD;//指向FuncRParams  也可能是无参少了右括号？？？？
+            GET_A_WORD;//指向FuncRParams  也可能是无参少了右括号
             //可以没有参数
-            if(WORD_TYPE == RPARENT){
+            if(WORD_TYPE == RPARENT){//  也要去判断参数个数的问题
+                func = nullptr;
+                temp = tableManager.cur;
+                while(temp != nullptr){
+                    if (temp->entries->find(ident) != temp->entries->end()){
+                        func = temp->entries->at(ident);
+                        if (func->kind != FUNC_INT && func->kind != FUNC_VOID){
+                            func = nullptr;
+                        }
+                        break;
+                    }
+                    temp = temp->Father_Entry;
+                }
+                if (func != nullptr && !(func->fParams->empty()) ){//函数定义时有参数 但是调用没参数  无脑个数问题
+//                    errorHandler.error_line = func_ident_line;
+                    errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);
+                }
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
             }else if(WORD_TYPE == LPARENT || WORD_TYPE == INTCON || WORD_TYPE == IDENFR || WORD_TYPE == PLUS || WORD_TYPE == MINU){
                 //函数实参的first集
-                FuncRParams();
+                func = nullptr;
+                temp = tableManager.cur;
+                while(temp != nullptr){
+                    if (temp->entries->find(ident) != temp->entries->end()){
+                        func = temp->entries->at(ident);
+                        if (func->kind != FUNC_INT && func->kind != FUNC_VOID){
+                            func = nullptr;
+                        }
+                        break;
+                    }
+                    temp = temp->Father_Entry;
+                }
+                func_name = ident;
+                errorHandler.error_line = func_ident_line;//记录可能发生错误的行号
+                FuncRParams(func_ident_line);
                 if (WORD_TYPE != RPARENT){
                     //Error  缺少右括号）
-                    errorHandler.Print_Error(RPARENT_MISSING);
+                    errorHandler.Insert_Error(RPARENT_MISSING);
                 }else {
                     PRINT_WORD;//PRINT )
                     GET_A_WORD;//point to next WORD
                 }
             }else{
                     //函数无参 且缺失 ‘）’
-                errorHandler.Print_Error(RPARENT_MISSING);
+                errorHandler.Insert_Error(RPARENT_MISSING);
             }
+            if(func->kind == FUNC_INT)
+                Exp_type = 0;
+            else if(func->kind == FUNC_VOID)//void  或者根本没有定义的函数 且已经报错未定义
+                Exp_type = -5;
+            else
+                Exp_type = -4;
         }else if(lexer.ch == '['){
             PrimaryExp();
         }else{
@@ -381,6 +456,7 @@ void Parser::UnaryExp() {
             PrimaryExp();//下放错误
         }
     }else{
+        Exp_type = 0;
         UnaryOp();
         UnaryExp();
     }
@@ -395,12 +471,13 @@ void Parser::PrimaryExp() {
         Exp();
         if (WORD_TYPE != RPARENT){
             //Error
-            errorHandler.Print_Error(RPARENT_MISSING);
+            errorHandler.Insert_Error(RPARENT_MISSING);
         }else{
             PRINT_WORD;//PRINT )
             GET_A_WORD;
         }
     }else if(WORD_TYPE == INTCON){
+        Exp_type = 0;
         Number();
     }else{  //  指向ident
         LVal();//不在这一层报错？   放到下一层LVal
@@ -412,8 +489,12 @@ void Parser::PrimaryExp() {
                 GET_A_WORD;
                 PRINT_WORD;//PRINT (
                 GET_A_WORD;
-                PRINT_WORD;//PRINT )
-                GET_A_WORD;
+                if(WORD_TYPE == RPARENT){
+                    PRINT_WORD;
+                    GET_A_WORD;
+                }else{
+                    errorHandler.Insert_Error(RPARENT_MISSING);
+                }
             } else {
                 Exp();
             }
@@ -424,17 +505,33 @@ void Parser::PrimaryExp() {
         Print_Grammar_Output("<PrimaryExp>");
 }
 
-void Parser::LVal() {
+void Parser::LVal() { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
     if (WORD_TYPE != IDENFR){
         //Error
     }
     PRINT_WORD;//PRINT IDENT
     string ident = WORD_DISPLAY;
-    Kind kind;
+    int error_const_line = lexer.line;
+    int error_semicolon_missing_line = lexer.line_lastWord;
+    Kind kind = VAR;
     int op  =0;
+    Entry * temp = tableManager.cur;
+//    bool not_define_error = true;
+//    while(temp != nullptr){
+//        if(temp->entries->find(ident) != temp->entries->end()){
+//            not_define_error = false;
+//            break;
+//        }
+//        temp = temp->Father_Entry;
+//    }
+//    if (not_define_error){
+//        errorHandler.Insert_Error(NOT_DEFINE,error_semicolon_missing_line);
+////        cout << "1   "+to_string(errorHandler.error_line);
+//    }
 
     //无论是否报错  都继续  报了错就是正常的
     GET_A_WORD;
+
     while(WORD_TYPE == LBRACK){
         op++;
         PRINT_WORD;//PRINT [
@@ -442,22 +539,66 @@ void Parser::LVal() {
         Exp();
         if (WORD_TYPE != RBRACK){
             //Error  缺少有中括号]
-            errorHandler.Print_Error(RBRACK_MISSING);
+            errorHandler.Insert_Error(RBRACK_MISSING);
         }else{
             PRINT_WORD;//PRINT ]
             GET_A_WORD;//POINT TO NEXT WORD
         }
     }
-    if(op == 0){
-        kind = VAR;
-    }else if(op == 1){
-        kind = ARRAY_1_VAR;
-    }else{
-        kind = ARRAY_2_VAR;
+    temp = tableManager.cur;
+    Exp_type = -3;
+    while (temp!= nullptr){
+        if(temp->entries->find(ident) != temp->entries->end()){
+            Kind kind1 = temp->entries->at(ident)->kind;
+            if(kind1 == ARRAY_1_VAR || kind1 == ARRAY_1_CONST){
+                Exp_type = 1-op;
+            }else if(kind1 == ARRAY_2_VAR || kind1 == ARRAY_2_CONST){
+                Exp_type = 2-op;
+            }else if (kind1 == VAR || kind1 == CONST){
+                Exp_type = 0-op;
+            }else{
+                //实际上是函数赋值   是未定义的
+            }
+            break;
+        }
+        temp = temp->Father_Entry;
     }
-    //错误的先后顺序  先检查方括号匹配 ---判断具体类型 再判断是否已经定义过 一行只有一个错误 不可能考到这个
-    if(WORD_TYPE == ASSIGN && ! semantic.isEverDefined(ident,kind, true)){
-        errorHandler.Print_Error(NOT_DEFINE);
+    if (Exp_type == -3){
+        //没找到 未定义
+//        errorHandler.Insert_Error(NOT_DEFINE);
+    }else if(Exp_type < 0){
+        //超出维数的引用   不出现
+    }else if(Exp_type == 0){
+        //值
+    }else if(Exp_type == 1){
+        //一维地址
+    }else{
+        //2维地址
+    }
+
+    //错误的先后顺序  先检查方括号匹配 ---判断具体类型和未定义 再判断是否是左值定义常量 isLeft参数为true表示检测左值的
+    if(WORD_TYPE == ASSIGN ){
+        Entry *t = tableManager.cur;
+        Entry * _const = nullptr;
+        while(t != nullptr){
+            if(t->entries->find(ident) != t->entries->end()){
+                _const = t->entries->at(ident);
+                if (_const->kind == CONST || _const->kind == ARRAY_1_CONST || _const->kind == ARRAY_2_CONST){
+                    errorHandler.error_line = error_const_line;
+                    errorHandler.Insert_Error(CONST_LEFT);
+                }
+            }
+            t = t->Father_Entry;
+        }
+    }else if (WORD_TYPE == IDENFR || WORD_TYPE == RBRACE
+    || WORD_TYPE == CONSTTK || WORD_TYPE == RETURNTK
+    || WORD_TYPE == IFTK || WORD_TYPE == ELSETK
+    || WORD_TYPE == CONTINUETK || WORD_TYPE == BREAKTK
+    ||WORD_TYPE == PRINTFTK|| WORD_TYPE == FORTK
+    || WORD_TYPE == VOIDTK  || WORD_TYPE == LBRACE
+    ||WORD_TYPE == INTTK){
+        //引用值结尾 却漏了分号  不在这里报错  但是要修改last_line
+    lexer.line_lastWord = error_semicolon_missing_line;
     }
     Print_Grammar_Output("<LVal>");
 }
@@ -486,35 +627,91 @@ void Parser::MainFuncDef() {
     PRINT_WORD;//PRINT (
     GET_A_WORD;//point to )
     if (WORD_TYPE != RPARENT){//point to {
-        errorHandler.Print_Error(RPARENT_MISSING);
+        errorHandler.Insert_Error(RPARENT_MISSING);
     }else{
         PRINT_WORD;//print )
         GET_A_WORD;//point to {
     }
+    string ident = "main";
+    INFO_ENTRY = semantic.fillInfoEntry(ident,FUNC_INT);
+    semantic.recordEntries(INFO_ENTRY);
+    tableManager.downTable(ident);
     Block();
+    tableManager.upTable();
     Print_Grammar_Output("<MainFuncDef>");
 }
 
-void Parser::FuncRParams() {
+void Parser::FuncRParams(int func_ident_line) {
+    bool already_error_func_type = false;
+    bool already_error_func_count = false;
     //依次取出Exp的类型 然后判断函数符号表中的vector   类型只需要看 0 1 2 普通变量 一维数组 二维数组
     //可是应该怎么比较好的完成这个Exp类型的判断呢
-    Exp();
+    Entry * func = nullptr;
+    Entry * temp = tableManager.cur;
+    while(temp  != nullptr){
+        if(temp->entries->find(func_name) != temp->entries->end()){
+            func = temp->entries->at(func_name);
+            if(func->kind != FUNC_INT && func-> kind != FUNC_VOID)
+                    func = nullptr;
+            break;
+        }
+        temp = temp->Father_Entry;
+    }
+    int cnt = 0;
+    int x;
+    vector<Entry *> FArguments;
+    if (func != nullptr){
+        FArguments = *(func->fParams);
+    }
+    if (FArguments.empty()&&func != nullptr){ //定义函数时空参数  但是调用存在参数  无脑个数问题
+//        errorHandler.error_line = func_ident_line;
+        errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);
+        already_error_func_count = true;
+    }
+    errorHandler.error_type = NORMAL;//先清除之前的  只在第一个实参前这样
+    Exp();//里面进行实参的未定义报错
+    if(func != nullptr&& !already_error_func_count&&!already_error_func_type){//如果函数是未定义的函数 也就不需要检查实参的两种类型错误
+        x = Kind2Exp_type(FArguments.at(cnt++)->kind);//函数定义时的形参
+        if(Exp_type != x&&Exp_type !=  -4){
+//            errorHandler.error_line = func_ident_line;
+            errorHandler.Insert_Error(FUNC_RPARAMS_TYPE_ERROR,func_ident_line);
+            already_error_func_type = true;
+        }
+    }
+
     while(WORD_TYPE == COMMA){
         PRINT_WORD;
         GET_A_WORD;
         Exp();
+        if(func != nullptr && !already_error_func_count&&!already_error_func_type&& errorHandler.error_type != NOT_DEFINE){
+            if(cnt >= FArguments.size()){//实际调用参数多
+//                errorHandler.error_line = func_ident_line;
+                errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);//不会出现一行两个错误 既有
+                already_error_func_count = true;
+                break;
+            }
+            x = Kind2Exp_type(FArguments.at(cnt++)->kind);//函数定义时的形参
+            if(Exp_type != x &&Exp_type !=-4&& !already_error_func_type&&!already_error_func_count){//避免报错多个类型不匹配？
+//                errorHandler.error_line = func_ident_line;
+                errorHandler.Insert_Error(FUNC_RPARAMS_TYPE_ERROR,func_ident_line);
+                already_error_func_type = true;
+            }
+        }
+    }
+    if(cnt < FArguments.size() &&!already_error_func_type&&!already_error_func_count&& func != nullptr){//实际调用参数少
+        errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);//不会出现一行两个错误 既有
     }
     Print_Grammar_Output("<FuncRParams>");
 }
 
-void Parser::FuncDef() {
+void Parser::FuncDef(Kind func_type) {
     //FuncDef 从名字<ident>开始
     bool error = false;
     string ident =WORD_DISPLAY;
 
     //定义：先在这一层找   找到就报错REDEFINE  没找到就填表
     if(tableManager.isRedefine(ident)){
-        errorHandler.Print_Error(REDEFINE);
+        errorHandler.Insert_Error(REDEFINE);
         error = true;
         ident = "main";
     }
@@ -524,39 +721,41 @@ void Parser::FuncDef() {
     GET_A_WORD;
     if(WORD_TYPE == RPARENT || WORD_TYPE == LBRACE){//可能的情况func({  空参数漏了）
         //no FUNCFParams
-        INFO_ENTRY = semantic.fillInfoEntry(ident,FUNC_INT);//空参数
+        INFO_ENTRY = semantic.fillInfoEntry(ident,func_type);//空参数
         INFO_ENTRY->fParams = new vector<Entry *>;
         semantic.recordEntries(INFO_ENTRY);
         if (WORD_TYPE == RPARENT){
             PRINT_WORD;
             GET_A_WORD;//point to {
         }else{
-            errorHandler.Print_Error(RPARENT_MISSING);
+            errorHandler.Insert_Error(RPARENT_MISSING);
         }
         tableManager.downTable(ident);
         Block();
         tableManager.upTable();
     }else{
-        vector<Entry *> entries;
+        INFO_ENTRY = semantic.fillInfoEntry(ident,func_type);
+        semantic.recordEntries(INFO_ENTRY);
+        tableManager.downTable(ident);//对于有参函数   参数和block都属于这个函数名的对应符号表level
+        vector<Entry *> entries;//涉及到堆上内存引用？
         if(WORD_TYPE == INTTK){
             FuncFParams(entries);
             //指向）
             if(WORD_TYPE != RPARENT){
                 //ERROR
-                errorHandler.Print_Error(RPARENT_MISSING);
+                errorHandler.Insert_Error(RPARENT_MISSING);
             }else{
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
             }
-            INFO_ENTRY = semantic.fillInfoEntry(ident,FUNC_INT);
-            INFO_ENTRY->fParams = &entries;
-            semantic.recordEntries(INFO_ENTRY);
-            tableManager.downTable(ident);//对于有参函数   参数和block都属于这个函数名的对应符号表level
-            semantic.recordEntries(entries);//参数也重新放进这个函数中 当做局部变量
+
+            tableManager.cur->fParams = new vector(entries);//还真是   如果直接&entries  会丢失
+//            semantic.recordEntries(entries);//参数也重新放进这个函数中 当做局部变量
             Block();
             tableManager.upTable();
         }else{
-            //Error  形参只能int打头
+            //Error  形参只能int打头    如果改成增加double！！！
+            //TODO:完善
 
 
         }
@@ -589,23 +788,26 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
     int op =0;
     string ident = WORD_DISPLAY;
     //定义：先在这一层找   找到就报错REDEFINE  没找到就填表
-    if(tableManager.isRedefine(ident)){
-        errorHandler.Print_Error(REDEFINE);
+    if(tableManager.isRedefine(ident) ){
+        errorHandler.Insert_Error(REDEFINE);//重定义不加入符号表形参???
+//        op =-1;  也要加入？   只是报错
     }
 
     PRINT_WORD;//PRINT IDENT
     GET_A_WORD;
     if(WORD_TYPE != LBRACK){
         //认为就是普通变量  这里不会有error
-        op = 0;
+        if (op != -1)
+            op = 0;
     }else{
         PRINT_WORD;//PRINT [
-        op++;
+        if (op !=-1)
+            op++;
         GET_A_WORD;
         if(WORD_TYPE != RBRACK){
             //ERROR  缺少右中括号
-            op = -1;
-            errorHandler.Print_Error(RBRACK_MISSING);
+//            op = -1;
+            errorHandler.Insert_Error(RBRACK_MISSING);
             goto END;
         }
         PRINT_WORD;//PRINT ]   一维数组变量
@@ -614,7 +816,8 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             //认为就是一维数组变量  这里不会有error
         }else{
             //二维数组变量
-            op++;
+            if(op!=-1)
+                op++;
             PRINT_WORD;//PRINT [
             GET_A_WORD;
             if(WORD_TYPE == RBRACK){
@@ -623,8 +826,8 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             ConstExp();
             if(WORD_TYPE != RBRACK){
                 //ERROR  缺少右中括号
-                op = -1;
-                errorHandler.Print_Error(RBRACK_MISSING);
+//                op = -1;
+                errorHandler.Insert_Error(RBRACK_MISSING);
                 goto END;
             }
             PRINT_WORD;//PRINT ]
@@ -645,6 +848,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             kind = ARRAY_2_VAR;
         }
         INFO_ENTRY = semantic.fillInfoEntry(ident,kind);
+        arguments.push_back(INFO_ENTRY);
         semantic.recordEntries(INFO_ENTRY);
     }
     Print_Grammar_Output("<FuncFParam>");
@@ -659,19 +863,23 @@ void Parser::Block() {
     GET_A_WORD;
     if(WORD_TYPE == RBRACE){
         //空语句块  单独分号是放在stmt解析的  所以一个空语句块是存在的
-        PRINT_WORD;//PRINT }
+        if (tableManager.cur->kind == FUNC_INT && tableManager.cur->return_error){
+            errorHandler.Insert_Error(INT_FUNC_NO_RETURN);
+        }
+        PRINT_WORD; // print }
         GET_A_WORD;
     }else{
         while(WORD_TYPE != RBRACE){
             BlockItem();//这一级不处理错误
             //只看最后一句有没有return  在这里进行一个peek
+            //如果这里缺少}  会出现问题   但是不可能出现
         }
         if(WORD_TYPE != RBRACE){
-            //ERROR
-            errorHandler.Print_Error(RBRACE_MISSING);
+            //ERROR   不可能出现的
+            errorHandler.Insert_Error(RBRACE_MISSING);
         }else{
             if (tableManager.cur->kind == FUNC_INT && tableManager.cur->return_error){
-                errorHandler.Print_Error(INT_FUNC_NO_RETURN);
+                errorHandler.Insert_Error(INT_FUNC_NO_RETURN);
             }
             PRINT_WORD; // print }
             GET_A_WORD;
@@ -699,40 +907,43 @@ void Parser::BlockItem() {
 void Parser::Stmt() {
     string ident;
     Entry * temp;
-    int printf_line = 0;
     int printf_count = 0;
-    int printf_format = 0;
+    bool loop_error = true;
+//    int printf_format = 0;
     switch (WORD_TYPE) {
         case PRINTFTK:
+//            errorHandler.error_type = NORMAL;
             PRINT_WORD;//PRINT PRINTF
             printf_line = lexer.line;
             GET_A_WORD;
             PRINT_WORD;//PRINT (
             GET_A_WORD;
-            FormatString(printf_line);
+            FormatString();
             while(WORD_TYPE == COMMA){
                 printf_count++;
                 PRINT_WORD;//PRINT ,
                 GET_A_WORD;
                 Exp();
             }
-            if(printf_format != printf_count){
-                errorHandler.Print_Error(PRINTF_NOT_EQUAL_COUNT);
+            if(lexer.printf_format_count != printf_count){//出现了不合法字符 就没必要再继续判断了
+                errorHandler.error_line = printf_line;
+                errorHandler.Insert_Error(PRINTF_NOT_EQUAL_COUNT);
             }
             if(WORD_TYPE != RPARENT){
                 //缺少右圆括号
-                errorHandler.Print_Error(RPARENT_MISSING);
+                errorHandler.Insert_Error(RPARENT_MISSING);
             }else{
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
             }
             if(WORD_TYPE != SEMICN){
                 //缺少分号
-                errorHandler.Print_Error(SEMICOLON_MISSING);
+                errorHandler.Insert_Error(SEMICOLON_MISSING);
             }else{
                 PRINT_WORD;//PRINT ;
                 GET_A_WORD;
             }
+
             break;
         case RETURNTK:
             PRINT_WORD;//PRINT RETURN
@@ -740,38 +951,54 @@ void Parser::Stmt() {
             if(WORD_TYPE == SEMICN){
                 PRINT_WORD;//PRINT ;
                 GET_A_WORD;//return；空
-            }else{
-                Exp();//错误下放
-                if (WORD_TYPE != SEMICN){
-                    //ERROR
-                    //Print_Grammar_Output("ERROR  :");
-                    errorHandler.Print_Error(SEMICOLON_MISSING);
-                }else{
-                    PRINT_WORD;//print ;
-                    GET_A_WORD;
+            }else{//如果是另起一行 并不算return后缺少分号
+                if(WORD_TYPE != RBRACE){ //如果return 后面真的是表达式
+                    temp = tableManager.cur;
+                    while(temp != nullptr){//无参函数返回值的错误
+                        if (temp->kind == FUNC_VOID){
+                            errorHandler.Insert_Error(VOID_FUNC_HAS_RETURN);
+                            break;
+                        }
+                        temp = temp->Father_Entry;
+                    }
+
+                    Exp();//错误下放
+                    if (WORD_TYPE != SEMICN){
+                        //ERROR
+                        //Print_Grammar_Output("ERROR  :");
+                        errorHandler.Insert_Error(SEMICOLON_MISSING);
+                    }else{
+                        PRINT_WORD;//print ;
+                        GET_A_WORD;
+                    }
+                    //有参函数标记末尾出现return+值的语句  之后结束时in FuncDef不用输出错误
+                    if (WORD_TYPE == RBRACE && tableManager.cur->kind == FUNC_INT){
+                        tableManager.cur->return_error = false;
+                    }
+                }else{//return }
+                    errorHandler.Insert_Error(SEMICOLON_MISSING);
                 }
-            }
-            temp = tableManager.cur;
-            while(temp != nullptr){
-                if (temp->kind == FUNC_VOID){
-                    errorHandler.Print_Error(VOID_FUNC_HAS_RETURN);
-                    break;
                 }
-            }
-            if (WORD_TYPE == RBRACE && tableManager.cur->kind == FUNC_INT){
-                tableManager.cur->return_error = false;
-            }
             break;
         case BREAKTK:
         case CONTINUETK:
             PRINT_WORD;//PRINT CONTINUE
             GET_A_WORD;
-            if(tableManager.cur->loop_count == 0){
-                errorHandler.Print_Error(NOT_LOOP_USING_BC);
+            temp = tableManager.cur;
+            while(temp != nullptr){
+                if(temp->ident == "for"){
+                    loop_error = false;
+                    break;
+                }
+                temp = temp->Father_Entry;
+            }
+
+            if(loop_error){
+                errorHandler.Insert_Error(NOT_LOOP_USING_BC);
             }
             if (WORD_TYPE != SEMICN){
                 //ERROR
-                errorHandler.Print_Error(SEMICOLON_MISSING);
+                errorHandler.Insert_Error(SEMICOLON_MISSING);
             }else{
                 PRINT_WORD;//PRINT ;
                 GET_A_WORD;
@@ -789,7 +1016,7 @@ void Parser::Stmt() {
                 ForStmt();
                 if (WORD_TYPE != SEMICN){
                     //ERROR
-                    errorHandler.Print_Error(SEMICOLON_MISSING);//虽然for语句强调了不会出现这个错误
+                    errorHandler.Insert_Error(SEMICOLON_MISSING);//虽然for语句强调了不会出现这个错误
                 }else{
                     PRINT_WORD;//PRINT ;
                     GET_A_WORD;
@@ -802,7 +1029,7 @@ void Parser::Stmt() {
                 Cond();
                 if (WORD_TYPE != SEMICN){
                     //ERROR
-                    errorHandler.Print_Error(SEMICOLON_MISSING);
+                    errorHandler.Insert_Error(SEMICOLON_MISSING);
                 }else{
                     PRINT_WORD;//PRINT ;
                     GET_A_WORD;
@@ -815,7 +1042,7 @@ void Parser::Stmt() {
                 ForStmt();
                 if (WORD_TYPE != RPARENT){
                     //error  这其实不可能会有
-                    errorHandler.Print_Error(RPARENT_MISSING);
+                    errorHandler.Insert_Error(RPARENT_MISSING);
                 }else{
                     PRINT_WORD;//PRINT )
                     GET_A_WORD;
@@ -841,7 +1068,7 @@ void Parser::Stmt() {
             Cond();
             if (WORD_TYPE != RPARENT){
                 //ERROR
-                errorHandler.Print_Error(RPARENT_MISSING);
+                errorHandler.Insert_Error(RPARENT_MISSING);
             }else{
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
@@ -865,12 +1092,19 @@ void Parser::Stmt() {
             break;
         case LBRACE:
             //from { start   not print
+            ident = "###";
+            semantic.recordEntries(semantic.fillInfoEntry(ident,BLOCK));
+            //向下一层符号表
+            tableManager.downTable(ident);
             Block();
+            tableManager.upTable();
+            tableManager.cur->entries->erase(ident);
             break;
         case SEMICN:
             PRINT_WORD;//PRINT ;
             GET_A_WORD;
             break;
+            
         default:
             // Exp  LVal    只有LVal有赋值符号于Stmt中
             //LVal
@@ -879,7 +1113,7 @@ void Parser::Stmt() {
             if(WORD_TYPE != SEMICN){
                 //ERROR
                 //缺少分号
-                errorHandler.Print_Error(SEMICOLON_MISSING);
+                errorHandler.Insert_Error(SEMICOLON_MISSING);
             }else{
                 PRINT_WORD;
                 GET_A_WORD;
@@ -892,13 +1126,12 @@ void Parser::Stmt() {
     Print_Grammar_Output("<Stmt>");
 }
 
-int  Parser::FormatString(int printf_line) {
+void  Parser::FormatString() {
 
     if (WORD_TYPE == ILLEGAL){
         //ERROR
         //可能还需要注意 格式字符串是否合法？
-        errorHandler.error_line = printf_line;
-        errorHandler.Print_Error(ILLEGAL_STRING);
+        errorHandler.Insert_Error(ILLEGAL_STRING);
     }
 
     PRINT_WORD;//PRINT StrCON or illegal
@@ -1023,6 +1256,31 @@ void Parser::LOrExp() {
         //error
     }
     Print_Grammar_Output("<LOrExp>");
+}
+
+int Parser::Kind2Exp_type(Kind kind) {
+    switch (kind) {
+        case VAR:
+        case CONST:
+            return 0;
+        case ARRAY_1_VAR:
+        case ARRAY_1_CONST:
+            return 1;
+        case ARRAY_2_VAR:
+        case ARRAY_2_CONST:
+            return 2;
+        default:
+            return -1;//不会出现的  函数作为参数
+    }
+}
+
+bool Parser::inArguments(vector<Entry *> arguments,string ident) {
+    for (auto entry: arguments) {
+        if(entry->ident == ident){
+            return true;
+        }
+    }
+    return false;
 }
 //我爱
 //    我爱xjl徐佳琳

@@ -82,9 +82,10 @@ private:
     Lexer(ifstream & sourceFile,ofstream & outputFile);
 public:
     //暴露给语法分析程序
+    string ident;//save the ident name   because not using ch in parser
     char ch;
     Type token_type;
-    union Token{
+    struct Token{
         int number;
         string *symbol;///?  如果不是指针 似乎有关构造函数会出问题
     }token;
