@@ -304,21 +304,43 @@ void Parser::ConstInitVal() {
     Print_Grammar_Output("<ConstInitVal>");
 }
 
-void Parser::ConstExp() {
-    AddExp();
+void Parser::ConstExp(IEntry *iEntry,int&value,bool isInOtherFunc) {
+    AddExp(iEntry,value,isInOtherFunc);
     Print_Grammar_Output("<ConstExp>");
 }
 
-void Parser::AddExp() {
-    MulExp();
+//Exp->AddExp
+//AddExp->MulExp{[+-]MulExp}
+//认为iEntry由下一级反馈  如果是空 说明值已经算出来放进了value   非空说明值为临时变量
+void Parser::AddExp(IEntry *iEntry,int&value,bool isInOtherFunc) {
+    int value1,value2;
+    IEntry*iEntry1 ,*iEntry2;
+    MulExp(iEntry1,value1,isInOtherFunc);
+
     if (WORD_TYPE == PLUS || WORD_TYPE == MINU){
         Exp_type =0;
         while(WORD_TYPE == PLUS || WORD_TYPE == MINU){
+            int op = WORD_TYPE == PLUS? 0:1;
+            auto *ans = new IEntry();
             if (!isLValInStmt)
                 Print_Grammar_Output("<AddExp>");
             PRINT_WORD;//print + -
             GET_A_WORD;
-            MulExp();
+            MulExp(iEntry2,value2,isInOtherFunc);
+            if (op == 0){
+                if (iEntry1->canGetValue &&  iEntry2->canGetValue){
+                    value = value1+value2;
+                }else {
+                    intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, ans);
+                }
+            }else{
+                if (iEntry1->canGetValue &&  iEntry2->canGetValue){
+                    value = value1-value2;
+                }else{
+                    intermediateCode.addICode(IntermediateCodeType::Sub,iEntry1,iEntry2,ans);
+                }
+            }
+            iEntry1 = ans;
 
         }
     }else{
@@ -328,29 +350,72 @@ void Parser::AddExp() {
         Print_Grammar_Output("<AddExp>");
     //已经指向下一个
 }
-void Parser::MulExp() {
-    UnaryExp();
+//MulExp是项  下面有因子
+//MulExp →UnaryExp [*/%] {UnaryExp}
+void Parser::MulExp(IEntry *iEntry,int&value,bool isInOtherFunc) {
+    int value1,value2;
+    IEntry*iEntry1 ,*iEntry2;
+    UnaryExp(iEntry1,value1,isInOtherFunc);
     if (WORD_TYPE == MULT || WORD_TYPE == DIV || WORD_TYPE == MOD){
         Exp_type = 0;
         while(WORD_TYPE == MULT || WORD_TYPE == DIV || WORD_TYPE == MOD){
+            int op;
+            switch (WORD_TYPE) {
+                case MULT:
+                    op = 0;
+                    break;
+                case DIV:
+                    op = 1;
+                    break;
+                case MOD:
+                    op = 2;
+                    break;
+                default:
+                    op = -1;
+                    break;
+            }
+            auto *ans = new IEntry();
             if (!isLValInStmt)
                 Print_Grammar_Output("<MulExp>");
             PRINT_WORD;//print the */%
             GET_A_WORD;
-            UnaryExp();
-
+            UnaryExp(iEntry2,value2,isInOtherFunc);
+            if (op == 0){
+                if (iEntry1->canGetValue &&  iEntry2->canGetValue){
+                    value = value1*value2;
+                    ans->canGetValue = true;
+                }else {
+                    intermediateCode.addICode(IntermediateCodeType::Mult, iEntry1, iEntry2, ans);
+                }
+            }else if(op ==1){
+                if (iEntry1->canGetValue &&  iEntry2->canGetValue){
+                    value = value1/value2;
+                    ans->canGetValue = true;
+                }else {
+                    intermediateCode.addICode(IntermediateCodeType::Div, iEntry1, iEntry2, ans);
+                }
+            }else{
+                if (iEntry1->canGetValue &&  iEntry2->canGetValue){
+                    value = value1%value2;
+                    ans->canGetValue = true;
+                }else {
+                    intermediateCode.addICode(IntermediateCodeType::Mod, iEntry1, iEntry2, ans);
+                }
+            }
+            iEntry1 = ans;
         }
     }else{
         //error
     }
+    iEntry = iEntry1;
     if (!isLValInStmt)
         Print_Grammar_Output("<MulExp>");
     //已经指向下一个
 }
-void Parser::UnaryExp() {
+void Parser::UnaryExp(IEntry * iEntry,int & value,bool isInOtherFunc) {
     int func_ident_line;
     if (WORD_TYPE == LPARENT || WORD_TYPE == INTCON){
-        PrimaryExp();
+        PrimaryExp(iEntry,value,isInOtherFunc);
     }else if(WORD_TYPE == IDENFR){
         string ident = WORD_DISPLAY;
         Entry * temp = tableManager.cur;
@@ -397,6 +462,9 @@ void Parser::UnaryExp() {
             GET_A_WORD;//指向FuncRParams  也可能是无参少了右括号
             //可以没有参数
             if(WORD_TYPE == RPARENT){//  也要去判断参数个数的问题
+                /**
+                 * 函数没有参数 不需要压栈
+                 */
                 func = nullptr;
                 temp = tableManager.cur;
                 while(temp != nullptr){
@@ -412,11 +480,16 @@ void Parser::UnaryExp() {
                 if (func != nullptr && !(func->fParams->empty()) ){//函数定义时有参数 但是调用没参数  无脑个数问题
 //                    errorHandler.error_line = func_ident_line;
                     errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);
+                }else{
+                    intermediateCode.addICode(FuncCall,intermediateCode.IEntries.at(func->id), nullptr, nullptr);
                 }
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
             }else if(WORD_TYPE == LPARENT || WORD_TYPE == INTCON || WORD_TYPE == IDENFR || WORD_TYPE == PLUS || WORD_TYPE == MINU){
                 //函数实参的first集
+                /**
+               * 函数有参数 需要压栈
+               */
                 func = nullptr;
                 temp = tableManager.cur;
                 while(temp != nullptr){
@@ -431,7 +504,9 @@ void Parser::UnaryExp() {
                 }
                 func_name = ident;
                 errorHandler.error_line = func_ident_line;//记录可能发生错误的行号
-                FuncRParams(func_ident_line);
+                auto * find_func = intermediateCode.IEntries.at(func->id);
+                auto *func_rParams = find_func->RParams;
+                FuncRParams(func_ident_line,func_rParams);
                 if (WORD_TYPE != RPARENT){
                     //Error  缺少右括号）
                     errorHandler.Insert_Error(RPARENT_MISSING);
@@ -464,11 +539,11 @@ void Parser::UnaryExp() {
         Print_Grammar_Output("<UnaryExp>");
 }
 
-void Parser::PrimaryExp() {
+void Parser::PrimaryExp(IEntry * iEntry,int & value,bool isInOtherFunc) {
     if (WORD_TYPE == LPARENT){
         PRINT_WORD;//PRINT (
         GET_A_WORD;
-        Exp();
+        Exp(iEntry,value,isInOtherFunc);
         if (WORD_TYPE != RPARENT){
             //Error
             errorHandler.Insert_Error(RPARENT_MISSING);
@@ -478,7 +553,7 @@ void Parser::PrimaryExp() {
         }
     }else if(WORD_TYPE == INTCON){
         Exp_type = 0;
-        Number();
+        Number(value);
     }else{  //  指向ident
         LVal();//不在这一层报错？   放到下一层LVal
         if (WORD_TYPE == ASSIGN){
@@ -505,7 +580,7 @@ void Parser::PrimaryExp() {
         Print_Grammar_Output("<PrimaryExp>");
 }
 
-void Parser::LVal() { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
+void Parser::LVal(IEntry * iEntry,int & value,bool isInOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
     if (WORD_TYPE != IDENFR){
         //Error
     }
@@ -516,27 +591,15 @@ void Parser::LVal() { // 这里面中的容易错的地方 ident  line已经指�
     Kind kind = VAR;
     int op  =0;
     Entry * temp = tableManager.cur;
-//    bool not_define_error = true;
-//    while(temp != nullptr){
-//        if(temp->entries->find(ident) != temp->entries->end()){
-//            not_define_error = false;
-//            break;
-//        }
-//        temp = temp->Father_Entry;
-//    }
-//    if (not_define_error){
-//        errorHandler.Insert_Error(NOT_DEFINE,error_semicolon_missing_line);
-////        cout << "1   "+to_string(errorHandler.error_line);
-//    }
-
     //无论是否报错  都继续  报了错就是正常的
     GET_A_WORD;
-
+    IEntry * array_exps[3];
+    int values[3];
     while(WORD_TYPE == LBRACK){
         op++;
         PRINT_WORD;//PRINT [
         GET_A_WORD;
-        Exp();
+        Exp(array_exps[op],values[op],isInOtherFunc);
         if (WORD_TYPE != RBRACK){
             //Error  缺少有中括号]
             errorHandler.Insert_Error(RBRACK_MISSING);
@@ -545,11 +608,17 @@ void Parser::LVal() { // 这里面中的容易错的地方 ident  line已经指�
             GET_A_WORD;//POINT TO NEXT WORD
         }
     }
+    /**
+     * 数组在定义时长度肯定已经确定 同时值会存储在tableManager的符号表系统中
+     * 所有由中间代码小组件的value（编译时确定）都会拷贝到符号表的Entry中---暂不清楚  反正IEntry是主要的  Entry存在id映射到IEntry
+     */
+    //引用LVal  搜寻之前定义时的类型，从而得出当前引用LVal时的类型   ------实际上LVal必须引用元素  即得到的一定是值
     temp = tableManager.cur;
+    Entry *find;
     Exp_type = -3;
     while (temp!= nullptr){
         if(temp->entries->find(ident) != temp->entries->end()){
-            Kind kind1 = temp->entries->at(ident)->kind;
+            Kind kind1 = (find = (temp->entries->at(ident)))->kind;
             if(kind1 == ARRAY_1_VAR || kind1 == ARRAY_1_CONST){
                 Exp_type = 1-op;
             }else if(kind1 == ARRAY_2_VAR || kind1 == ARRAY_2_CONST){
@@ -563,18 +632,83 @@ void Parser::LVal() { // 这里面中的容易错的地方 ident  line已经指�
         }
         temp = temp->Father_Entry;
     }
+
+    int dim1_length = find->dim1_length;
+    int index = 0;
+    IEntry * index_entry;
     if (Exp_type == -3){
         //没找到 未定义
 //        errorHandler.Insert_Error(NOT_DEFINE);
     }else if(Exp_type < 0){
         //超出维数的引用   不出现
     }else if(Exp_type == 0){
-        //值
+        //
+        if (op == 2){
+            if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
+                index = values[2]*dim1_length + values[1];
+                if (find->kind == ARRAY_2_CONST){
+                    iEntry->canGetValue = true;
+                    value = find->values.at(index);
+                }else{
+                    intermediateCode.addICode(GetArrayElement,index,intermediateCode.IEntries.at(find->id),iEntry);
+                }
+            }else{//TODO:暂且先不管数组中的各种难搞中间代码
+                if (array_exps[2]->canGetValue){
+                    int t = values[2]*dim1_length;
+                    intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[1],index_entry);
+                }
+                else if(array_exps[1]->canGetValue){
+                    auto *t = new IEntry;
+                    intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[2],t);
+                    intermediateCode.addICode(IntermediateCodeType::Add,values[1],t,index_entry);
+                }else{
+                    intermediateCode.addICode(IntermediateCodeType::Add,array_exps[1],array_exps[2],index_entry);
+                }
+            }
+        }else if(op == 1){
+            if(array_exps[1]->canGetValue) {
+                index = values[1];
+                if (find->kind == ARRAY_1_CONST){
+                    iEntry->canGetValue = true;
+                    value = find->values.at(index);
+                }else{
+                    intermediateCode.addICode(GetArrayElement,index,intermediateCode.IEntries.at(find->id),iEntry);
+                }
+            }
+        }else{
+            intermediateCode.addICode(Assign, intermediateCode.IEntries.at(find->id), nullptr, iEntry);
+        }
     }else if(Exp_type == 1){
         //一维地址
     }else{
         //2维地址
     }
+
+
+
+
+
+
+    /**
+     *     此时array_exps[]为索引Exp的临时变量IEntry
+     *     values[]为值（如果可以算出来）
+     *     注意value并没有存到IEntry中  因为IEntry的存在就是为了生成中间代码的四元式时不得不生产出来的临时变量来代表中间结果的变量 也有可能是编译时无法直接求出value的  所以需要中间临时变量进行代替  这一部分是会在生成MIPS时通过IEntry-》内存位置从而消除
+     */
+     /**
+      * 二维地址
+      */
+
+
+
+
+
+/**
+ * index_entry   index
+ *
+ *
+ *
+ * 要理解IEntry---在中间代码的层次 -不要太底层了 ---要做的是把一些有用的信息放进这里面---IEntry是要编号的   ICode的作用
+ */
 
     //错误的先后顺序  先检查方括号匹配 ---判断具体类型和未定义 再判断是否是左值定义常量 isLeft参数为true表示检测左值的
     if(WORD_TYPE == ASSIGN ){
@@ -603,22 +737,26 @@ void Parser::LVal() { // 这里面中的容易错的地方 ident  line已经指�
     Print_Grammar_Output("<LVal>");
 }
 
-void Parser::Number() {
+void Parser::Number( int & value) {
     if (WORD_TYPE != INTCON){
         //Error
     }
+    value = lexer.token.number;
+
     PRINT_WORD;
     Print_Grammar_Output("<Number>");
     GET_A_WORD;//NOT PW
 }
 
-void Parser::Exp() {
-    AddExp();
+void Parser::Exp(IEntry *iEntry,int & value,bool isInOtherFunc) {
+    AddExp(iEntry,value,isInOtherFunc);
     if (!isLValInStmt)
         Print_Grammar_Output("<Exp>");
 }
 
 void Parser::MainFuncDef() {
+    isInOtherFunc = false;
+    funcLabel = "main";
     if (WORD_TYPE != MAINTK){
         //ERROR
     }
@@ -641,7 +779,7 @@ void Parser::MainFuncDef() {
     Print_Grammar_Output("<MainFuncDef>");
 }
 
-void Parser::FuncRParams(int func_ident_line) {
+void Parser::FuncRParams(int func_ident_line,vector<int> RParams) {
     bool already_error_func_type = false;
     bool already_error_func_count = false;
     //依次取出Exp的类型 然后判断函数符号表中的vector   类型只需要看 0 1 2 普通变量 一维数组 二维数组
@@ -669,7 +807,9 @@ void Parser::FuncRParams(int func_ident_line) {
         already_error_func_count = true;
     }
     errorHandler.error_type = NORMAL;//先清除之前的  只在第一个实参前这样
-    Exp();//里面进行实参的未定义报错
+    IEntry * exp_iEntry;
+    int value;
+    Exp(exp_iEntry, value, true);//里面进行实参的未定义报错
     if(func != nullptr&& !already_error_func_count&&!already_error_func_type){//如果函数是未定义的函数 也就不需要检查实参的两种类型错误
         x = Kind2Exp_type(FArguments.at(cnt++)->kind);//函数定义时的形参
         if(Exp_type != x&&Exp_type !=  -4){
@@ -678,7 +818,17 @@ void Parser::FuncRParams(int func_ident_line) {
             already_error_func_type = true;
         }
     }
-
+    /**
+     * 将实参exp_iEntry放入
+     */
+    if(exp_iEntry->canGetValue){
+        auto * imm = new IEntry;
+        imm->canGetValue = true;
+        imm->imm = value;
+        RParams.push_back(imm->Id);
+    }else{
+        auto * rParam =
+    }
     while(WORD_TYPE == COMMA){
         PRINT_WORD;
         GET_A_WORD;
@@ -705,9 +855,11 @@ void Parser::FuncRParams(int func_ident_line) {
 }
 
 void Parser::FuncDef(Kind func_type) {
+    isInOtherFunc = true;
     //FuncDef 从名字<ident>开始
     bool error = false;
     string ident =WORD_DISPLAY;
+    funcLabel = ident;
 
     //定义：先在这一层找   找到就报错REDEFINE  没找到就填表
     if(tableManager.isRedefine(ident)){

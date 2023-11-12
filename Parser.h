@@ -7,13 +7,15 @@
 #include "TableManager.h"
 #include "ErrorHandler.h"
 #include "Semantic.h"
+#include "IntermediateCode.h"
 #define WORD_TYPE lexer.token_type
 #define GET_A_WORD lexer.nextSymbol()
 #define PEEK_A_LETTER lexer.sourceFile.peek()
 #define PRINT_WORD lexer.printOutput()
 #define WORD_DISPLAY (*lexer.token.symbol)
 #define INFO_ENTRY (tableManager.info)
-
+bool isInOtherFunc;
+string funcLabel;
 /**
  *Parser  的编写规则    注意：1.指向WORD   2.输出WORD
  * 依据文法说明
@@ -27,7 +29,6 @@
 
 class Parser {
 private:
-
     bool enablePrint;
     bool isLValInStmt;
     bool func_rParams_not_define = false;
@@ -38,8 +39,10 @@ private:
     TableManager & tableManager;
     ErrorHandler& errorHandler; //如果漏了&号  在构造函数报了warning
     Semantic & semantic;
+    IntermediateCode & intermediateCode;
 public:
-    Parser(Lexer& lexer1,TableManager& tableManager1,ErrorHandler &errorHandler1,Semantic& semantic1):lexer(lexer1),tableManager(tableManager1),errorHandler(errorHandler1),semantic(semantic1),enablePrint(false),isLValInStmt(false){};
+
+    Parser(Lexer& lexer1,TableManager& tableManager1,ErrorHandler &errorHandler1,Semantic& semantic1,IntermediateCode intermediateCode1):lexer(lexer1),tableManager(tableManager1),errorHandler(errorHandler1),semantic(semantic1),intermediateCode(intermediateCode1),enablePrint(false),isLValInStmt(false){};
     void Print_Grammar_Output(string s);
     void CompUnit();
     int Kind2Exp_type (Kind kind);
@@ -62,21 +65,21 @@ public:
 //    void NormalChar();
 //    void FormalChar();
     void ForStmt();
-    void Exp();
+    void Exp(IEntry *iEntry,int&value,bool isInOtherFunc);
     void Cond();
-    void LVal();
-    void PrimaryExp();
-    void Number();
-    void UnaryExp();
+    void LVal(IEntry * iEntry,int & value,bool isInOtherFunc);
+    void PrimaryExp(IEntry * iEntry,int & value,bool isInOtherFunc);
+    void Number(int & value);
+    void UnaryExp(IEntry *iEntry,int&value,bool isInOtherFunc);
     void UnaryOp();
-    void FuncRParams(int func_ident_line);
-    void MulExp();
-    void AddExp();
+    void FuncRParams(int func_ident_line,vector<int> RParams);
+    void MulExp(IEntry *iEntry,int&value,bool isInOtherFunc);
+    void AddExp(IEntry *iEntry,int&value,bool isInOtherFunc);
     void RelExp();
     void EqExp();
     void LAndExp();
     void LOrExp();
-    void ConstExp();
+    void ConstExp(IEntry *iEntry,int&value,bool isInOtherFunc);
     bool inArguments(vector<Entry *> arguments,string ident);
 
 };

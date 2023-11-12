@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "MipsCode.h"
 
 using namespace std;
 #ifndef LEX_TABLEMANAGER_H
@@ -39,7 +40,8 @@ enum Kind{
 //};
 
 //Entry
-struct Entry{
+class Entry{
+public:
     string ident;//标识符名称
     Kind kind;
     vector<Entry*> *fParams;
@@ -50,12 +52,16 @@ struct Entry{
 //暂且不实现值的符号记录
     int value;
     vector<int> values; //值
+    int dim1_length;
 
-
+    //中间代码生成时的
+    int id;
 
     map<string, Entry*>  *entries;
     struct Entry * Father_Entry;
 };
+
+
 
 //整个程序的初始表项  树的root   不需要定义在这里
 class TableManager {
