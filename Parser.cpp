@@ -518,6 +518,9 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool isInOtherFunc) {
                     //函数无参 且缺失 ‘）’
                 errorHandler.Insert_Error(RPARENT_MISSING);
             }
+            /**
+             * 调用函数时的func
+             */
             if(func->kind == FUNC_INT)
                 Exp_type = 0;
             else if(func->kind == FUNC_VOID)//void  或者根本没有定义的函数 且已经报错未定义
@@ -580,7 +583,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool isInOtherFunc) {
         Print_Grammar_Output("<PrimaryExp>");
 }
 
-void Parser::LVal(IEntry * iEntry,int & value,bool isInOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
+void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
     if (WORD_TYPE != IDENFR){
         //Error
     }
@@ -599,7 +602,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool isInOtherFunc) { // 这里面
         op++;
         PRINT_WORD;//PRINT [
         GET_A_WORD;
-        Exp(array_exps[op],values[op],isInOtherFunc);
+        Exp(array_exps[op], values[op], inOtherFunc);
         if (WORD_TYPE != RBRACK){
             //Error  缺少有中括号]
             errorHandler.Insert_Error(RBRACK_MISSING);
@@ -612,7 +615,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool isInOtherFunc) { // 这里面
      * 数组在定义时长度肯定已经确定 同时值会存储在tableManager的符号表系统中
      * 所有由中间代码小组件的value（编译时确定）都会拷贝到符号表的Entry中---暂不清楚  反正IEntry是主要的  Entry存在id映射到IEntry
      */
-    //引用LVal  搜寻之前定义时的类型，从而得出当前引用LVal时的类型   ------实际上LVal必须引用元素  即得到的一定是值
+    //引用LVal  搜寻之前定义时的类型，从而得出当前引用LVal时的类型   ------实际上LVal必须引用元素  即得到的一定是值---并不是  可以参数LVal是地址 一维或者二维都行
     temp = tableManager.cur;
     Entry *find;
     Exp_type = -3;
@@ -645,25 +648,27 @@ void Parser::LVal(IEntry * iEntry,int & value,bool isInOtherFunc) { // 这里面
         //
         if (op == 2){
             if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
-                index = values[2]*dim1_length + values[1];
+                index = values[1]*dim1_length + values[2];
                 if (find->kind == ARRAY_2_CONST){
+                    iEntry = new IEntry;
                     iEntry->canGetValue = true;
                     value = find->values.at(index);
                 }else{
                     intermediateCode.addICode(GetArrayElement,index,intermediateCode.IEntries.at(find->id),iEntry);
                 }
-            }else{//TODO:暂且先不管数组中的各种难搞中间代码
-                if (array_exps[2]->canGetValue){
-                    int t = values[2]*dim1_length;
-                    intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[1],index_entry);
+            }else{
+                if (array_exps[1]->canGetValue){
+                    int t = values[1]*dim1_length;
+                    intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[2],index_entry);
                 }
-                else if(array_exps[1]->canGetValue){
+                else if(array_exps[2]->canGetValue){
                     auto *t = new IEntry;
-                    intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[2],t);
-                    intermediateCode.addICode(IntermediateCodeType::Add,values[1],t,index_entry);
+                    intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
+                    intermediateCode.addICode(IntermediateCodeType::Add,values[2],t,index_entry);
                 }else{
                     intermediateCode.addICode(IntermediateCodeType::Add,array_exps[1],array_exps[2],index_entry);
                 }
+                intermediateCode.addICode(GetArrayElement,intermediateCode.IEntries.at(find->id),index_entry,iEntry);
             }
         }else if(op == 1){
             if(array_exps[1]->canGetValue) {
@@ -676,12 +681,32 @@ void Parser::LVal(IEntry * iEntry,int & value,bool isInOtherFunc) { // 这里面
                 }
             }
         }else{
-            intermediateCode.addICode(Assign, intermediateCode.IEntries.at(find->id), nullptr, iEntry);
+//            intermediateCode.addICode(Assign, intermediateCode.IEntries.at(find->id), nullptr, iEntry);
+                iEntry = intermediateCode.IEntries.at(find->id);
         }
-    }else if(Exp_type == 1){
+    }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址
         //一维地址
+        /**
+         * 重新生成一个IEntry   用来表示内存位置
+         * TODO:先不考虑烦人的array找不到对应的值的情况---需要进一步生成index的中间代码
+         */
+         if(op == 1){
+             //原生的一维数组
+             //只可能在函数实参中出现和函数形参
+             iEntry = new IEntry;
+             iEntry->startAddress = intermediateCode.IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
+             iEntry->type = 1;
+         }else if(op == 2){
+            index = find->dim1_length *values[1];
+             iEntry = new IEntry;
+             iEntry->type = 1;
+             iEntry->startAddress = index + intermediateCode.IEntries.at(find->id)->startAddress;
+         }
     }else{
         //2维地址
+        iEntry = new IEntry;
+        iEntry->type = 1;
+        iEntry->startAddress = intermediateCode.IEntries.at(find->id)->startAddress;
     }
 
 

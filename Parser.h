@@ -67,7 +67,7 @@ public:
     void ForStmt();
     void Exp(IEntry *iEntry,int&value,bool isInOtherFunc);
     void Cond();
-    void LVal(IEntry * iEntry,int & value,bool isInOtherFunc);
+    void LVal(IEntry * iEntry,int & value,bool inOtherFunc);
     void PrimaryExp(IEntry * iEntry,int & value,bool isInOtherFunc);
     void Number(int & value);
     void UnaryExp(IEntry *iEntry,int&value,bool isInOtherFunc);

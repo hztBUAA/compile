@@ -32,6 +32,7 @@ int id_generate = 0;
 class IEntry{
 public:
     int Id{};
+    int type{};//0定位元素 1维地址
     string name;
     int imm{};//立即数或者已经算出  不能直接再被用来计算 由于另一个操作区待定
     bool canGetValue{};
@@ -104,6 +105,7 @@ public:
 public:
     void addICode(IntermediateCodeType type,IEntry* src1,IEntry* src2,IEntry* dst){
         iCode = new ICode();
+        dst = new IEntry;
         iCode->type = type;
         iCode->src1 = src1;
         iCode->src2 = src2;
@@ -116,6 +118,7 @@ public:
     }
     void addICode(IntermediateCodeType type,int src1,IEntry* src2,IEntry* dst){
         iCode = new ICode();
+        dst = new IEntry;
         iCode->type = type;
         auto* s1 = new IEntry;
         s1->imm = src1;
