@@ -37,6 +37,7 @@ public:
     int imm{};//立即数或者已经算出  不能直接再被用来计算 由于另一个操作区待定
     bool canGetValue{};
 
+    int dim1_length{};
     vector<int> *values;//存储数组的值
     int startAddress;//用来跟MIPS的后端对接  ---由于数组的存在地址不是和id一一对应
 

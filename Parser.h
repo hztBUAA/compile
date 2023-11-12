@@ -50,7 +50,7 @@ public:
     void Decl();
     void ConstDecl();
     void ConstDef(vector<Entry*> & entries);
-    void ConstInitVal();
+    void ConstInitVal(IEntry *iEntry,int&nums);
     void VarDecl();
     void VarDef(vector<Entry*> & entries);
     void InitVal();
@@ -80,7 +80,7 @@ public:
     void EqExp();
     void LAndExp();
     void LOrExp();
-    void ConstExp(IEntry *iEntry,int&value,bool isInOtherFunc);
+    void ConstExp(IEntry *iEntry,int&value,bool InOtherFunc);
     bool inArguments(const vector<Entry *>& arguments,string ident);
 
 };

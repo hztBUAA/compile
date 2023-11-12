@@ -270,48 +270,66 @@ void Parser::ConstDef(vector<Entry*>& entries) {
             break;
     }
 
-    int value;
+    int nums = 0;
 //常量定义  必须赋值
     if (WORD_TYPE != ASSIGN){
         //Error
     }else{
         PRINT_WORD;
         GET_A_WORD;
-        //FIXME:这里的iEntry可以作为存放初值
-        ConstInitVal();
+        //FIXME:这里的iEntry可以作为存放初值  --数组  --普通变量
+        iEntry->values = new vector<int>;
+        ConstInitVal(iEntry,nums);
     }
     //留下对数组长度的补充计算  以及变量值的存储
     //已经指向下一个word  ,  or ;
+    //FIXME:目前认为values只保存在IEntry中   TODO：需要注意同步IEntry和Entry的关系
     if(!error){
         entries.push_back(entry);
-    semantic.recordEntries(entry);
+        semantic.recordEntries(entry);
+        if (nums == 1){
+            auto *const_ = new IEntry();
+            entry->id = const_->Id;
+        }else{
+            auto *const_array = new IEntry(nums);
+            entry->id = const_array->Id;
+        }
     }
     Print_Grammar_Output("<ConstDef>");
 }
 
-void Parser::ConstInitVal(IEntry *iEntry,int&value,bool isInOtherFunc) {
+//FIXME:至多只有两层   append
+//FIXME:value表示目前的个数   dim1_length表示第一层维数的大小   ConstInitVa中的iEntry指向的是数组变量
+void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
     if (WORD_TYPE == LBRACE){
         PRINT_WORD;//PRINT {
         GET_A_WORD;
-        ConstInitVal();
+        ConstInitVal(iEntry, nums);
         while(WORD_TYPE == COMMA){
             PRINT_WORD;//PRINT ,
             GET_A_WORD;
-            ConstInitVal();
+            ConstInitVal(iEntry, nums);
         }
         if(WORD_TYPE != RBRACE){
             //Error
         }
         PRINT_WORD;//PRINT }
         GET_A_WORD;
+        iEntry->dim1_length = nums;
     }else{
-        ConstExp();
+        int value;
+        ConstExp(iEntry, value, isInOtherFunc);
+        nums++;
     }
     Print_Grammar_Output("<ConstInitVal>");
 }
 
-void Parser::ConstExp(IEntry *iEntry,int&value,bool isInOtherFunc) {
-    AddExp(iEntry,value,isInOtherFunc);
+//FIXME:至多只有两层   append
+//FIXME:nums表示目前的个数  一个ConstExp只有一个值
+void Parser::ConstExp(IEntry *iEntry,int&value,bool InOtherFunc) {
+    IEntry* _addExp;
+    AddExp(_addExp, value, InOtherFunc);
+    iEntry->values->push_back(value);//FIXME: ConstExp一定可以算出来
     Print_Grammar_Output("<ConstExp>");
 }
 
