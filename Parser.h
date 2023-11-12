@@ -14,7 +14,8 @@
 #define PRINT_WORD lexer.printOutput()
 #define WORD_DISPLAY (*lexer.token.symbol)
 #define INFO_ENTRY (tableManager.info)
-bool isInOtherFunc;
+bool isInOtherFunc;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
+#define ISGLOBAL  (tableManager.cur->kind == CompUnit)
 string funcLabel;
 /**
  *Parser  的编写规则    注意：1.指向WORD   2.输出WORD
@@ -71,7 +72,7 @@ public:
     void PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc);
     void Number(IEntry *iEntry,int & value,bool InOtherFunc);
     void UnaryExp(IEntry *iEntry,int&value,bool InOtherFunc);
-    void UnaryOp();
+    void UnaryOp(int &op);
     void FuncRParams(int func_ident_line,vector<int> *RParams);
     void MulExp(IEntry *iEntry,int&value,bool InOtherFunc);
     void AddExp(IEntry *iEntry,int&value,bool iInOtherFunc);

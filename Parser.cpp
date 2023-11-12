@@ -11,6 +11,7 @@ using namespace std;
 
 void Parser::Print_Grammar_Output(string s) {
     if (enablePrint){
+
         //cout << s << endl;
         lexer.outputFile << s << endl;
     }
@@ -237,11 +238,14 @@ void Parser::ConstDef(vector<Entry*>& entries) {
     PRINT_WORD;
     GET_A_WORD;
     int op = 0;
+    IEntry * iEntry;
+    IEntry * exp_iEntries[3];
+    int values[3];
     while(WORD_TYPE == LBRACK){
         op++;
         PRINT_WORD;
         GET_A_WORD;
-        ConstExp();
+        ConstExp(exp_iEntries[op],values[op],isInOtherFunc);
         if (WORD_TYPE == RBRACK){
             PRINT_WORD;
             GET_A_WORD;
@@ -266,12 +270,14 @@ void Parser::ConstDef(vector<Entry*>& entries) {
             break;
     }
 
+    int value;
 //常量定义  必须赋值
     if (WORD_TYPE != ASSIGN){
         //Error
     }else{
         PRINT_WORD;
         GET_A_WORD;
+        //FIXME:这里的iEntry可以作为存放初值
         ConstInitVal();
     }
     //留下对数组长度的补充计算  以及变量值的存储
@@ -283,7 +289,7 @@ void Parser::ConstDef(vector<Entry*>& entries) {
     Print_Grammar_Output("<ConstDef>");
 }
 
-void Parser::ConstInitVal() {
+void Parser::ConstInitVal(IEntry *iEntry,int&value,bool isInOtherFunc) {
     if (WORD_TYPE == LBRACE){
         PRINT_WORD;//PRINT {
         GET_A_WORD;
@@ -543,8 +549,18 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         }
     }else{
         Exp_type = 0;
-        UnaryOp();
+        int op;
+        UnaryOp(op);
         UnaryExp(iEntry,value,InOtherFunc);
+        if (op == 0){
+            ;//无事
+        }else if (op == 1){
+            if (iEntry->canGetValue){
+                value = -1 * value;
+            }
+        }else if(op ==2 ){
+            //FIXME:仅出现在条件表达式？TODO
+        }
     }
     if (!isLValInStmt)
         Print_Grammar_Output("<UnaryExp>");
@@ -1375,9 +1391,23 @@ void Parser::ForStmt() {
     Print_Grammar_Output("<ForStmt>");
 }
 
-void Parser::UnaryOp() {
+void Parser::UnaryOp(int &op) {
     if (WORD_TYPE != PLUS && WORD_TYPE != MINU && WORD_TYPE != NOT){
         //ERROR
+    }
+    switch (WORD_TYPE) {
+        case PLUS:
+            op = 0;
+            break;
+        case MINU:
+            op = 1;
+            break;
+        case NOT:
+            op = 2;
+            break;
+        default:
+            op = -1;
+            break;
     }
     PRINT_WORD;
     GET_A_WORD;
