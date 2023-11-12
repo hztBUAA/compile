@@ -75,7 +75,8 @@ enum IntermediateCodeType{
     Mult,
     Div,
     Mod,
-    Assign,
+//    Assign,//还是需要的  LVal = Exp中  ---想了想还是不需要  直接把iEntry放进去即可
+    GetInt,//只有dst参数   表示放进dst
     GetArrayElement,
     FuncCall,//调用时要进行参数压栈和临时内存上堆
     FuncDef,//定义函数时 形式参数需要当成local定义   进入符号表生成Entry的同时生成IEntry 并记录两者的映射
@@ -105,7 +106,7 @@ public:
 public:
     void addICode(IntermediateCodeType type,IEntry* src1,IEntry* src2,IEntry* dst){
         iCode = new ICode();
-        dst = new IEntry;
+        dst = new IEntry;//最后翻译时 会根据约定的IEntryType去使用IEntry
         iCode->type = type;
         iCode->src1 = src1;
         iCode->src2 = src2;

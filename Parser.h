@@ -68,19 +68,19 @@ public:
     void Exp(IEntry *iEntry,int&value,bool isInOtherFunc);
     void Cond();
     void LVal(IEntry * iEntry,int & value,bool inOtherFunc);
-    void PrimaryExp(IEntry * iEntry,int & value,bool isInOtherFunc);
-    void Number(int & value);
-    void UnaryExp(IEntry *iEntry,int&value,bool isInOtherFunc);
+    void PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc);
+    void Number(IEntry *iEntry,int & value,bool InOtherFunc);
+    void UnaryExp(IEntry *iEntry,int&value,bool InOtherFunc);
     void UnaryOp();
-    void FuncRParams(int func_ident_line,vector<int> RParams);
-    void MulExp(IEntry *iEntry,int&value,bool isInOtherFunc);
-    void AddExp(IEntry *iEntry,int&value,bool isInOtherFunc);
+    void FuncRParams(int func_ident_line,vector<int> *RParams);
+    void MulExp(IEntry *iEntry,int&value,bool InOtherFunc);
+    void AddExp(IEntry *iEntry,int&value,bool iInOtherFunc);
     void RelExp();
     void EqExp();
     void LAndExp();
     void LOrExp();
     void ConstExp(IEntry *iEntry,int&value,bool isInOtherFunc);
-    bool inArguments(vector<Entry *> arguments,string ident);
+    bool inArguments(const vector<Entry *>& arguments,string ident);
 
 };
 
