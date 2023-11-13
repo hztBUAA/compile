@@ -18,6 +18,7 @@ int main() {
     Parser parser(my_lexer,tableManager,errorHandler,semantic,intermediateCode);
     parser.CompUnit();
     errorHandler.Print_Errors();
+    intermediateCode.debug_print();
     //my_lexer.analyze();
     return 0;
 }

@@ -7,9 +7,13 @@
 
 #include <string>
 #include <utility>
+#include <ostream>
+#include <iostream>
 #include "vector"
 #include "Parser.h"
 using namespace std;
+extern bool isInOtherFunc;
+extern string funcLabel;
 
 
 
@@ -55,6 +59,8 @@ public:
     static int generateId(){
         return id_generate++;
     }
+
+
     IEntry(){
         this->Id = generateId();
         this->startAddress = tempMemoryAddressTop;
@@ -101,6 +107,7 @@ struct ICode{
     IEntry* dst;
 //    int address;
 };
+
 static int id = 0;
 class IntermediateCode {
     /**
@@ -118,6 +125,46 @@ public:
 
 
 public:
+    static string iCode2str(ICode *iCode){
+        IEntry *var1 = iCode->src1;
+        IEntry *var2 = iCode->src2;
+        IEntry *var3 = iCode->dst;
+        switch (iCode->type) {
+            case Def_Has_Value:
+                return "Def_Has_Value :" + var1->name + "type:" + to_string(var1->type) ;
+                break;
+            case Def_No_Value:
+                return "Def_Has_Value :" + var1->name + "type:" + to_string(var1->type) ;
+                break;
+            case Add:
+                return "Add :" + var1->name + "type:" + to_string(var1->type)  ;
+                break;
+            case Sub:
+                return "Sub :" + var1->name + "type:" + to_string(var1->type)  ;
+                break;
+            case Mult:
+                return "Mult :" + var1->name + "type:" + to_string(var1->type)  ;
+                break;
+            case Div:
+                return "Div :" + var1->name + "type:" + to_string(var1->type)  ;
+                break;
+            case Mod:
+                return "Mod :" + var1->name + "type:" + to_string(var1->type)  ;
+                break;
+            case GetInt:
+                return "GetInt :" + var1->name + "type:" + to_string(var1->type)  ;
+                break;
+            case GetArrayElement:
+                return "GetArrayElement :" + var1->name + "type:" + to_string(var1->type)  ;
+                break;
+            case FuncCall:
+                return "FuncCall :" + var1->name + "type:" + to_string(var1->type)  ;
+                break;
+            case FuncDef:
+                return " FuncDef:" + var1->name + "type:" + to_string(var1->type)  ;
+                break;
+        }
+    }
     void addDef(bool isGlobal,IntermediateCodeType type,IEntry* src1,IEntry* src2,IEntry* dst){
         iCode = new ICode();
         dst = new IEntry;//最后翻译时 会根据约定的IEntryType去使用IEntry
@@ -173,8 +220,27 @@ void addICode(IntermediateCodeType type,int src1,IEntry* src2,IEntry* dst){
     }
 }
 
-void debug_print(){
-        //print mainICodes
+    void debug_print(){
+        cout<<"#全局变量"<<endl;
+        for (auto def:globalDef) {
+            //输出iCode的类型、和非空的IEntry
+            cout<< iCode2str(def) << endl;
+        }
+        cout<<"#主函数"<<endl;
+            //print mainICodes
+        for (auto item:mainICodes) {
+            //输出iCode的类型、和非空的IEntry
+            cout << iCode2str(item) << endl;
+        }
+        cout<<"#其他自定义函数"<<endl;
+      //按顺序输出otherFuncICodes的每一个FuncLabel的ICodes
+        for (const auto& func:otherFuncICodes) {
+            cout<<"#自定义函数名："+func.first<<endl;
+            for (auto item:func.second) {
+                cout << iCode2str(item) << endl;
+
+            }
+        }
     }
 
 };

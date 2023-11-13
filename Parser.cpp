@@ -1034,6 +1034,7 @@ void Parser::FuncType() {
     Print_Grammar_Output("<FuncType>");
 }
 
+//TODO:函数形参的处理
 void Parser::FuncFParams(vector<Entry *> &arguments) {
     FuncFParam(arguments);
     while(WORD_TYPE == COMMA){
@@ -1058,6 +1059,8 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
 //        op =-1;  也要加入？   只是报错
     }
 
+    IEntry*exp_iEntrys[3];
+    int values[3];
     PRINT_WORD;//PRINT IDENT
     GET_A_WORD;
     if(WORD_TYPE != LBRACK){
@@ -1088,7 +1091,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             if(WORD_TYPE == RBRACK){
                 //ERROR  二维数组 最后一维需要常数
             }
-            ConstExp();
+            ConstExp(exp_iEntrys[op],values[2],isInOtherFunc);
             if(WORD_TYPE != RBRACK){
                 //ERROR  缺少右中括号
 //                op = -1;
@@ -1169,11 +1172,14 @@ void Parser::BlockItem() {
 //不用输出语法成分
 }
 
+//TODO:有关下放Exp的处理
 void Parser::Stmt() {
     string ident;
     Entry * temp;
     int printf_count = 0;
     bool loop_error = true;
+    IEntry * exp;
+    int exp_value;
 //    int printf_format = 0;
     switch (WORD_TYPE) {
         case PRINTFTK:
@@ -1184,11 +1190,12 @@ void Parser::Stmt() {
             PRINT_WORD;//PRINT (
             GET_A_WORD;
             FormatString();
+
             while(WORD_TYPE == COMMA){
                 printf_count++;
                 PRINT_WORD;//PRINT ,
                 GET_A_WORD;
-                Exp();
+                Exp(exp,exp_value,isInOtherFunc);
             }
             if(lexer.printf_format_count != printf_count){//出现了不合法字符 就没必要再继续判断了
                 errorHandler.error_line = printf_line;
@@ -1227,7 +1234,7 @@ void Parser::Stmt() {
                         temp = temp->Father_Entry;
                     }
 
-                    Exp();//错误下放
+                    Exp(exp,exp_value,isInOtherFunc);//错误下放
                     if (WORD_TYPE != SEMICN){
                         //ERROR
                         //Print_Grammar_Output("ERROR  :");

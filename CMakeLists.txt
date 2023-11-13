@@ -14,9 +14,7 @@ add_executable(Lex main.cpp
         TableManager.h
         Semantic.cpp
         Semantic.h
-        IntermediateCode.cpp
         IntermediateCode.h
         MipsCode.cpp
         MipsCode.h
-        IntermediateCode.h
 )
