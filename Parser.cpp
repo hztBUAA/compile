@@ -149,7 +149,6 @@ void Parser::VarDef(vector<Entry*> &entries) {
 
     PRINT_WORD;//PRINT IDENT
     GET_A_WORD;
-    auto * iEntry = new IEntry;
     int values[3];
     IEntry* exp_iEntries[3];
     while(WORD_TYPE == LBRACK){
@@ -166,6 +165,21 @@ void Parser::VarDef(vector<Entry*> &entries) {
 //            error =true;
         }
     }
+    int nums = 0;//数组的长度  会在扫描初始值时设定  同时本身也会设定
+    IEntry * iEntry;
+    int total_length,dim1_length;
+    if (op == 0){
+        total_length = dim1_length = 1;
+        iEntry = new IEntry;
+    }else if(op == 1){
+        total_length = dim1_length = values[1];
+        iEntry = new IEntry(total_length);
+    }else if(op == 2){
+        total_length = values[1]*values[2];//FIXME；数组初始大小
+        dim1_length = values[2];
+        iEntry = new IEntry(total_length);
+    }
+
     Entry * entry;
     switch (op) {
         case 0:
@@ -180,8 +194,9 @@ void Parser::VarDef(vector<Entry*> &entries) {
         default:
             break;
     }
-    int nums = 0;
+    bool hasValue = false;
     if (WORD_TYPE == ASSIGN){
+        hasValue = true;
         PRINT_WORD;
         GET_A_WORD;
         iEntry->values_Id = new vector<int>;
@@ -190,6 +205,12 @@ void Parser::VarDef(vector<Entry*> &entries) {
     if(!error){
         entries.push_back(entry);
         semantic.recordEntries(entry);
+        entry->id = iEntry->Id;
+        if (hasValue){
+            intermediateCode.addDef(ISGLOBAL,Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
+        }else{
+            intermediateCode.addDef(ISGLOBAL,Def_No_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
+        }
     }
     Print_Grammar_Output("<VarDef>");
 }

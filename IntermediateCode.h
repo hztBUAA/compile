@@ -39,7 +39,8 @@ public:
 
     int total_length{};
     int dim1_length{};
-    vector<int> *values;//存储数组的值
+    vector<int> *values;//存储数组的值   -----假想的会放在对应的Address位置上
+    vector<int > *values_Id;
     int startAddress;//用来跟MIPS的后端对接  ---由于数组的存在地址不是和id一一对应  FIXME:type = 1时只能使用startAddress
 
 
@@ -48,7 +49,9 @@ public:
      * 类似于Entry  包含id即可  id是查询符号表时已经有对应的id在对应的Entry（定义该变量时就存在的）
      *
      */
-    vector<int > *values_Id;
+
+
+
     static int generateId(){
         return id_generate++;
     }
