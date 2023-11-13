@@ -14,9 +14,11 @@
 #define PRINT_WORD lexer.printOutput()
 #define WORD_DISPLAY (*lexer.token.symbol)
 #define INFO_ENTRY (tableManager.info)
-bool isInOtherFunc;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
+
 #define ISGLOBAL  (tableManager.cur->kind ==Kind::CompUnit)
-string funcLabel;
+extern bool isInOtherFunc;
+extern string funcLabel;
+
 
 /**
  *Parser  的编写规则    注意：1.指向WORD   2.输出WORD
@@ -74,13 +76,13 @@ public:
     void Number(IEntry *iEntry,int & value,bool InOtherFunc);
     void UnaryExp(IEntry *iEntry,int&value,bool InOtherFunc);
     void UnaryOp(int &op);
-    void FuncRParams(int func_ident_line,vector<int> *RParams);
+    void FuncRParams(int func_ident_line,vector<int> *FParams);
     void MulExp(IEntry *iEntry,int&value,bool InOtherFunc);
-    void AddExp(IEntry *iEntry,int&value,bool iInOtherFunc);
-    void RelExp();
-    void EqExp();
-    void LAndExp();
-    void LOrExp();
+    void AddExp(IEntry *iEntry,int&value,bool InOtherFunc);
+    void RelExp(IEntry * iEntry,bool InOtherFunc);
+    void EqExp(IEntry * iEntry,bool InOtherFunc);
+    void LAndExp(IEntry * iEntry,bool InOtherFunc);
+    void LOrExp(IEntry * iEntry,bool InOtherFunc);
     void ConstExp(IEntry *iEntry,int&value,bool InOtherFunc);
     bool inArguments(const vector<Entry *>& arguments,string ident);
 

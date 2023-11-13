@@ -8,7 +8,8 @@
 #include "Lexer.h"
 #include <iostream>
 using namespace std;
-
+string funcLabel;
+bool isInOtherFunc;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
 
 void Parser::Print_Grammar_Output(string s) {
     if (enablePrint){
@@ -902,7 +903,8 @@ void Parser::MainFuncDef() {
     Print_Grammar_Output("<MainFuncDef>");
 }
 
-void Parser::FuncRParams(int func_ident_line,vector<int>  *RParams) {
+//TODO:函数实参一一赋值给已经占住位置的形参
+void Parser::FuncRParams(int func_ident_line,vector<int>  *FParams) {
     bool already_error_func_type = false;
     bool already_error_func_count = false;
     //依次取出Exp的类型 然后判断函数符号表中的vector   类型只需要看 0 1 2 普通变量 一维数组 二维数组
@@ -945,7 +947,8 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *RParams) {
      * 将实参exp_iEntry放入
      */
      //TODO:在中间代码阶段就先不要多多去管闲事去想着分类讨论值  把IEntry看做抽象 能够加快效率  新建的exp_IEntry
-    RParams->push_back(exp_iEntry->Id);
+//    FParams->push_back(exp_iEntry->Id);
+    intermediateCode.addICode(Assign, exp_iEntry,nullptr,intermediateCode.IEntries.at(FParams->at(cnt-1)));
 
     while(WORD_TYPE == COMMA){
         PRINT_WORD;
@@ -965,7 +968,8 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *RParams) {
                 already_error_func_type = true;
             }
         }
-        RParams->push_back(exp_iEntry->Id);
+//        FParams->push_back(exp_iEntry->Id);
+        intermediateCode.addICode(Assign, exp_iEntry,nullptr,intermediateCode.IEntries.at(FParams->at(cnt-1)));
     }
     if(cnt < FArguments.size() &&!already_error_func_type&&!already_error_func_count&& func != nullptr){//实际调用参数少
         errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);//不会出现一行两个错误 既有
@@ -979,6 +983,7 @@ void Parser::FuncDef(Kind func_type) {
     bool error = false;
     string ident =WORD_DISPLAY;
     funcLabel = ident;
+    auto* func = new IEntry ;//FIXME:表示函数定义时的相关信息头： 形参values_Id 有没有返回值
 
     //定义：先在这一层找   找到就报错REDEFINE  没找到就填表
     if(tableManager.isRedefine(ident)){
@@ -993,7 +998,10 @@ void Parser::FuncDef(Kind func_type) {
     if(WORD_TYPE == RPARENT || WORD_TYPE == LBRACE){//可能的情况func({  空参数漏了）
         //no FUNCFParams
         INFO_ENTRY = semantic.fillInfoEntry(ident,func_type);//空参数
+        func->has_return = func_type == FUNC_INT;
+        func->values_Id = new vector<int>;
         INFO_ENTRY->fParams = new vector<Entry *>;
+        INFO_ENTRY->id = func->Id;//后续被引用时才知道是这个IEntry的函数头
         semantic.recordEntries(INFO_ENTRY);
         if (WORD_TYPE == RPARENT){
             PRINT_WORD;
@@ -1006,12 +1014,19 @@ void Parser::FuncDef(Kind func_type) {
         tableManager.upTable();
     }else{
         INFO_ENTRY = semantic.fillInfoEntry(ident,func_type);
+        func->has_return = func_type == FUNC_INT;
+        func->values_Id = new vector<int>;
+        INFO_ENTRY->id = func->Id;
         semantic.recordEntries(INFO_ENTRY);
         tableManager.downTable(ident);//对于有参函数   参数和block都属于这个函数名的对应符号表level
         vector<Entry *> entries;//涉及到堆上内存引用？
         if(WORD_TYPE == INTTK){
             FuncFParams(entries);
             //指向）
+            //FIXME:将IEntry的对应形参存储完善
+            for (auto entry :entries) {
+                func->values_Id->push_back(entry->id);//传递的最终都是4字节的  值或地址！
+            }
             if(WORD_TYPE != RPARENT){
                 //ERROR
                 errorHandler.Insert_Error(RPARENT_MISSING);
@@ -1027,11 +1042,11 @@ void Parser::FuncDef(Kind func_type) {
         }else{
             //Error  形参只能int打头    如果改成增加double！！！
             //TODO:完善
-
-
         }
     }
     tableManager.cur->entries->erase("main");//如果是重定义的函数 需要抹掉它
+    //TODO:FuncCall中间代码 FIXME：完成FuncCALL   src1为函数头
+    intermediateCode.addICode(FuncCall,func, nullptr, nullptr);
 
     Print_Grammar_Output("<FuncDef>");
 }
@@ -1098,6 +1113,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
                 //ERROR  二维数组 最后一维需要常数
             }
             ConstExp(exp_iEntrys[op],values[2],isInOtherFunc);
+            //FIXME:无关紧要  实参拷贝到形参时默认是正确的通过实参就可以断定type
             if(WORD_TYPE != RBRACK){
                 //ERROR  缺少右中括号
 //                op = -1;
@@ -1122,6 +1138,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             kind = ARRAY_2_VAR;
         }
         INFO_ENTRY = semantic.fillInfoEntry(ident,kind);
+        INFO_ENTRY->id = (new IEntry)->Id;//FIXME：函数形参站住位置
         arguments.push_back(INFO_ENTRY);
         semantic.recordEntries(INFO_ENTRY);
     }
@@ -1462,7 +1479,9 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量初值
 }
 
 void Parser::Cond() {
-    LOrExp();
+    //TODO:FOR循环的逻辑补充
+    IEntry *iEntry;
+    LOrExp(iEntry,isInOtherFunc);
     Print_Grammar_Output("<Cond>");
 }
 
@@ -1506,28 +1525,33 @@ void Parser::UnaryOp(int &op) {
 }
 
 //RelExp-> AddExp {(< > <= >=) AddExp}
-void Parser::RelExp() {
-    AddExp();
+void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
+    IEntry *_addExp1,*_addExp2;
+    int _addValue1,_addValue2;
+    AddExp(_addExp1,_addValue1,isInOtherFunc);
     if(WORD_TYPE == LSS || WORD_TYPE == GRE || WORD_TYPE == LEQ || WORD_TYPE == GEQ){
         while(WORD_TYPE == LSS || WORD_TYPE == GRE || WORD_TYPE == LEQ || WORD_TYPE == GEQ){
             Print_Grammar_Output("<RelExp>");
             PRINT_WORD;
             GET_A_WORD;
-            AddExp();
+            AddExp(_addExp2,_addValue2,isInOtherFunc);
+            //TODO:比较的逻辑 建立中间代码
         }
     }
     Print_Grammar_Output("<RelExp>");
 }
 
-void Parser::EqExp() {
-    RelExp();
+void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
+    IEntry *_relExp1,*_relExp2;
+//    int _relValue1,_relValue2;
+    RelExp(_relExp1,isInOtherFunc);
     if(WORD_TYPE == EQL || WORD_TYPE ==NEQ){
         while(WORD_TYPE == EQL || WORD_TYPE ==NEQ){
             Print_Grammar_Output("<EqExp>");
             PRINT_WORD;
             GET_A_WORD;
-            RelExp();
-
+            RelExp(_relExp2,isInOtherFunc);
+//TODO:逻辑
         }
     }else{
         //error
@@ -1535,14 +1559,16 @@ void Parser::EqExp() {
     Print_Grammar_Output("<EqExp>");
 }
 
-void Parser::LAndExp() {
-    EqExp();
+void Parser::LAndExp(IEntry * iEntry,bool InOtherFunc) {
+    IEntry *_eqExp1,*_eqExp2;
+    EqExp(_eqExp1,InOtherFunc);
     if(WORD_TYPE == AND){
         while(WORD_TYPE == AND){
             Print_Grammar_Output("<LAndExp>");
             PRINT_WORD;
             GET_A_WORD;
-            EqExp();
+            EqExp(_eqExp2,InOtherFunc);
+            //TODO:逻辑
         }
     }else{
         //error
@@ -1550,15 +1576,16 @@ void Parser::LAndExp() {
     Print_Grammar_Output("<LAndExp>");
 }
 
-void Parser::LOrExp() {
-    LAndExp();
+void Parser::LOrExp(IEntry * iEntry,bool InOtherFunc) {
+    IEntry *_lAndExp1,*_lAndExp2;
+    LAndExp(_lAndExp1,InOtherFunc);
     if(WORD_TYPE == OR){
         while(WORD_TYPE == OR){
             Print_Grammar_Output("<LOrExp>");
             PRINT_WORD;
             GET_A_WORD;
-            LAndExp();
-
+            LAndExp(_lAndExp2,InOtherFunc);
+            //TODO :逻辑
         }
     }else{
         //error

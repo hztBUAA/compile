@@ -17,4 +17,5 @@ add_executable(Lex main.cpp
         IntermediateCode.h
         MipsCode.cpp
         MipsCode.h
+        IntermediateCode.cpp
 )

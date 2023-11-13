@@ -108,10 +108,6 @@ public:
 
     void printOutput();//token_type token{number string}
 
-    //我需要一个函数  用来判断是否是字母
-    bool isLetter(char ch);
-    bool isDigit(char ch);
-    bool isSpace(char ch);
 
 
 };
