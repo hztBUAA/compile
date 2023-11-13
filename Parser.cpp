@@ -2,11 +2,12 @@
 // Created by hzt on 2023/9/25.
 //
 
+
+
 #include "Parser.h"
 #include "Lexer.h"
 #include <iostream>
 using namespace std;
-
 
 
 void Parser::Print_Grammar_Output(string s) {
@@ -148,11 +149,14 @@ void Parser::VarDef(vector<Entry*> &entries) {
 
     PRINT_WORD;//PRINT IDENT
     GET_A_WORD;
+    auto * iEntry = new IEntry;
+    int values[3];
+    IEntry* exp_iEntries[3];
     while(WORD_TYPE == LBRACK){
         op++;
         PRINT_WORD;//PRINT [
         GET_A_WORD;
-        ConstExp();
+        ConstExp(exp_iEntries[op],values[op],isInOtherFunc);
         if (WORD_TYPE == RBRACK){
             PRINT_WORD;//PRINT ]
             GET_A_WORD;
@@ -176,10 +180,12 @@ void Parser::VarDef(vector<Entry*> &entries) {
         default:
             break;
     }
+    int nums = 0;
     if (WORD_TYPE == ASSIGN){
         PRINT_WORD;
         GET_A_WORD;
-        InitVal();
+        iEntry->values_Id = new vector<int>;
+        InitVal(iEntry,nums);
     }
     if(!error){
         entries.push_back(entry);
@@ -238,7 +244,7 @@ void Parser::ConstDef(vector<Entry*>& entries) {
     PRINT_WORD;
     GET_A_WORD;
     int op = 0;
-    IEntry * iEntry;
+
     IEntry * exp_iEntries[3];
     int values[3];
     while(WORD_TYPE == LBRACK){
@@ -255,6 +261,21 @@ void Parser::ConstDef(vector<Entry*>& entries) {
 //            error = true;
         }
     }
+    int nums = 0;//数组的长度  会在扫描初始值时设定  同时本身也会设定
+    IEntry * iEntry;
+    int total_length,dim1_length;
+    if (op == 0){
+        total_length = dim1_length = 1;
+        iEntry = new IEntry;
+    }else if(op == 1){
+        total_length = dim1_length = values[1];
+        iEntry = new IEntry(total_length);
+    }else if(op == 2){
+        total_length = values[1]*values[2];//FIXME；数组初始大小
+        dim1_length = values[2];
+        iEntry = new IEntry(total_length);
+    }
+
     Entry * entry;
     switch (op) {
         case 0:
@@ -270,7 +291,6 @@ void Parser::ConstDef(vector<Entry*>& entries) {
             break;
     }
 
-    int nums = 0;
 //常量定义  必须赋值
     if (WORD_TYPE != ASSIGN){
         //Error
@@ -287,19 +307,14 @@ void Parser::ConstDef(vector<Entry*>& entries) {
     if(!error){
         entries.push_back(entry);
         semantic.recordEntries(entry);
-        if (nums == 1){
-            auto *const_ = new IEntry();
-            entry->id = const_->Id;
-        }else{
-            auto *const_array = new IEntry(nums);
-            entry->id = const_array->Id;
-        }
+        entry->id = iEntry->Id;
+        intermediateCode.addDef(ISGLOBAL,Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
     }
     Print_Grammar_Output("<ConstDef>");
 }
 
 //FIXME:至多只有两层   append
-//FIXME:value表示目前的个数   dim1_length表示第一层维数的大小   ConstInitVa中的iEntry指向的是数组变量
+//FIXME:value表示目前的个数   dim1_length表示第一层维数的大小   ConstInitVa中的iEntry指向的是数组变量的IEntry
 void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
     if (WORD_TYPE == LBRACE){
         PRINT_WORD;//PRINT {
@@ -325,7 +340,7 @@ void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
 }
 
 //FIXME:至多只有两层   append
-//FIXME:nums表示目前的个数  一个ConstExp只有一个值
+//FIXME:nums表示目前的个数  一个ConstExp只有一个值   value表示ConstExp当前的算出值
 void Parser::ConstExp(IEntry *iEntry,int&value,bool InOtherFunc) {
     IEntry* _addExp;
     AddExp(_addExp, value, InOtherFunc);
@@ -513,7 +528,11 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
 //                    errorHandler.error_line = func_ident_line;
                     errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);
                 }else{
-                    intermediateCode.addICode(FuncCall,intermediateCode.IEntries.at(func->id), nullptr, nullptr);
+                    if (func->kind == FUNC_INT){
+                        intermediateCode.addICode(FuncCall,intermediateCode.IEntries.at(func->id), nullptr, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
+                    }else{
+                        intermediateCode.addICode(FuncCall,intermediateCode.IEntries.at(func->id), nullptr, nullptr);
+                    }
                 }
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
@@ -537,7 +556,7 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 func_name = ident;
                 errorHandler.error_line = func_ident_line;//记录可能发生错误的行号
                 auto * find_func = intermediateCode.IEntries.at(func->id);
-                auto *func_rParams = find_func->RParams;
+                auto *func_rParams = find_func->values_Id;//FIXME:values_address解决了有些值可能不是直接imm显示的
                 FuncRParams(func_ident_line,func_rParams);
                 if (WORD_TYPE != RPARENT){
                     //Error  缺少右括号）
@@ -697,6 +716,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                     iEntry = new IEntry;
                     iEntry->canGetValue = true;
                     value = find->values.at(index);
+                    iEntry->imm = value;
                 }else{
                     intermediateCode.addICode(GetArrayElement,index,intermediateCode.IEntries.at(find->id),iEntry);
                 }
@@ -720,13 +740,14 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                 if (find->kind == ARRAY_1_CONST){
                     iEntry->canGetValue = true;
                     value = find->values.at(index);
+                    iEntry->imm = value;
                 }else{
                     intermediateCode.addICode(GetArrayElement,index,intermediateCode.IEntries.at(find->id),iEntry);
                 }
             }
         }else{
 //            intermediateCode.addICode(Assign, intermediateCode.IEntries.at(find->id), nullptr, iEntry);
-                iEntry = intermediateCode.IEntries.at(find->id);
+                iEntry = intermediateCode.IEntries.at(find->id);//引用时 引用的是本身      区别与函数调用时的普通变量  会是新生成IEntry
         }
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址
         //一维地址
@@ -820,8 +841,11 @@ void Parser::Number( IEntry *iEntry,int & value,bool InOtherFunc) {
     GET_A_WORD;//NOT PW
 }
 
-void Parser::Exp(IEntry *iEntry,int & value,bool isInOtherFunc) {
-    AddExp(iEntry,value,isInOtherFunc);
+void Parser::Exp(IEntry *iEntry,int & value,bool InOtherFunc) {
+    IEntry* _addExp;
+    AddExp(_addExp,value,InOtherFunc);
+//    iEntry->values->push_back(value);
+    iEntry->values_Id->push_back(_addExp->Id);//FIXME:只记录那个值的存储位置
     if (!isLValInStmt)
         Print_Grammar_Output("<Exp>");
 }
@@ -893,7 +917,7 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *RParams) {
     /**
      * 将实参exp_iEntry放入
      */
-     //TODO:在中间代码阶段就先不要多多去管闲事去想着分类讨论值  把IEntry看做抽象 能够加快效率
+     //TODO:在中间代码阶段就先不要多多去管闲事去想着分类讨论值  把IEntry看做抽象 能够加快效率  新建的exp_IEntry
     RParams->push_back(exp_iEntry->Id);
 
     while(WORD_TYPE == COMMA){
@@ -1368,7 +1392,7 @@ void  Parser::FormatString() {
 //
 //}
 
-void Parser::InitVal() { //变量初值
+void Parser::InitVal(IEntry * iEntry,int & nums) { //变量初值
     if(WORD_TYPE == LBRACE){
         PRINT_WORD;//PRINT {
         GET_A_WORD;
@@ -1377,11 +1401,11 @@ void Parser::InitVal() { //变量初值
             PRINT_WORD;//PRINT }
             GET_A_WORD;
         }else{
-            InitVal();
+            InitVal(iEntry,nums);
             while(WORD_TYPE == COMMA){
                 PRINT_WORD;//PRINT ,
                 GET_A_WORD;
-                InitVal();
+                InitVal(iEntry,nums);
             }
             if (WORD_TYPE != RBRACE){
                 //ERROR
@@ -1389,8 +1413,11 @@ void Parser::InitVal() { //变量初值
             PRINT_WORD;//PRINT }
             GET_A_WORD;
         }
+        iEntry->dim1_length = nums;
     }else{
-        Exp();//下放错误
+        int value;
+        Exp(iEntry, value, isInOtherFunc);//下放错误
+        nums++;
     }
 
     Print_Grammar_Output("<InitVal>");

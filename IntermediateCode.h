@@ -32,14 +32,15 @@ int id_generate = 0;
 class IEntry{
 public:
     int Id{};
-    int type{};//0定位元素 1维地址
+    int type{};//0定位元素 1维地址 2表示函数调用FuncCALL--
     string name;
     int imm{};//立即数或者已经算出  不能直接再被用来计算 由于另一个操作区待定
     bool canGetValue{};
 
+    int total_length{};
     int dim1_length{};
     vector<int> *values;//存储数组的值
-    int startAddress;//用来跟MIPS的后端对接  ---由于数组的存在地址不是和id一一对应
+    int startAddress;//用来跟MIPS的后端对接  ---由于数组的存在地址不是和id一一对应  FIXME:type = 1时只能使用startAddress
 
 
     //---------FuncCall---------
@@ -47,7 +48,7 @@ public:
      * 类似于Entry  包含id即可  id是查询符号表时已经有对应的id在对应的Entry（定义该变量时就存在的）
      *
      */
-    vector<int > *RParams;
+    vector<int > *values_Id;
     static int generateId(){
         return id_generate++;
     }
@@ -55,7 +56,7 @@ public:
         this->Id = generateId();
         this->startAddress = tempMemoryAddressTop;
         this->name = "@"+ to_string(this->Id);
-        this->RParams = new vector<int>;
+        this->values_Id = new vector<int>;
         tempMemoryAddressTop += 4;
 //         iEntry->address
     }
@@ -63,7 +64,7 @@ public:
     explicit IEntry(int length){
         this->Id = generateId();
         this->startAddress = tempMemoryAddressTop;
-        this->RParams = new vector<int>;
+        this->values_Id = new vector<int>;
         this->name = "@"+ to_string(this->Id);
         tempMemoryAddressTop += length*4;
 //         iEntry->address
@@ -74,6 +75,10 @@ public:
  * Assign是一对一的赋值
  */
 enum IntermediateCodeType{
+    Def_Has_Value,
+    Def_No_Value,
+
+
     Add,
     Sub,
     Mult,
@@ -110,6 +115,26 @@ public:
 
 
 public:
+    void addDef(bool isGlobal,IntermediateCodeType type,IEntry* src1,IEntry* src2,IEntry* dst){
+        iCode = new ICode();
+        dst = new IEntry;//最后翻译时 会根据约定的IEntryType去使用IEntry
+        iCode->type = type;
+        iCode->src1 = src1;
+        iCode->src2 = src2;
+        iCode->dst = dst;
+        if (isGlobal){
+            globalDef.push_back(iCode);
+        }else{
+            if (isInOtherFunc){
+                if (otherFuncICodes.find(funcLabel) == otherFuncICodes.end()){
+                    otherFuncICodes.insert(pair<string,vector<ICode*>>(funcLabel,vector<ICode*>()));
+                }
+                otherFuncICodes.at(funcLabel).push_back(iCode);
+            }else{
+                mainICodes.push_back(iCode);
+            }
+        }
+    }
     void addICode(IntermediateCodeType type,IEntry* src1,IEntry* src2,IEntry* dst){
         iCode = new ICode();
         dst = new IEntry;//最后翻译时 会根据约定的IEntryType去使用IEntry
@@ -118,36 +143,36 @@ public:
         iCode->src2 = src2;
         iCode->dst = dst;
         if (isInOtherFunc){
+            if (otherFuncICodes.find(funcLabel) == otherFuncICodes.end()){
+                otherFuncICodes.insert(pair<string,vector<ICode*>>(funcLabel,vector<ICode*>()));
+            }
             otherFuncICodes.at(funcLabel).push_back(iCode);
         }else{
             mainICodes.push_back(iCode);
         }
     }
-    void addICode(IntermediateCodeType type,int src1,IEntry* src2,IEntry* dst){
-        iCode = new ICode();
-        dst = new IEntry;
-        iCode->type = type;
-        auto* s1 = new IEntry;
-        s1->imm = src1;
-        iCode->src1 = s1;
-        iCode->src2 = src2;
-        iCode->dst = dst;
-        if (isInOtherFunc){
-            otherFuncICodes.at(funcLabel).push_back(iCode);
-        }else{
-            mainICodes.push_back(iCode);
+void addICode(IntermediateCodeType type,int src1,IEntry* src2,IEntry* dst){
+    iCode = new ICode();
+    dst = new IEntry;
+    iCode->type = type;
+    auto* s1 = new IEntry;
+    s1->imm = src1;
+    iCode->src1 = s1;
+    iCode->src2 = src2;
+    iCode->dst = dst;
+    if (isInOtherFunc){
+        if (otherFuncICodes.find(funcLabel) == otherFuncICodes.end()){
+            otherFuncICodes.insert(pair<string,vector<ICode*>>(funcLabel,vector<ICode*>()));
         }
+        otherFuncICodes.at(funcLabel).push_back(iCode);
+    }else{
+        mainICodes.push_back(iCode);
     }
-//    void addICode(IntermediateCodeType type,IEntry* src1,int src2,IEntry* dst){
-//        iCode = new ICode();
-//        iCode->type = type;
-//        iCode->src1 = src1;
-//        auto* s2 = new IEntry;
-//        s2->imm = src2;
-//        iCode->src2 = s2;
-//        iCode->dst = dst;
-//        mainICodes.push_back(iCode);
-//    }
+}
+
+void debug_print(){
+        //print mainICodes
+    }
 
 };
 

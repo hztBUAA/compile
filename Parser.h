@@ -15,8 +15,9 @@
 #define WORD_DISPLAY (*lexer.token.symbol)
 #define INFO_ENTRY (tableManager.info)
 bool isInOtherFunc;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
-#define ISGLOBAL  (tableManager.cur->kind == CompUnit)
+#define ISGLOBAL  (tableManager.cur->kind ==Kind::CompUnit)
 string funcLabel;
+
 /**
  *Parser  的编写规则    注意：1.指向WORD   2.输出WORD
  * 依据文法说明
@@ -53,7 +54,7 @@ public:
     void ConstInitVal(IEntry *iEntry,int&nums);
     void VarDecl();
     void VarDef(vector<Entry*> & entries);
-    void InitVal();
+    void InitVal(IEntry * iEntry,int & nums);
     void FuncDef(Kind func_type);
     void MainFuncDef();
     void FuncType();
