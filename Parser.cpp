@@ -657,7 +657,13 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 }
                 intermediateCode.addICode(GetInt, nullptr, nullptr,iEntry);
             } else {
-                Exp(iEntry, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！
+                IEntry*exp;
+                Exp(exp, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
+                if (exp->canGetValue){
+                    iEntry->imm = value;//值传递  修改值就行
+                }else{
+                    intermediateCode.addICode(Assign,exp, nullptr,iEntry);//一般的传递
+                }
             }
             //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
             isLValInStmt = true;
@@ -1215,7 +1221,7 @@ void Parser::Stmt() {
                 PRINT_WORD;//PRINT ;
                 GET_A_WORD;
             }
-
+            //TODO:printf
             break;
         case RETURNTK:
             PRINT_WORD;//PRINT RETURN
@@ -1251,6 +1257,7 @@ void Parser::Stmt() {
                     errorHandler.Insert_Error(SEMICOLON_MISSING);
                 }
                 }
+            //TODO:RETURN
             break;
         case BREAKTK:
         case CONTINUETK:
@@ -1381,7 +1388,10 @@ void Parser::Stmt() {
             // Exp  LVal    只有LVal有赋值符号于Stmt中
             //LVal
             //Exp
-            Exp();
+            //TODO:Exp
+            IEntry *exp_iEntry;
+            int value;
+            Exp(exp_iEntry,value,isInOtherFunc);
             if(WORD_TYPE != SEMICN){
                 //ERROR
                 //缺少分号
@@ -1457,10 +1467,18 @@ void Parser::Cond() {
 }
 
 void Parser::ForStmt() {
-    LVal();
+    //TODO:ForStmt ICode
+    IEntry *lVal,*exp;
+    int v1,v2;
+    LVal(lVal,v1,isInOtherFunc);
     PRINT_WORD;//PRINT =
     GET_A_WORD;
-    Exp();
+    Exp(exp,v2,isInOtherFunc);
+    if (exp->canGetValue){
+        lVal->imm = v2;
+    }else{
+        intermediateCode.addICode(Assign,exp, nullptr,lVal);
+    }
     Print_Grammar_Output("<ForStmt>");
 }
 
@@ -1487,6 +1505,7 @@ void Parser::UnaryOp(int &op) {
     Print_Grammar_Output("<UnaryOp>");
 }
 
+//RelExp-> AddExp {(< > <= >=) AddExp}
 void Parser::RelExp() {
     AddExp();
     if(WORD_TYPE == LSS || WORD_TYPE == GRE || WORD_TYPE == LEQ || WORD_TYPE == GEQ){
