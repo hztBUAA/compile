@@ -407,28 +407,31 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
             MulExp(iEntry2, value2, iInOtherFunc);
             if (op == 0){
                 if (iEntry1->canGetValue &&  iEntry2->canGetValue){
-                    value = value1+value2;
+                    value = iEntry1->imm + iEntry2->imm;
                     iEntry1->imm = value;
                     iEntry1->canGetValue = true;
                 }else {
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, ans);
+                    iEntry1 = ans;
                 }
             }else{
                 if (iEntry1->canGetValue &&  iEntry2->canGetValue){
-                    value = value1-value2;
+                    value = iEntry1->imm - iEntry2->imm;
                     iEntry1->imm = value;
                     iEntry1->canGetValue = true;
                 }else{
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Sub,iEntry1,iEntry2,ans);
+                    iEntry1 = ans;
                 }
             }
-            iEntry1 = ans;
+
         }
     }else{
         //error
     }
+    //TODO: imm & address
     if (iEntry1->canGetValue){
         iEntry->imm = iEntry1->imm;
         iEntry->canGetValue = true;
@@ -473,7 +476,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
             UnaryExp(iEntry2, value2, InOtherFunc);
             if (op == 0){
                 if (iEntry1->canGetValue &&  iEntry2->canGetValue){
-                    value = value1*value2;
+                    value = iEntry1->imm * iEntry2->imm;
                     ans = new IEntry;
                     ans->canGetValue = true;
                     ans->imm = value;
@@ -483,7 +486,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                 }
             }else if(op ==1){
                 if (iEntry1->canGetValue &&  iEntry2->canGetValue){
-                    value = value1/value2;
+                    value = iEntry1->imm / iEntry2->imm;
                     ans = new IEntry;
                     ans->canGetValue = true;
                     ans->imm = value;
@@ -493,7 +496,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                 }
             }else{
                 if (iEntry1->canGetValue &&  iEntry2->canGetValue){
-                    value = value1%value2;
+                    value = iEntry1->imm / iEntry2->imm;
                     ans = new IEntry;
                     ans->canGetValue = true;
                     ans->imm = value;

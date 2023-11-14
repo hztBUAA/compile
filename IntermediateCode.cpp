@@ -37,15 +37,15 @@ string IntermediateCode::iCode2str(ICode *iCode) {
     IEntry *var3 = iCode->dst;
     switch (iCode->type) {
         case VAR_Def_Has_Value:
-            return "define var_has_value_or: id," + to_string(var1->Id)+ ",values:"+ to_string(var1->values->at(0));//非const都先直接用IEntry存起来 后端生成时再解包
+            return "define var_has_value_or: id, " + to_string(var1->Id)+ " value:"+ to_string(IEntries.at(var1->values_Id->at(0))->imm);//非const都先直接用IEntry存起来 后端生成时再解包
         case VAR_Def_No_Value:
-            return "define var_no_value : id," + to_string(var1->Id);
+            return "define var_no_value : id, " + to_string(var1->Id);
         case ARRAY_VAR_Def_Has_Value:
-            return "define var_array_has_value : id," + to_string(var1->Id);
+            return "define var_array_has_value : id, " + to_string(var1->Id);
         case ARRAY_Def_No_Value:
-            return "define var_array_has_value : id," + to_string(var1->Id);
+            return "define var_array_has_value : id, " + to_string(var1->Id);
         case Const_Def_Has_Value:
-            return "define const_has_value : id," + to_string(var1->Id) + "value: " + to_string(var1->values->at(0));
+            return "define const_has_value : id, " + to_string(var1->Id) + " value: " + to_string(var1->values->at(0));
         case ARRAY_CONST_Def_Has_Value:
             return "define const_array_has_value : id," + to_string(var1->Id);
         case Add:
