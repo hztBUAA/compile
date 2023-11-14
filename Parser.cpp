@@ -208,6 +208,9 @@ void Parser::VarDef(vector<Entry*> &entries) {
         entries.push_back(entry);
         semantic.recordEntries(entry);
         entry->id = iEntry->Id;
+        if (ISGLOBAL){
+            iEntry->isGlobal = true;//MIPS依据这个生成标签或者地址  lw
+        }
         if (hasValue){
             if (op == 0){
                 intermediateCode.addDef(ISGLOBAL,VAR_Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
@@ -339,6 +342,9 @@ void Parser::ConstDef(vector<Entry*>& entries) {
         entries.push_back(entry);
         semantic.recordEntries(entry);
         entry->id = iEntry->Id;
+        if(ISGLOBAL){
+            iEntry->isGlobal = true;
+        }
         if (op == 0){
             intermediateCode.addDef(ISGLOBAL,Const_Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
         }else{

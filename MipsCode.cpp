@@ -75,12 +75,251 @@ void MipsCode::translate() const {
     /**
      * 输出主函数main的代码ICode
      */
+     cout<<"#主函数main的代码ICode\n";
+     cout<<"\nmain:\n";
+    for (auto ICode: mainCodes) {
+        IntermediateCodeType type = ICode->type;
+        IEntry *src1 = ICode->src1;
+        IEntry *src2 = ICode->src2;
+        IEntry *dst= ICode->dst;
 
+        switch (type) {
+            case Add:{
+                if (src1->canGetValue && src2->canGetValue){
+                    dst->canGetValue = true;
+                    dst->imm = src1->imm + src2->imm;
+                }else {
+                    if (src1->canGetValue){
+                        cout << "li " << "$t0" << ", " << src1->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        cout << "add " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else if (src2->canGetValue){
+                        cout << "li " << "$t0" << ", " << src2->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        cout << "add " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else{
+                        cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
+                        cout << "add " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
+                    }
+                }
+            }
+                break;
+            case Sub:{
+                if (src1->canGetValue && src2->canGetValue){
+                    dst->canGetValue = true;
+                    dst->imm = src1->imm - src2->imm;
+                }else {
+                    if (src1->canGetValue){
+                        cout << "li " << "$t0" << ", " << src1->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        cout << "sub " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else if (src2->canGetValue){
+                        cout << "li " << "$t0" << ", " << src2->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        cout << "sub " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else{
+                        cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
+                        cout << "sub " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
+                    }
+                }
+            }
+                break;
+            case Mult:{
+                if (src1->canGetValue && src2->canGetValue){
+                    dst->canGetValue = true;
+                    dst->imm = src1->imm * src2->imm;
+                }else {
+                    if (src1->canGetValue){
+                        cout << "li " << "$t0" << ", " << src1->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        cout << "mul " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else if (src2->canGetValue){
+                        cout << "li " << "$t0" << ", " << src2->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        cout << "mul " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else{
+                        cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
+                        cout << "mul " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
+                    }
+                }
+            }
+                break;
+            //除法：HI存放余数，LO存放除法结果
+            case Div:{
+                if (src1->canGetValue && src2->canGetValue){
+                    dst->canGetValue = true;
+                    dst->imm = src1->imm / src2->imm;
+                }else {
+                    if (src1->canGetValue){
+                        cout << "li " << "$t0" << ", " << src1->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        cout << "div " << "$t0" << ", " << "$t1" << endl;
+                        cout << "mflo " << "$t2" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else if (src2->canGetValue){
+                        cout << "li " << "$t0" << ", " << src2->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "mflo " << "$t2" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else{
+                        cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
+                        cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "mflo " << "$t2" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
+                    }
+                }
+            }
+                break;
+            //TODO:优化
+            case Mod:{
+                if (src1->canGetValue && src2->canGetValue){
+                    dst->canGetValue = true;
+                    dst->imm = src1->imm % src2->imm;
+                }else {
+                    if (src1->canGetValue){
+                        cout << "li " << "$t0" << ", " << src1->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        cout << "div " << "$t0" << ", " << "$t1" << endl;
+                        cout << "mfhi " << "$t2" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else if (src2->canGetValue){
+                        cout << "li " << "$t0" << ", " << src2->imm << endl;
+                        cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "mfhi " << "$t2" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                    }else{
+                        cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
+                        cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "mfhi " << "$t2" << endl;
+                        cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
+                    }
+                }
+            }
+                break;
+            //FIXME:一定是地址？
+            case Assign:
+                if (src1->canGetValue){
+                    dst->canGetValue = true;
+                    dst->imm = src1->imm;
+                }else {
+                    cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
+                    cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)"<< endl;
+                }
+                break;
+                //FIXME:总是容易陷入误区 得到v0的值已经是运行时  编译的极限块也做不到预知~
+            case GetInt:
+                cout << "\nli $v0, 5\n";
+                cout<<"syscall\n";
+                cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)"<< endl;
+                break;
+                //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
+            case GetArrayElement:{
+                if (src2->canGetValue){
+                    //直接编译时取到了对应index的array元素值  则不会生成现在GetArrayElement代码
+                    ;
+                }else if (src1->canGetValue ){
+                    //TODO：需要分辨全局数组  要用标签   其他则可以直接编译放在temp内存
+//                    cout << "li " << "$t0" << ", " << src1->imm << endl;
+                    if (src2->isGlobal){
+                        cout << "lw " << "$t1" << ", " << "array@"+ to_string(src2->Id) << endl;
+                    }else{
+                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                    }
+                    //FIXME:丑陋
+                    cout << "lw " << "$t2" << ", " << (src2->startAddress + src1->imm * 4) << "($zero)" << endl;
+                    cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
+                }else {
+                    cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
+                    cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
+                    cout << "addu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                    cout << "lw " << "$t2" << ", " << "0($t2)" << endl;
+                    cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
+                }
+            }
+                break;
+            //TODO:函数的格式理解  sp  压栈~虚拟？  IEntry:has_return?
+            case FuncCall:
+                cout << "funcCall " << ICode->dst->name << ", " << ICode->src1->name << ", " << ICode->src2->name << endl;
+                break;
+            case FuncDef:
+                cout << "funcDef " << ICode->dst->name << ", " << ICode->src1->name << ", " << ICode->src2->name << endl;
+                break;
+            case VAR_Def_Has_Value:
+                cout<< "var_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
+                for (auto id_init_value:*(ICode->src1->values_Id)) {
+                    cout << IEntries.at(id_init_value )->imm<< " ";
+                }
+                cout << endl;
+                break;
+            case VAR_Def_No_Value:
+                cout<< "var_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
+                for (int i = 0;i<ICode->src1->total_length;i++) {
+                    cout << "0 ";
+                }
+                cout << endl;
+                break;
+            case ARRAY_VAR_Def_Has_Value:
+                cout<< "array_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
+                for (auto id_init_value:*(ICode->src1->values_Id)) {
+                    cout << IEntries.at(id_init_value)->imm << " ";
+                }
+                cout << endl;
+                break;
+            case ARRAY_Def_No_Value:
+                cout<< "array_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
+                for (int i = 0;i<ICode->src1->total_length;i++) {
+                    cout << "0 ";
+                }
+                cout << endl;
+                break;
+            case Const_Def_Has_Value:
+                cout<< "const_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
+                for (auto init_value:*(ICode->src1->values)) {
+                    cout << init_value << " ";
+                }
+                cout << endl;
+                break;
+            case ARRAY_CONST_Def_Has_Value:
+                cout<< "array_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
+                for (auto init_value:*(ICode->src1->values)) {
+                    cout <<init_value << " ";
+                }
+                cout << endl;
+                break;
+
+
+
+
+            default:
+                break;
+
+        }
+    }
 
 
     /**
      * 输出其他函数的代码ICode
      */
+    cout<<"#自定义函数main的代码ICode\n";
+    for (auto ICode: otherFuncICodes) {
+    ;
+    }
 
 }
 

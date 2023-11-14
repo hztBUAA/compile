@@ -121,6 +121,7 @@ void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src
     dst = new IEntry;
     iCode->type = type;
     auto* s1 = new IEntry;
+    s1->canGetValue = true;
     s1->imm = src1;
     iCode->src1 = s1;
     iCode->src2 = src2;
