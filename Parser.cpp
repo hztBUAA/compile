@@ -385,6 +385,7 @@ void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
 //FIXME:至多只有两层   append
 //FIXME:nums表示目前的个数  一个ConstExp只有一个值   value表示ConstExp当前的算出值
 void Parser::ConstExp(IEntry *iEntry,int&value,bool InOtherFunc) {
+    iEntry = new IEntry;
     AddExp(iEntry, value, InOtherFunc);
 //    iEntry->values->push_back(value);//FIXME: ConstExp一定可以算出来
     Print_Grammar_Output("<ConstExp>");
@@ -918,6 +919,7 @@ void Parser::Number( IEntry *iEntry,int & value,bool InOtherFunc) {
 
 void Parser::Exp(IEntry *iEntry,int & value,bool InOtherFunc) {//TODO:认为iEntry代表Exp的值 或者存值的地址
 //    auto* _addExp = new IEntry;
+//FIXME：对比ConstExp->AddExp  这里不用再iEntry = new Entry
     AddExp(iEntry,value,InOtherFunc);
 //    iEntry->values->push_back(value);
 //    iEntry->values_Id->push_back(_addExp->Id);//FIXME:只记录那个值的存储位置
