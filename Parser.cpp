@@ -375,7 +375,7 @@ void Parser::ConstExp(IEntry *iEntry,int&value,bool InOtherFunc) {
 //认为iEntry由下一级反馈  如果是空 说明值已经算出来放进了value   非空说明值为临时变量
 void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
     int value1,value2;
-    IEntry*iEntry1 ,*iEntry2;
+    auto*iEntry1 = new IEntry ,*iEntry2 = new IEntry;
     //TODO:理解iEntry的原理
     MulExp(iEntry1, value1, iInOtherFunc);
 
@@ -395,6 +395,7 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
                 if (iEntry1->canGetValue &&  iEntry2->canGetValue){
                     value = value1+value2;
                 }else {
+                    ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, ans);
                 }
             }else{
@@ -405,7 +406,6 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
                 }
             }
             iEntry1 = ans;
-
         }
     }else{
         //error
@@ -419,7 +419,7 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
 //MulExp →UnaryExp [*/%] {UnaryExp}
 void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
     int value1,value2;
-    IEntry*iEntry1 ,*iEntry2;
+    auto*iEntry1 = new IEntry ,*iEntry2 = new IEntry;
     IEntry * ans;
     UnaryExp(iEntry1, value1, InOtherFunc);
     if (WORD_TYPE == MULT || WORD_TYPE == DIV || WORD_TYPE == MOD){
@@ -452,6 +452,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                     ans = new IEntry;
                     ans->canGetValue = true;
                 }else {
+                    ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mult, iEntry1, iEntry2, ans);
                 }
             }else if(op ==1){
@@ -460,6 +461,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                     ans = new IEntry;
                     ans->canGetValue = true;
                 }else {
+                    ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Div, iEntry1, iEntry2, ans);
                 }
             }else{
@@ -468,6 +470,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                     ans = new IEntry;
                     ans->canGetValue = true;
                 }else {
+                    ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mod, iEntry1, iEntry2, ans);
                 }
             }
@@ -861,7 +864,7 @@ void Parser::Number( IEntry *iEntry,int & value,bool InOtherFunc) {
     }
     //TODO:  需要进一步明确value的值是否需要放在IEntry中？   这是后面的常数优化
     value = lexer.token.number;
-    iEntry = new IEntry;
+//    iEntry = new IEntry;FIXME:高层建立iEntry  传下来  不然似乎会有野指针问题？
     iEntry->canGetValue = true;
     iEntry->imm = value;
     PRINT_WORD;
@@ -870,7 +873,7 @@ void Parser::Number( IEntry *iEntry,int & value,bool InOtherFunc) {
 }
 
 void Parser::Exp(IEntry *iEntry,int & value,bool InOtherFunc) {
-    IEntry* _addExp;
+    auto* _addExp = new IEntry;
     AddExp(_addExp,value,InOtherFunc);
 //    iEntry->values->push_back(value);
     iEntry->values_Id->push_back(_addExp->Id);//FIXME:只记录那个值的存储位置

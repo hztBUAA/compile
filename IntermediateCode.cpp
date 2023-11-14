@@ -15,7 +15,7 @@ string IntermediateCode::iCode2str(ICode *iCode) {
     IEntry *var3 = iCode->dst;
     switch (iCode->type) {
         case Def_Has_Value:
-            return "Def_Has_Value :" + var1->name + "type:" + to_string(var1->type) ;
+            return "Def_Has_Value :" + var1->name + " type:" + to_string(var1->type) + " value:"+ to_string(var1->imm) ;
             break;
         case Def_No_Value:
             return "Def_Has_Value :" + var1->name + "type:" + to_string(var1->type) ;

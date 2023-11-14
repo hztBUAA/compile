@@ -56,14 +56,14 @@ class IEntry{
 private:
     int tempMemoryAddressTop = 268500992;
 public:
-    int Id{};
-    int type{};//0定位元素 1维地址 2表示函数调用FuncCALL--
+    int Id;
+    int type;//0定位元素 1维地址 2表示函数调用FuncCALL--
     string name;
-    int imm{};//立即数或者已经算出  不能直接再被用来计算 由于另一个操作区待定
+    int imm;//立即数或者已经算出  不能直接再被用来计算 由于另一个操作区待定
     bool canGetValue{};
 
-    int total_length{};
-    int dim1_length{};
+    int total_length;
+    int dim1_length;
     vector<int> *values;//存储数组的值   -----假想的会放在对应的Address位置上
     vector<int > *values_Id;
     int startAddress;//用来跟MIPS的后端对接  ---由于数组的存在地址不是和id一一对应  FIXME:type = 1时只能使用startAddress
@@ -83,6 +83,7 @@ public:
         this->startAddress = tempMemoryAddressTop;
         this->name = "@"+ to_string(this->Id);
         this->values_Id = new vector<int>;
+        this->imm = 0;
         tempMemoryAddressTop += 4;
 //         iEntry->address
     }
@@ -92,6 +93,7 @@ public:
         this->startAddress = tempMemoryAddressTop;
         this->values_Id = new vector<int>;
         this->name = "@"+ to_string(this->Id);
+        this->imm = 0;
         tempMemoryAddressTop += length*4;
 //         iEntry->address
     }
