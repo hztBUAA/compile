@@ -231,7 +231,7 @@ void MipsCode::translate() const {
                 //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
             case GetArrayElement:{
                 if (src2->canGetValue){
-                    //直接编译时取到了对应index的array元素值  则不会生成现在GetArrayElement代码
+                    //TODO:   mistake:   src2是基地址base   直接编译时取到了对应index的array元素值  则不会生成现在GetArrayElement代码
                     ;
                 }else if (src1->canGetValue ){
                     //TODO：需要分辨全局数组  要用标签   其他则可以直接编译放在temp内存
@@ -241,6 +241,7 @@ void MipsCode::translate() const {
                     }else{
                         cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
                     }
+                    //TODO：这里关于数组取元素 理清楚src1   src2 dst的原理
                     //FIXME:丑陋
                     cout << "lw " << "$t2" << ", " << (src2->startAddress + src1->imm * 4) << "($zero)" << endl;
                     cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
@@ -260,52 +261,56 @@ void MipsCode::translate() const {
             case FuncDef:
                 cout << "funcDef " << ICode->dst->name << ", " << ICode->src1->name << ", " << ICode->src2->name << endl;
                 break;
+                /**
+                 * 非全局变量的初始化定义
+                 */
             case VAR_Def_Has_Value:
-                cout<< "var_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
-                for (auto id_init_value:*(ICode->src1->values_Id)) {
-                    cout << IEntries.at(id_init_value )->imm<< " ";
+                cout<< "#local_var_@"+ to_string(ICode->src1->Id) <<"_def:  " ;
+                if(IEntries.at(src1->values_Id->at(0))->canGetValue){
+                    //                    src1->imm = IEntries.at(src1->values_Id->at(0))->imm;
+                    //                    src1->canGetValue = true;
+                    cout<<IEntries.at(src1->values_Id->at(0))->imm << " ";
+                }else{
+                    //                    cout << "";
+                    //                    cout << "lw " << "$t0" << ", " << (IEntries.at(src1->values_Id->at(0))->startAddress) << "($zero)" << endl;
+                    //                    cout << "sw " << "$t0" << ", " << (src1->startAddress) << "($zero)" << endl;
+                    cout<<"@("<<src1->values_Id->at(0)<<")"<< " ";
                 }
-                cout << endl;
+                cout <<endl;
                 break;
             case VAR_Def_No_Value:
-                cout<< "var_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
-                for (int i = 0;i<ICode->src1->total_length;i++) {
-                    cout << "0 ";
-                }
-                cout << endl;
+                cout<< "#local_var_@"+ to_string(ICode->src1->Id) <<"no_value_def\n  " ;
                 break;
             case ARRAY_VAR_Def_Has_Value:
-                cout<< "array_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
-                for (auto id_init_value:*(ICode->src1->values_Id)) {
-                    cout << IEntries.at(id_init_value)->imm << " ";
+                cout<< "#local_array_@"+ to_string(ICode->src1->Id) <<"_def:  " ;
+                for (auto id_init_value:*(src1->values_Id)) {
+                    if (IEntries.at(id_init_value)->canGetValue){
+                        ;//FIXME:编译时可以得出的值  以后要用就再按需取
+                        cout<<IEntries.at(id_init_value)->imm<<" ";
+                    }else{
+                        cout<<"@("<<id_init_value<<")" << " ";
+                        ;//FIXME:编译时不可以得出的值  说明运行后通过getint的变量间接得到值  以后要用就再按需lw sw取  初始值IEntry是有若干个IEntry组成的 可以进行canGetValue的判断
+                    }
                 }
-                cout << endl;
+                cout<<endl;
                 break;
             case ARRAY_Def_No_Value:
-                cout<< "array_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
-                for (int i = 0;i<ICode->src1->total_length;i++) {
-                    cout << "0 ";
-                }
-                cout << endl;
+                cout<< "#local_array_@"+ to_string(ICode->src1->Id) <<"_def\n  " ;
                 break;
             case Const_Def_Has_Value:
-                cout<< "const_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
-                for (auto init_value:*(ICode->src1->values)) {
-                    cout << init_value << " ";
+                cout<< "#const_@"+ to_string(ICode->src1->Id) <<"_def:  " ;
+                for (auto init_value:*(src1->values)) {
+                    cout<<init_value<<" ";
                 }
-                cout << endl;
+                cout<<endl;
                 break;
             case ARRAY_CONST_Def_Has_Value:
-                cout<< "array_@"+ to_string(ICode->src1->Id) <<":  .word  " ;
-                for (auto init_value:*(ICode->src1->values)) {
-                    cout <<init_value << " ";
+                cout<< "#array_const@"+ to_string(ICode->src1->Id) <<"def   " ;
+                for (auto init_value:*(src1->values)) {
+                    cout<<init_value<<" ";
                 }
-                cout << endl;
+                cout<<endl;
                 break;
-
-
-
-
             default:
                 break;
 

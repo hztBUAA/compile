@@ -740,6 +740,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
         op++;
         PRINT_WORD;//PRINT [
         GET_A_WORD;
+        array_exps[op] = new IEntry;
         Exp(array_exps[op], values[op], inOtherFunc);
         if (WORD_TYPE != RBRACK){
             //Error  缺少有中括号]
@@ -786,7 +787,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
         //
         if (op == 2){
             if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
-                index = values[1]*dim1_length + values[2];
+                index = array_exps[1]->imm*dim1_length + array_exps[2]->imm;
                 if (find->kind == ARRAY_2_CONST){
                     iEntry = new IEntry;
                     iEntry->canGetValue = true;
@@ -798,7 +799,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                 }
             }else{
                 if (array_exps[1]->canGetValue){
-                    int t = values[1]*dim1_length;
+                    int t = array_exps[1]->imm*dim1_length;
                     intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[2],index_entry);
                 }
                 else if(array_exps[2]->canGetValue){
@@ -812,7 +813,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
             }
         }else if(op == 1){
             if(array_exps[1]->canGetValue) {
-                index = values[1];
+                index = array_exps[1]->imm;
                 if (find->kind == ARRAY_1_CONST){
                     iEntry->canGetValue = true;
                     value = IEntries.at(find->id)->values->at(index);
