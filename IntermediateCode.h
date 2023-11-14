@@ -21,11 +21,14 @@ extern string funcLabel;
  * Assign是一对一的赋值
  */
 enum IntermediateCodeType{
-    Def_Has_Value,
-    Def_No_Value,
+    ARRAY_CONST_Def_Has_Value,
+    ARRAY_VAR_Def_Has_Value,
+    VAR_Def_Has_Value,
+    Const_Def_Has_Value,
+    ARRAY_Def_No_Value,
+    VAR_Def_No_Value,
+
     Printf,
-
-
     Add,
     Sub,
     Mult,
@@ -77,26 +80,11 @@ public:
     //--------FuncDef------
     //FIXME:函数形参 需要留好位置IEntry并与Entry进行映射   函数调用时 会将实参对应IEntry（已经放进函数调用中间代码的IEntry中的value_Id）的数据Assign到形参区有后端完成
     bool has_return{};
-    static int generateId();
-    IEntry(){
-        this->Id = generateId();
-        this->startAddress = tempMemoryAddressTop;
-        this->name = "@"+ to_string(this->Id);
-        this->values_Id = new vector<int>;
-        this->imm = 0;
-        tempMemoryAddressTop += 4;
-//         iEntry->address
-    }
 
-    explicit IEntry(int length){
-        this->Id = generateId();
-        this->startAddress = tempMemoryAddressTop;
-        this->values_Id = new vector<int>;
-        this->name = "@"+ to_string(this->Id);
-        this->imm = 0;
-        tempMemoryAddressTop += length*4;
-//         iEntry->address
-    }
+    static int generateId();
+    IEntry();
+    explicit IEntry(int length);
+
 };
 
 struct ICode{
@@ -109,12 +97,14 @@ struct ICode{
 
 
 class IntermediateCode {
+private:
+
     /**
      * 定义一条中间代码类型
      * 定义一条中间代码中的小部件
      */
 public:
-    vector<IEntry *> IEntries;
+
     vector<ICode *> mainICodes;
     map<string, vector<ICode *>> otherFuncICodes;
     ICode *iCode;

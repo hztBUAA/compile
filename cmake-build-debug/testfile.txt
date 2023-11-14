@@ -1,1 +1,1 @@
-int t = 5;
+const int t = 5;

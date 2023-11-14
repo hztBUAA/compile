@@ -4,9 +4,31 @@
 
 #include "IntermediateCode.h"
 
+vector<IEntry *> IEntries;
 int IEntry::generateId() {
     static int  id_generate = 0;
     return id_generate++;
+}
+IEntry::IEntry(){
+    this->Id = generateId();
+    this->startAddress = tempMemoryAddressTop;
+    this->name = "@"+ to_string(this->Id);
+    this->values_Id = new vector<int>;
+    this->values = new vector<int>;
+    this->imm = 0;
+    tempMemoryAddressTop += 4;
+    IEntries.push_back(this);
+//         iEntry->address
+}
+ IEntry::IEntry(int length){
+    this->Id = generateId();
+    this->startAddress = tempMemoryAddressTop;
+    this->values_Id = new vector<int>;
+    this->name = "@"+ to_string(this->Id);
+    this->imm = 0;
+    tempMemoryAddressTop += length*4;
+     IEntries.push_back(this);
+//         iEntry->address
 }
 
 string IntermediateCode::iCode2str(ICode *iCode) {
@@ -14,12 +36,18 @@ string IntermediateCode::iCode2str(ICode *iCode) {
     IEntry *var2 = iCode->src2;
     IEntry *var3 = iCode->dst;
     switch (iCode->type) {
-        case Def_Has_Value:
-            return "Def_Has_Value :" + var1->name + " type:" + to_string(var1->type) + " value:"+ to_string(var1->imm) ;
-            break;
-        case Def_No_Value:
-            return "Def_Has_Value :" + var1->name + "type:" + to_string(var1->type) ;
-            break;
+        case VAR_Def_Has_Value:
+            return "define var_has_value_or: id," + to_string(var1->Id)+ ",values:"+ to_string(var1->values->at(0));//非const都先直接用IEntry存起来 后端生成时再解包
+        case VAR_Def_No_Value:
+            return "define var_no_value : id," + to_string(var1->Id);
+        case ARRAY_VAR_Def_Has_Value:
+            return "define var_array_has_value : id," + to_string(var1->Id);
+        case ARRAY_Def_No_Value:
+            return "define var_array_has_value : id," + to_string(var1->Id);
+        case Const_Def_Has_Value:
+            return "define const_has_value : id," + to_string(var1->Id) + "value: " + to_string(var1->values->at(0));
+        case ARRAY_CONST_Def_Has_Value:
+            return "define const_array_has_value : id," + to_string(var1->Id);
         case Add:
             return "Add :" + var1->name + "type:" + to_string(var1->type)  ;
             break;
