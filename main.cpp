@@ -11,6 +11,7 @@ int main() {
     ofstream errorFile("error.txt");
     Lexer & my_lexer = Lexer::initLexer(input,output);//相当于 放给语法Parser去指导Lexer
     IntermediateCode intermediateCode;
+    MipsCode mipsCode(intermediateCode);
 
     ErrorHandler errorHandler(my_lexer,errorFile);
     TableManager tableManager(errorHandler);
@@ -18,7 +19,8 @@ int main() {
     Parser parser(my_lexer,tableManager,errorHandler,semantic,intermediateCode);
     parser.CompUnit();
     errorHandler.Print_Errors();
-    intermediateCode.debug_print();
+//    intermediateCode.debug_print();
+    mipsCode.translate();
     //my_lexer.analyze();
     return 0;
 }

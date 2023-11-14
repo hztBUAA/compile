@@ -121,5 +121,5 @@ public:
 
     void debug_print();
 };
-
+extern vector<IEntry *> IEntries;
 #endif //LEX_INTERMEDIATECODE_H
