@@ -69,7 +69,8 @@ public:
     int dim1_length;
     vector<int> *values;//存储数组的值   -----假想的会放在对应的Address位置上
     vector<int > *values_Id;
-    int startAddress;//用来跟MIPS的后端对接  ---由于数组的存在地址不是和id一一对应  FIXME:type = 1时只能使用startAddress
+    int startAddress;//用来跟MIPS的后端对接  ---由于数组的存在地址不是和id一一对应  FIXME:type = 1时只能使用startAddress 和offset  startAddress是数组的首地址  offset是偏移量  函数形参中的数组也是这样的  type判断1时要加上offset+startAddress  否则就是直接对应的地址
+    IEntry * offset_IEntry;//配合地址使用  只有type = 1时成立
     bool isGlobal;
 
     //---------FuncCall---------

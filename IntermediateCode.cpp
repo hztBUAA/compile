@@ -20,6 +20,7 @@ IEntry::IEntry(){
     IEntries.push_back(this);
 //         iEntry->address
 }
+//FIXME数组的定义时的IEntry的生成  type = 0  只有地址时才是1
  IEntry::IEntry(int length){
     this->Id = generateId();
     this->startAddress = tempMemoryAddressTop;
