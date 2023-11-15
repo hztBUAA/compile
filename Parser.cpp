@@ -868,10 +868,12 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
             //TODO:存在指针问题   上面传来的iEntry  已经指向  肯定是值  所以type肯定是0了  下面或许就是Assign的原型
 //            intermediateCode.addICode(Assign, intermediateCode.getIEntries.at(find->id), nullptr, iEntry);
                 IEntry *ref = IEntries.at(find->id);//引用时 引用的是本身      区别与函数调用时的普通变量  会是新生成IEntry  由后端解决函数参数问题
-                iEntry->canGetValue = ref->canGetValue;
-                iEntry->imm = ref->imm;
-                iEntry->type = ref ->type;
-                iEntry->startAddress = ref->startAddress;
+                //FIXME:ref为定义变量时的IEntry  其值另外放在values_id    源程序定义时的变量都不是直接放在ref中 因为可能数组多个值 就统一数组、变量都在valus中
+                IEntry * ref_value = IEntries.at(ref->values_Id->at(0));
+                iEntry->canGetValue = ref_value->canGetValue; //这里如果值 是getint  也没问题   会MIPS进行判断
+                iEntry->imm = ref_value->imm;
+                iEntry->type = ref_value->type;
+                iEntry->startAddress = ref_value->startAddress;
         }
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中
         //一维地址
@@ -1341,7 +1343,7 @@ void Parser::Stmt() {
                 printf_count++;
                 PRINT_WORD;//PRINT ,
                 GET_A_WORD;
-                exp = new IEntry;
+                exp = new IEntry;///
                 Exp(exp,exp_value,isInOtherFunc);
                 p_params->values_Id->push_back(exp->Id);
             }
