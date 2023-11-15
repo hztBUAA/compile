@@ -157,7 +157,7 @@ void Parser::VarDef(vector<Entry*> &entries) {
         op++;
         PRINT_WORD;//PRINT [
         GET_A_WORD;
-        ConstExp(exp_iEntries[op],values[op],isInOtherFunc);
+        ConstExp(exp_iEntries[op],values[op],isInOtherFunc); //FIXME不要再相信values   就是无效值
         if (WORD_TYPE == RBRACK){
             PRINT_WORD;//PRINT ]
             GET_A_WORD;
@@ -174,12 +174,14 @@ void Parser::VarDef(vector<Entry*> &entries) {
         total_length = dim1_length = 1;
         iEntry = new IEntry;
     }else if(op == 1){
-        total_length = dim1_length = values[1];
+        total_length = dim1_length = exp_iEntries[1]->imm;
         iEntry = new IEntry(total_length);
+        iEntry->dim1_length = dim1_length;
     }else if(op == 2){
-        total_length = values[1]*values[2];//FIXME；数组初始大小
-        dim1_length = values[2];
+        total_length = exp_iEntries[1]->imm*exp_iEntries[2]->imm;//FIXME；数组初始大小
+        dim1_length = exp_iEntries[2]->imm;
         iEntry = new IEntry(total_length);
+        iEntry->dim1_length = dim1_length;
     }
 
     Entry * entry;
@@ -775,9 +777,9 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
         temp = temp->Father_Entry;
     }
 
-    int dim1_length = find->dim1_length;
+    int dim1_length = IEntries.at(find->id)->dim1_length;
     int index = 0;
-    IEntry * index_entry;
+    auto * index_entry = new IEntry;
     if (Exp_type == -3){
         //没找到 未定义
 //        errorHandler.Insert_Error(NOT_DEFINE);
@@ -795,7 +797,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                     value =IEntries.at(find->id)->values->at(index);
                     iEntry->imm = value;
                 }else{
-                    intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),iEntry);
+                    intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),iEntry);//FIXME:后端生成代码时 判断src2 's type
                 }
             }else{
                 if (array_exps[1]->canGetValue){
@@ -805,12 +807,12 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                 else if(array_exps[2]->canGetValue){
                     auto *t = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
-                    intermediateCode.addICode(IntermediateCodeType::Add,values[2],t,index_entry);
+                    intermediateCode.addICode(IntermediateCodeType::Add,array_exps[2],t,index_entry);
                 }else{
                     intermediateCode.addICode(IntermediateCodeType::Add,array_exps[1],array_exps[2],index_entry);
                 }
-                intermediateCode.addICode(GetArrayElement,IEntries.at(find->id),index_entry,iEntry);
-            }
+                intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),iEntry);
+            }//FIXME:数组定义时的IEntry （src2）   偏移index（不乘4）index_entry-》能get就get 不能就lw address
         }else if(op == 1){
             if(array_exps[1]->canGetValue) {
                 index = array_exps[1]->imm;
@@ -823,10 +825,15 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                 }
             }
         }else{
+            //TODO:存在指针问题   上面传来的iEntry  已经指向  肯定是值  所以type肯定是0了  下面或许就是Assign的原型
 //            intermediateCode.addICode(Assign, intermediateCode.getIEntries.at(find->id), nullptr, iEntry);
-                iEntry = IEntries.at(find->id);//引用时 引用的是本身      区别与函数调用时的普通变量  会是新生成IEntry
+                IEntry *ref = IEntries.at(find->id);//引用时 引用的是本身      区别与函数调用时的普通变量  会是新生成IEntry  由后端解决函数参数问题
+                iEntry->canGetValue = ref->canGetValue;
+                iEntry->imm = ref->imm;
+                iEntry->type = ref ->type;
+                iEntry->startAddress = ref->startAddress;
         }
-    }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址
+    }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中
         //一维地址
         /**
          * 重新生成一个IEntry   用来表示内存位置
@@ -835,20 +842,39 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
          if(op == 1){
              //原生的一维数组
              //只可能在函数实参中出现和函数形参
-             iEntry = new IEntry;
              iEntry->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
+
+             iEntry->offset_IEntry = new IEntry;
+             iEntry->offset_IEntry->canGetValue = true;
+             iEntry->offset_IEntry->imm = 0;
              iEntry->type = 1;
-         }else if(op == 2){
-            index = find->dim1_length *values[1];
-             iEntry = new IEntry;
-             iEntry->type = 1;
-             iEntry->startAddress = index + IEntries.at(find->id)->startAddress;
+         }else if(op == 2){  //arr[2][3]二维数组  形参是arr[2] 要在iEntry新建  甚至可能是arr[t]  t编译时不清楚
+             if (array_exps[1]->canGetValue){
+                 index = dim1_length *array_exps[1]->imm;
+                 iEntry->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
+
+                 iEntry->offset_IEntry = new IEntry;
+                 iEntry->offset_IEntry->canGetValue = true;
+                 iEntry->offset_IEntry->imm = index;//index 以数组下标作为索引
+                 iEntry->type = 1;
+             }else{
+                 intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],index_entry);
+                 iEntry->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
+                 iEntry->offset_IEntry = index_entry;
+//                 iEntry->offset_IEntry = new IEntry;
+                 iEntry->offset_IEntry->canGetValue = false;//需要lw sw
+//                 iEntry->offset_IEntry->imm = index;//index 以数组下标作为索引
+                 iEntry->type = 1;
+             }
+
          }
-    }else{
-        //2维地址
-        iEntry = new IEntry;
-        iEntry->type = 1;
+    }else{ // 二级地址要小心 TODO: 形参的ConstExp是有用的  const不能作为数组参数！！！ 所以只用伪造valuesID
+        //2维地址  伪造iEntry数组 不认为是type = 1
+        int new_dim1_length = array_exps[2]->imm;
+//        iEntry->type = 1;
         iEntry->startAddress = IEntries.at(find->id)->startAddress;
+        iEntry->dim1_length = new_dim1_length;
+        iEntry->values_Id = IEntries.at(find->id)->values_Id;
     }
 
 
@@ -953,7 +979,7 @@ void Parser::MainFuncDef() {
     Print_Grammar_Output("<MainFuncDef>");
 }
 
-//TODO:函数实参一一赋值给已经占住位置的形参
+//TODO:函数实参一一赋值给已经占住位置的形参FParams是   当初函数头的形参的values_Id
 void Parser::FuncRParams(int func_ident_line,vector<int>  *FParams) {
     bool already_error_func_type = false;
     bool already_error_func_count = false;
@@ -1096,6 +1122,7 @@ void Parser::FuncDef(Kind func_type) {
     }
     tableManager.cur->entries->erase("main");//如果是重定义的函数 需要抹掉它
     //TODO:FuncCall中间代码 FIXME：完成FuncCALL   src1为函数头
+    func->original_funcName = ident;
     intermediateCode.addICode(FuncCall,func, nullptr, nullptr);
 
     Print_Grammar_Output("<FuncDef>");

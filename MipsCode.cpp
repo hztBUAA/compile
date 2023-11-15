@@ -230,37 +230,88 @@ void MipsCode::translate() const {
                 break;
                 //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
             case GetArrayElement:{
-                if (src2->canGetValue){
-                    //TODO:   mistake:   src2是基地址base   直接编译时取到了对应index的array元素值  则不会生成现在GetArrayElement代码
-                    ;
-                }else if (src1->canGetValue ){
-                    //TODO：需要分辨全局数组  要用标签   其他则可以直接编译放在temp内存
-//                    cout << "li " << "$t0" << ", " << src1->imm << endl;
-                    if (src2->isGlobal){
-                        cout << "lw " << "$t1" << ", " << "array@"+ to_string(src2->Id) << endl;
-                    }else{
-                        cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                int index = 0;
+                int isNormalArray = src2->type;
+                if (isNormalArray){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
+                    if (src1->canGetValue){//array就是数组首地址 index索引知道是第几个元素
+                        index += src1->imm;
+                        if (IEntries.at(src2->values_Id->at(index))->canGetValue){
+                            dst->canGetValue = true;
+                            dst->imm = IEntries.at(src2->values_Id->at(index))->imm;
+                        }else{
+                            //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
+                            dst->canGetValue = false;
+                            cout << "lw " << "$t0" << ", " << IEntries.at(src2->values_Id->at(index))->startAddress << "($zero)" << endl;
+                            cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                        }
+                    }else{//array就是数组首地址 index索引还不知道是第几个元素 即索引也是取决于getint  需要lw
+                        cout << "li " << "$t0" << ", " << src2->startAddress << endl;
+                        cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        cout << "addu " << "$t2" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
+                        cout << "lw " << "$t3" << ", 0($t2)" << endl;
+                        cout << "sw " << "$t3" << dst->startAddress << "($zero)" << endl;
                     }
-                    //TODO：这里关于数组取元素 理清楚src1   src2 dst的原理
-                    //FIXME:丑陋
-                    cout << "lw " << "$t2" << ", " << (src2->startAddress + src1->imm * 4) << "($zero)" << endl;
-                    cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
-                }else {
-                    cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
-                    cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
-                    cout << "addu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                    cout << "lw " << "$t2" << ", " << "0($t2)" << endl;
-                    cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
+                }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
+                    IEntry* offset = src2->offset_IEntry;
+                    if (offset->canGetValue){ //引用数组的索引 已知
+                        index += offset->imm;
+                        if (src1->canGetValue){
+                            index += src1->imm;
+                            if (IEntries.at(src2->values_Id->at(index))->canGetValue){
+                                dst->canGetValue = true;
+                                dst->imm = IEntries.at(src2->values_Id->at(index))->imm;
+                            }else{
+                                //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
+                                dst->canGetValue = false;
+                                cout << "lw " << "$t0" << ", " << IEntries.at(src2->values_Id->at(index))->startAddress << "($zero)" << endl;
+                                cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                            }
+                        }else{ //额外索引值是getint 函数调用的引用时
+                            cout << "li " << "$t0" << ", " << src2->startAddress << endl;
+                            cout << "li " << "$t1" << ", " << index * 4 << endl;//此时index只有offset->imm  再加上src1的值
+                            cout << "lw " << "$t2" << ", " << src1->startAddress << "($zero)" << endl;
+
+                            cout << "addu " << "$t3" << ", "  << "$t0" << ", " << "$t1"<< endl;
+                            cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
+                            cout << "lw " << "$t4" << ", 0($t3)" << endl;
+                            cout << "sw " << "$t4" << dst->startAddress << "($zero)" << endl;
+                        }
+                    }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
+                        cout << "lw " << "$t0" << ", " << src2->offset_IEntry->startAddress<<"$(zero)" << endl;//t in $t0
+                        cout << "sll " << "$t0"<< ", "<< "$t0"<< " 2";//$t0
+                        if (src1->canGetValue){
+                            cout << "li " << "$t1" << ", " << src1->imm  << endl;// in $t1
+                        }else{
+                            cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;// in $t1
+                        }
+                        cout << "addu " << "$t2" << ", "  << "$t0" << ", " << "$t1"<< endl; // in $t2
+                        cout << "li " << "$t3" << ", " << src2->startAddress << endl;
+                        cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
+                        cout << "lw " << "$t3" << ",  0($t3)" << endl;
+                        cout << "sw " << "$t3" << dst->startAddress << "($zero)" << endl;
+                    }
                 }
-            }
                 break;
+            }
             //TODO:函数的格式理解  sp  压栈~虚拟？  IEntry:has_return?
             case FuncCall:
                 cout << "funcCall " << ICode->dst->name << ", " << ICode->src1->name << ", " << ICode->src2->name << endl;
                 break;
+
+                /**
+                 * 函数名标签  就是函数头的名字
+                 */
             case FuncDef:
+                cout << "#" << src1->original_funcName<< ":"<<endl;
                 cout << "funcDef " << ICode->dst->name << ", " << ICode->src1->name << ", " << ICode->src2->name << endl;
+                /**
+                 * 将实参的  值 地址 按格式给形参
+                 */
+
+
                 break;
+
+
                 /**
                  * 非全局变量的初始化定义
                  */
