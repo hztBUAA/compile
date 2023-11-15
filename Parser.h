@@ -65,7 +65,7 @@ public:
     void Block();
     void BlockItem();
     void Stmt();
-  void FormatString();
+  void FormatString(IEntry * strings);
 //    void NormalChar();
 //    void FormalChar();
     void ForStmt();

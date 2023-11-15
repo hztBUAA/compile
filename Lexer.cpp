@@ -309,9 +309,9 @@ void Lexer::nextString() {
         //"满足格式的字符串"
         token_type = STRCON;
         token.symbol = & str;//FIXME:str不含有“”   转成MIPS需要标签  放在全局中
-        // }else{
-        //ILLEGAL
-        //"中间出现不满足文法的格式字符串"
+         }else{
+//        ILLEGAL
+//        "中间出现不满足文法的格式字符串"
         token_type = ILLEGAL;
         while(ch != '"'){
             ch = (char )sourceFile.get();

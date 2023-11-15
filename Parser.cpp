@@ -1304,6 +1304,9 @@ void Parser::Stmt() {
     bool loop_error = true;
     IEntry * exp;
     int exp_value;
+
+    IEntry * strings;
+    IEntry * p_params;
 //    int printf_format = 0;
     switch (WORD_TYPE) {
         case PRINTFTK:
@@ -1313,13 +1316,18 @@ void Parser::Stmt() {
             GET_A_WORD;
             PRINT_WORD;//PRINT (
             GET_A_WORD;
-            FormatString();
-
+            strings = new IEntry;
+            strings->strings_iEntry_id = new vector<int>;//TODo  :在内部函数初始化 会出错？
+            FormatString(strings);//FIXME:拆成若干个string   %d   [normal string]
+            p_params = new IEntry;
+            p_params->values_Id = new vector<int>;
             while(WORD_TYPE == COMMA){
                 printf_count++;
                 PRINT_WORD;//PRINT ,
                 GET_A_WORD;
+                exp = new IEntry;
                 Exp(exp,exp_value,isInOtherFunc);
+                p_params->values_Id->push_back(exp->Id);
             }
             if(lexer.printf_format_count != printf_count){//出现了不合法字符 就没必要再继续判断了
                 errorHandler.error_line = printf_line;
@@ -1336,6 +1344,8 @@ void Parser::Stmt() {
                 //缺少分号
                 errorHandler.Insert_Error(SEMICOLON_MISSING);
             }else{
+                intermediateCode.addICode(Printf,strings,p_params, nullptr);
+//                intermediateCode.strings->push_back()
                 PRINT_WORD;//PRINT ;
                 GET_A_WORD;
             }
@@ -1526,14 +1536,42 @@ void Parser::Stmt() {
     Print_Grammar_Output("<Stmt>");
 }
 
-void  Parser::FormatString() {
-
+void  Parser::FormatString(IEntry * strings) {
+    IEntry* p ;
+    int pos = 0;
+//    strings->strings_iEntry_id = new vector<int>;
+    string* whole = lexer.token.symbol;
+    int i = 0;
     if (WORD_TYPE == ILLEGAL){
         //ERROR
         //可能还需要注意 格式字符串是否合法？
         errorHandler.Insert_Error(ILLEGAL_STRING);
     }else{
-
+            //解析string    %d%d...%d....%d
+        for (i = 0;i < whole->size();i++){
+            if (whole->at(i) == '%'){
+                if (i!= 0 && i-pos>=1){
+                    //[pos,i)
+                    p = new IEntry;
+                    p->str = whole->substr(pos,i-pos);
+                    strings->strings_iEntry_id->push_back(p->Id);
+                    intermediateCode.strings->push_back(p->Id);
+                }
+                i++;//跳过d
+                p = new IEntry;
+                p->str = "%d";
+                strings->strings_iEntry_id->push_back(p->Id);
+                intermediateCode.strings->push_back(p->Id);
+                pos = i+1;//下一个有效的可能为真正字符串的位置
+            }
+        }
+        if (i!= 0 && i-pos>=1){
+            //[pos,i)
+            p = new IEntry;
+            p->str = whole->substr(pos,i-pos);
+            strings->strings_iEntry_id->push_back(p->Id);
+            intermediateCode.strings->push_back(p->Id);
+        }
     }
 
     PRINT_WORD;//PRINT StrCON or illegal

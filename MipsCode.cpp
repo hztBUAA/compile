@@ -45,6 +45,7 @@ void MipsCode::translate() const {
     vector<ICode *> mainCodes = intermediateCode.mainICodes;
     map<string, vector<ICode *>> otherFuncICodes = intermediateCode.otherFuncICodes;
     vector<ICode *> globalDefs = intermediateCode.globalDef;
+    vector<int > * strings = intermediateCode.strings;
 
     /**
      * 输出全局的变量定义data段  以及全局变量的初始化
@@ -52,7 +53,17 @@ void MipsCode::translate() const {
     cout << ".data 0x10010000\n";
 
     cout << "temp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
+    /**字符串区
+# string tokens:
+str_1:  .asciiz   "hello!"
+str_3:  .asciiz   "haha"
+str_5:  .asciiz   "ha"
 
+     */
+     cout<<"#strings in printf\n";
+    for (auto id: *strings) {
+        cout << "str_"<<id<<": .asciiz " << "\""<<IEntries.at(id)->str << "\""<< endl;
+    }
     for (auto def:globalDefs) {
         //形如 def src1
         IntermediateCodeType type = def->type;
@@ -107,18 +118,50 @@ void MipsCode::translate() const {
     /**
      * 输出主函数main的代码ICode
      */
+    cout<<".text\n";
      cout<<"#主函数main的代码ICode\n";
-     cout<<"\nmain:\n";
+     cout<<"main:\n";
     for (auto ICode: mainCodes) {
         IntermediateCodeType type = ICode->type;
         IEntry *src1 = ICode->src1;
         IEntry *src2 = ICode->src2;
         IEntry *dst= ICode->dst;
+        int cnt_param;//for printf_exp
 
         vector<int> *rParam_ids ;
         vector<int> *fParam_ids ;
 
         switch (type) {
+            case Printf:
+                cnt_param = 0;
+                for (auto id: *src1->strings_iEntry_id) {
+                    /**
+ la $a0, str_1
+li $v0, 4
+syscall
+lw $a0, 268501012($zero)
+li $v0, 1
+syscall
+                     */
+                    if (IEntries.at(id)->str == "%d"){//lw  li  1 syscall
+                        IEntry * p = IEntries.at( src2->values_Id->at(cnt_param++));
+                        if (p->canGetValue){
+                            cout << "li $a0, "<< p->imm<< endl;
+                        }else{
+                            cout << "lw $a0, "<<p->startAddress<<"($zero)"<<endl;
+                        }
+                        cout <<"li $v0, 1"<<endl;
+                        cout <<"syscall"<<endl;
+                    }else{
+                        //la  li 4 syscall
+                        cout << "la $a0, "<< "str_"<<id<< endl;
+                        cout <<"li $v0, 4"<<endl;
+                        cout <<"syscall"<<endl;
+                    }
+
+                }
+
+                break;
             case Add:{
                 if (src1->canGetValue && src2->canGetValue){
                     dst->canGetValue = true;

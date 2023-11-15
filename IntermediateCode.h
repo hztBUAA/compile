@@ -83,6 +83,10 @@ public:
     bool has_return{};
     string original_Name;
 
+    //------printf-------//
+    vector<int> * strings_iEntry_id;
+    string str;
+
     static int generateId();
     IEntry();
     explicit IEntry(int length);
@@ -106,7 +110,7 @@ private:
      * 定义一条中间代码中的小部件
      */
 public:
-    vector<string> strings;
+    vector<int> *strings = new std::vector<int>;
     vector<ICode *> mainICodes;
     map<string, vector<ICode *>> otherFuncICodes;
     ICode *iCode;
