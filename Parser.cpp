@@ -1529,6 +1529,8 @@ void  Parser::FormatString() {
         //ERROR
         //可能还需要注意 格式字符串是否合法？
         errorHandler.Insert_Error(ILLEGAL_STRING);
+    }else{
+
     }
 
     PRINT_WORD;//PRINT StrCON or illegal
