@@ -9,7 +9,35 @@
 #include "MipsCode.h"
 using namespace std;
 
+
+void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) {
+    /*
+     * 值传递  地址赋
+     * */
+    if (src1->type == 0){
+        if (src1->canGetValue){
+            dst->canGetValue = true;
+            dst->imm = src1->imm;
+        }else{
+            cout << "lw " << "$t0, " << src1->startAddress<<"$(zero)"<<endl;
+            cout << "sw " << "$t0, " << dst->startAddress<<"$(zero)"<<endl;
+        }
+    }else{
+        dst->canGetValue = false;
+        dst->values_Id = src1->values_Id;
+        dst->values = src1->values;//none sense
+        dst->type = 1;
+        dst->total_length = src1->total_length;
+        dst->dim1_length = src1->dim1_length;
+        dst->offset_IEntry = src1->offset_IEntry;
+        //FIXME:其他属性就不用拷贝的？   理清楚？ isGlobal保持自己 has_return 不可能
+    }
+
+}
+
+
 void MipsCode::translate() const {
+
     vector<ICode *> mainCodes = intermediateCode.mainICodes;
     map<string, vector<ICode *>> otherFuncICodes = intermediateCode.otherFuncICodes;
     vector<ICode *> globalDefs = intermediateCode.globalDef;
@@ -82,6 +110,9 @@ void MipsCode::translate() const {
         IEntry *src1 = ICode->src1;
         IEntry *src2 = ICode->src2;
         IEntry *dst= ICode->dst;
+
+        vector<int> *rParam_ids = src2->values_Id;
+        vector<int> *fParam_ids = src1->values_Id;
 
         switch (type) {
             case Add:{
@@ -214,13 +245,7 @@ void MipsCode::translate() const {
                 break;
             //FIXME:一定是地址？
             case Assign:
-                if (src1->canGetValue){
-                    dst->canGetValue = true;
-                    dst->imm = src1->imm;
-                }else {
-                    cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
-                    cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)"<< endl;
-                }
+                assign(src1, nullptr,dst);
                 break;
                 //FIXME:总是容易陷入误区 得到v0的值已经是运行时  编译的极限块也做不到预知~
             case GetInt:
@@ -293,25 +318,35 @@ void MipsCode::translate() const {
                 }
                 break;
             }
+                /**
+                     * 将实参的  值 地址 按格式给形参   IN src1->valuesId  存储了对应的形参时生成的IEntry
+                     */
             //TODO:函数的格式理解  sp  压栈~虚拟？  IEntry:has_return?
             case FuncCall:
-                cout << "funcCall " << ICode->dst->name << ", " << ICode->src1->name << ", " << ICode->src2->name << endl;
+                if (rParam_ids->size() != fParam_ids->size()){
+                    cout << "error!!!!\n";
+                }
+                cout << "#调用函数" << src1->original_funcName<< ": ";
+                for (int i = 0; i < rParam_ids->size();i++){
+                    assign(IEntries.at(rParam_ids->at(i)), nullptr,IEntries.at(fParam_ids->at(i)));
+                }
+                cout << endl;
                 break;
 
                 /**
-                 * 函数名标签  就是函数头的名字
+                 * 函数名标签  就是函数头的名字  形参的IEntry需要在中间代码就生成
                  */
             case FuncDef:
-                cout << "#" << src1->original_funcName<< ":"<<endl;
-                cout << "funcDef " << ICode->dst->name << ", " << ICode->src1->name << ", " << ICode->src2->name << endl;
-                /**
-                 * 将实参的  值 地址 按格式给形参
-                 */
-
-
+                cout << "#" << src1->original_funcName<< "部分: ";
+                for (auto id: *src1->values_Id) {
+                    if(IEntries.at(id)->type == 0){
+                        cout <<"value:@" << id <<" ";
+                    }else{
+                        cout <<"address:@" << id <<" ";
+                    }
+                }
+                cout << endl;
                 break;
-
-
                 /**
                  * 非全局变量的初始化定义
                  */

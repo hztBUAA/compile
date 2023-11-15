@@ -157,6 +157,7 @@ void Parser::VarDef(vector<Entry*> &entries) {
         op++;
         PRINT_WORD;//PRINT [
         GET_A_WORD;
+        exp_iEntries[op] = new IEntry;
         ConstExp(exp_iEntries[op],values[op],isInOtherFunc); //FIXME不要再相信values   就是无效值
         if (WORD_TYPE == RBRACK){
             PRINT_WORD;//PRINT ]
@@ -387,7 +388,6 @@ void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
 //FIXME:至多只有两层   append
 //FIXME:nums表示目前的个数  一个ConstExp只有一个值   value表示ConstExp当前的算出值
 void Parser::ConstExp(IEntry *iEntry,int&value,bool InOtherFunc) {
-    iEntry = new IEntry;
     AddExp(iEntry, value, InOtherFunc);
 //    iEntry->values->push_back(value);//FIXME: ConstExp一定可以算出来
     Print_Grammar_Output("<ConstExp>");
@@ -598,11 +598,13 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 if (func != nullptr && !(func->fParams->empty()) ){//函数定义时有参数 但是调用没参数  无脑个数问题
 //                    errorHandler.error_line = func_ident_line;
                     errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);
-                }else{
+                }else{//没有参数的函数调用  src1函数定义头  src2函数参数IEntry  放在valueId
+                    auto * params = new IEntry;
+                    params->values_Id = new vector<int>;
                     if (func->kind == FUNC_INT){
-                        intermediateCode.addICode(FuncCall,IEntries.at(func->id), nullptr, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
+                        intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
                     }else{
-                        intermediateCode.addICode(FuncCall,IEntries.at(func->id), nullptr, nullptr);
+                        intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, nullptr);
                     }
                 }
                 PRINT_WORD;//PRINT )
@@ -626,8 +628,9 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 }
                 func_name = ident;
                 errorHandler.error_line = func_ident_line;//记录可能发生错误的行号
-                auto * find_func = IEntries.at(func->id);
-                auto *func_rParams = find_func->values_Id;//FIXME:values_address解决了有些值可能不是直接imm显示的
+                auto * find_func = IEntries.at(func->id);//这个是函数定义头
+                auto * params = new IEntry;//函数实参IEntry
+                auto *func_rParams = params->values_Id;//FIXME:values_address解决了有些值可能不是直接imm显示的
                 FuncRParams(func_ident_line,func_rParams);
                 if (WORD_TYPE != RPARENT){
                     //Error  缺少右括号）
@@ -711,6 +714,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 Exp(exp, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
                 if (exp->canGetValue){
                     iEntry->imm = exp->imm;//值传递  修改值就行
+                    iEntry->canGetValue =true;
                 }else{
                     intermediateCode.addICode(Assign,exp, nullptr,iEntry);//一般的传递
                 }
@@ -860,7 +864,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
              }else{
                  intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],index_entry);
                  iEntry->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
-                 iEntry->offset_IEntry = index_entry;
+                 iEntry->offset_IEntry = index_entry;//包装好了地址
 //                 iEntry->offset_IEntry = new IEntry;
                  iEntry->offset_IEntry->canGetValue = false;//需要lw sw
 //                 iEntry->offset_IEntry->imm = index;//index 以数组下标作为索引
@@ -1023,8 +1027,8 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *FParams) {
      * 将实参exp_iEntry放入
      */
      //TODO:在中间代码阶段就先不要多多去管闲事去想着分类讨论值  把IEntry看做抽象 能够加快效率  新建的exp_IEntry
-//    FParams->push_back(exp_iEntry->Id);
-    intermediateCode.addICode(Assign, exp_iEntry,nullptr,IEntries.at(FParams->at(cnt-1)));
+    FParams->push_back(exp_iEntry->Id);//后端去拷贝assign
+//    intermediateCode.addICode(Assign, exp_iEntry,nullptr,IEntries.at(FParams->at(cnt-1)));
 
     while(WORD_TYPE == COMMA){
         PRINT_WORD;
@@ -1101,7 +1105,7 @@ void Parser::FuncDef(Kind func_type) {
             //指向）
             //FIXME:将IEntry的对应形参存储完善
             for (auto entry :entries) {
-                func->values_Id->push_back(entry->id);//传递的最终都是4字节的  值或地址！
+                func->values_Id->push_back(entry->id);//传递的最终都是IEntry  值或地址！
             }
             if(WORD_TYPE != RPARENT){
                 //ERROR
@@ -1123,7 +1127,7 @@ void Parser::FuncDef(Kind func_type) {
     tableManager.cur->entries->erase("main");//如果是重定义的函数 需要抹掉它
     //TODO:FuncCall中间代码 FIXME：完成FuncCALL   src1为函数头
     func->original_funcName = ident;
-    intermediateCode.addICode(FuncCall,func, nullptr, nullptr);
+    intermediateCode.addICode(IntermediateCodeType::FuncDef,func, nullptr, nullptr);
 
     Print_Grammar_Output("<FuncDef>");
 }
@@ -1565,7 +1569,7 @@ void Parser::Cond() {
 }
 
 void Parser::ForStmt() {
-    //TODO:ForStmt ICode
+    //TODO:ForStmt ICode  ASSIGN
     IEntry *lVal,*exp;
     int v1,v2;
     LVal(lVal,v1,isInOtherFunc);

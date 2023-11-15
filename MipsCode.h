@@ -76,6 +76,7 @@ public:
     /**
      * 根据type进行中间代码到MIPS的翻译
      */
+    static void assign(IEntry *src1,IEntry *src2,IEntry *dst) ;
     void translate() const;
 
     /**
