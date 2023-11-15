@@ -443,10 +443,12 @@ void Parser::UnaryExp() {
                     //函数无参 且缺失 ‘）’
                 errorHandler.Insert_Error(RPARENT_MISSING);
             }
-            if(func->kind == FUNC_INT)
-                Exp_type = 0;
-            else if(func->kind == FUNC_VOID)//void  或者根本没有定义的函数 且已经报错未定义
-                Exp_type = -5;
+            if(func){
+                if(func->kind == FUNC_INT)
+                    Exp_type = 0;
+                else if(func->kind == FUNC_VOID)//void  或者根本没有定义的函数 且已经报错未定义
+                    Exp_type = -5;
+            }
             else
                 Exp_type = -4;
         }else if(lexer.ch == '['){
