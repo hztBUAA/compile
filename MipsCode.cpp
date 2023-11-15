@@ -301,7 +301,7 @@ syscall
                 cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)"<< endl;
                 break;
                 //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
-            case GetArrayElement:{
+            case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
                 int index = 0;
                 int isNormalArray = src2->type;
                 if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引

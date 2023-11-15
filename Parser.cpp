@@ -713,6 +713,22 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的  如果LVal为全局  或者非全局的赋值呢  标签？ lw？
             //TODO：使用全局变量 直接读值 编译时存好 0 或者具体值  这点在语法分析时没做好 需要MIPS code 进行进一步
             //TODO:   写入全局变量  如果写入值编译时确定 则直接更新编译时的IEntry|否则
+            //TODO:  要改变LVal的值  需要找到真正的父本real
+            IEntry * real_def;
+            IEntry * real_value;
+
+            Entry * lVal;
+            Entry * temp = tableManager.cur;
+            string name = iEntry->original_Name;
+            while(temp  != nullptr){
+                if(temp->entries->find(name) != temp->entries->end()){
+                    lVal = temp->entries->at(name);
+                    break;
+                }
+                temp = temp->Father_Entry;
+            }
+            real_def = IEntries.at(lVal->id);
+            real_value = IEntries.at(real_def->values_Id->at(0));
             PRINT_WORD;//PRINT =
             GET_A_WORD;
             if (WORD_TYPE == GETINTTK){
@@ -726,15 +742,15 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 }else{
                     errorHandler.Insert_Error(RPARENT_MISSING);
                 }
-                intermediateCode.addICode(GetInt, nullptr, nullptr,iEntry);
+                intermediateCode.addICode(GetInt, nullptr, nullptr, real_def);
             } else {
                 auto*exp = new IEntry;
                 Exp(exp, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
                 if (exp->canGetValue){
-                    iEntry->imm = exp->imm;//值传递  修改值就行
-                    iEntry->canGetValue =true;
+                    real_def->imm = exp->imm;//值传递  修改值就行
+                    real_def->canGetValue =true;
                 }else{
-                    intermediateCode.addICode(Assign,exp, nullptr,iEntry);//一般的传递
+                    intermediateCode.addICode(Assign, exp, nullptr, real_def);//一般的传递
                 }
             }
             //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
@@ -874,6 +890,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                 iEntry->imm = ref_value->imm;
                 iEntry->type = ref_value->type;
                 iEntry->startAddress = ref_value->startAddress;
+                iEntry->original_Name = ref_value->original_Name;
         }
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中
         //一维地址
@@ -959,6 +976,54 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
             }
             t = t->Father_Entry;
         }
+        if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的  如果LVal为全局  或者非全局的赋值呢  标签？ lw？
+            //TODO：使用全局变量 直接读值 编译时存好 0 或者具体值  这点在语法分析时没做好 需要MIPS code 进行进一步
+            //TODO:   写入全局变量  如果写入值编译时确定 则直接更新编译时的IEntry|否则
+            //TODO:  要改变LVal的值  需要找到真正的父本real
+            IEntry * real_def;
+            IEntry * real_value;
+
+            Entry * lVal;
+            Entry * temp = tableManager.cur;
+            string name = iEntry->original_Name;
+            while(temp  != nullptr){
+                if(temp->entries->find(name) != temp->entries->end()){
+                    lVal = temp->entries->at(name);
+                    break;
+                }
+                temp = temp->Father_Entry;
+            }
+            real_def = IEntries.at(lVal->id);
+            real_value = IEntries.at(real_def->values_Id->at(0));
+            PRINT_WORD;//PRINT =
+            GET_A_WORD;
+            if (WORD_TYPE == GETINTTK){
+                PRINT_WORD;//PRITN GETINT
+                GET_A_WORD;
+                PRINT_WORD;//PRINT (
+                GET_A_WORD;
+                if(WORD_TYPE == RPARENT){
+                    PRINT_WORD;
+                    GET_A_WORD;
+                }else{
+                    errorHandler.Insert_Error(RPARENT_MISSING);
+                }
+                intermediateCode.addICode(GetInt, nullptr, nullptr, real_def);
+            } else {
+                auto*exp = new IEntry;
+                Exp(exp, value, isInOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
+                if (exp->canGetValue){
+                    real_def->imm = exp->imm;//值传递  修改值就行
+                    real_def->canGetValue =true;
+                }else{
+                    intermediateCode.addICode(Assign, exp, nullptr, real_def);//一般的传递
+                }
+            }
+            //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
+            isLValInStmt = true;
+        }
+
+
     }else if (WORD_TYPE == IDENFR || WORD_TYPE == RBRACE
     || WORD_TYPE == CONSTTK || WORD_TYPE == RETURNTK
     || WORD_TYPE == IFTK || WORD_TYPE == ELSETK
