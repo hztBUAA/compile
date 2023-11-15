@@ -111,8 +111,8 @@ void MipsCode::translate() const {
         IEntry *src2 = ICode->src2;
         IEntry *dst= ICode->dst;
 
-        vector<int> *rParam_ids = src2->values_Id;
-        vector<int> *fParam_ids = src1->values_Id;
+        vector<int> *rParam_ids ;
+        vector<int> *fParam_ids ;
 
         switch (type) {
             case Add:{
@@ -123,17 +123,17 @@ void MipsCode::translate() const {
                     if (src1->canGetValue){
                         cout << "li " << "$t0" << ", " << src1->imm << endl;
                         cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                        cout << "add " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "addu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
                     }else if (src2->canGetValue){
                         cout << "li " << "$t0" << ", " << src2->imm << endl;
                         cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                        cout << "add " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "addu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
                     }else{
                         cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
                         cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
-                        cout << "add " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "addu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
                     }
                 }
@@ -257,7 +257,7 @@ void MipsCode::translate() const {
             case GetArrayElement:{
                 int index = 0;
                 int isNormalArray = src2->type;
-                if (isNormalArray){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
+                if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
                     if (src1->canGetValue){//array就是数组首地址 index索引知道是第几个元素
                         index += src1->imm;
                         if (IEntries.at(src2->values_Id->at(index))->canGetValue){
@@ -323,10 +323,12 @@ void MipsCode::translate() const {
                      */
             //TODO:函数的格式理解  sp  压栈~虚拟？  IEntry:has_return?
             case FuncCall:
+                rParam_ids = src2->values_Id;
+                fParam_ids = src1->values_Id;
                 if (rParam_ids->size() != fParam_ids->size()){
                     cout << "error!!!!\n";
                 }
-                cout << "#调用函数" << src1->original_funcName<< ": ";
+                cout << "#调用函数" << src1->original_Name << ": ";
                 for (int i = 0; i < rParam_ids->size();i++){
                     assign(IEntries.at(rParam_ids->at(i)), nullptr,IEntries.at(fParam_ids->at(i)));
                 }
@@ -337,7 +339,7 @@ void MipsCode::translate() const {
                  * 函数名标签  就是函数头的名字  形参的IEntry需要在中间代码就生成
                  */
             case FuncDef:
-                cout << "#" << src1->original_funcName<< "部分: ";
+                cout << "#" << src1->original_Name << "部分: ";
                 for (auto id: *src1->values_Id) {
                     if(IEntries.at(id)->type == 0){
                         cout <<"value:@" << id <<" ";
@@ -351,7 +353,7 @@ void MipsCode::translate() const {
                  * 非全局变量的初始化定义
                  */
             case VAR_Def_Has_Value:
-                cout<< "#local_var_@"+ to_string(ICode->src1->Id) <<"_def:  " ;
+                cout<< "#local_var_@"+ to_string(ICode->src1->Id) <<"_"+src1->original_Name<<"_def:  " ;
                 if(IEntries.at(src1->values_Id->at(0))->canGetValue){
                     //                    src1->imm = IEntries.at(src1->values_Id->at(0))->imm;
                     //                    src1->canGetValue = true;
@@ -365,10 +367,10 @@ void MipsCode::translate() const {
                 cout <<endl;
                 break;
             case VAR_Def_No_Value:
-                cout<< "#local_var_@"+ to_string(ICode->src1->Id) <<"no_value_def\n  " ;
+                cout<< "#local_var_@"+ to_string(ICode->src1->Id) <<"_"+src1->original_Name<<"no_value_def\n  " ;
                 break;
             case ARRAY_VAR_Def_Has_Value:
-                cout<< "#local_array_@"+ to_string(ICode->src1->Id) <<"_def:  " ;
+                cout<< "#local_array_@"+ to_string(ICode->src1->Id) <<"_"+src1->original_Name<<"_def:  " ;
                 for (auto id_init_value:*(src1->values_Id)) {
                     if (IEntries.at(id_init_value)->canGetValue){
                         ;//FIXME:编译时可以得出的值  以后要用就再按需取
@@ -381,17 +383,17 @@ void MipsCode::translate() const {
                 cout<<endl;
                 break;
             case ARRAY_Def_No_Value:
-                cout<< "#local_array_@"+ to_string(ICode->src1->Id) <<"_def\n  " ;
+                cout<< "#local_array_@"+ to_string(ICode->src1->Id) <<"_"+src1->original_Name<<"_def\n  " ;
                 break;
             case Const_Def_Has_Value:
-                cout<< "#const_@"+ to_string(ICode->src1->Id) <<"_def:  " ;
+                cout<< "#const_@"+ to_string(ICode->src1->Id) <<"_"+src1->original_Name<<"_def:  " ;
                 for (auto init_value:*(src1->values)) {
                     cout<<init_value<<" ";
                 }
                 cout<<endl;
                 break;
             case ARRAY_CONST_Def_Has_Value:
-                cout<< "#array_const@"+ to_string(ICode->src1->Id) <<"def   " ;
+                cout<< "#array_const@"+ to_string(ICode->src1->Id)<<"_"+src1->original_Name <<"def   " ;
                 for (auto init_value:*(src1->values)) {
                     cout<<init_value<<" ";
                 }

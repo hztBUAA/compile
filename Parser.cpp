@@ -214,6 +214,7 @@ void Parser::VarDef(vector<Entry*> &entries) {
         if (ISGLOBAL){
             iEntry->isGlobal = true;//MIPS依据这个生成标签或者地址  lw
         }
+        iEntry->original_Name = ident;
         if (hasValue){
             if (op == 0){
                 intermediateCode.addDef(ISGLOBAL,VAR_Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
@@ -348,6 +349,7 @@ void Parser::ConstDef(vector<Entry*>& entries) {
         if(ISGLOBAL){
             iEntry->isGlobal = true;
         }
+        iEntry->original_Name = ident;
         if (op == 0){
             intermediateCode.addDef(ISGLOBAL,Const_Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
         }else{
@@ -817,7 +819,7 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                 }
                 intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),iEntry);
             }//FIXME:数组定义时的IEntry （src2）   偏移index（不乘4）index_entry-》能get就get 不能就lw address
-        }else if(op == 1){
+        }else if(op == 1){//FIXME:可能you缺漏
             if(array_exps[1]->canGetValue) {
                 index = array_exps[1]->imm;
                 if (find->kind == ARRAY_1_CONST){
@@ -827,6 +829,8 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                 }else{
                     intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),iEntry);
                 }
+            }else{
+                intermediateCode.addICode(GetArrayElement,array_exps[1],IEntries.at(find->id),iEntry);
             }
         }else{
             //TODO:存在指针问题   上面传来的iEntry  已经指向  肯定是值  所以type肯定是0了  下面或许就是Assign的原型
@@ -1126,7 +1130,7 @@ void Parser::FuncDef(Kind func_type) {
     }
     tableManager.cur->entries->erase("main");//如果是重定义的函数 需要抹掉它
     //TODO:FuncCall中间代码 FIXME：完成FuncCALL   src1为函数头
-    func->original_funcName = ident;
+    func->original_Name = ident;
     intermediateCode.addICode(IntermediateCodeType::FuncDef,func, nullptr, nullptr);
 
     Print_Grammar_Output("<FuncDef>");

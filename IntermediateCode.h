@@ -81,7 +81,7 @@ public:
     //--------FuncDef------
     //FIXME:函数形参 需要留好位置IEntry并与Entry进行映射   函数调用时 会将实参对应IEntry（已经放进函数调用中间代码的IEntry中的value_Id）的数据Assign到形参区有后端完成
     bool has_return{};
-    string original_funcName;
+    string original_Name;
 
     static int generateId();
     IEntry();
