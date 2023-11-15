@@ -819,7 +819,15 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                     value =IEntries.at(find->id)->values->at(index);
                     iEntry->imm = value;
                 }else{
-                    intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),iEntry);//FIXME:后端生成代码时 判断src2 's type
+                    int id = IEntries.at(find->id)->values_Id->at(index);
+                    IEntry * e = IEntries.at(id);
+                    if (e->canGetValue){
+                        iEntry->canGetValue = true;
+                        iEntry->imm  = e->imm;
+                    }else{
+                        intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),iEntry);
+                    }
+                  //FIXME:后端生成代码时 判断src2 's type
                 }
             }else{
                 if (array_exps[1]->canGetValue){
@@ -843,7 +851,15 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
                     value = IEntries.at(find->id)->values->at(index);
                     iEntry->imm = value;
                 }else{
-                    intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),iEntry);
+                    int id = IEntries.at(find->id)->values_Id->at(index);
+                    IEntry * e = IEntries.at(id);
+                    if (e->canGetValue){
+                        iEntry->canGetValue = true;
+                        iEntry->imm  = e->imm;
+                    }else{
+                        intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),iEntry);
+                    }
+
                 }
             }else{
                 intermediateCode.addICode(GetArrayElement,array_exps[1],IEntries.at(find->id),iEntry);
