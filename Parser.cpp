@@ -212,7 +212,7 @@ void Parser::VarDef(vector<Entry*> &entries) {
         semantic.recordEntries(entry);
         entry->id = iEntry->Id;
         if (ISGLOBAL){
-            iEntry->isGlobal = true;//MIPS依据这个生成标签或者地址  lw
+            iEntry->isGlobal = true;//MIPS依据这个生成标签或者地址  lw  FIXME:标签采用   originalName_id：
         }
         iEntry->original_Name = ident;
         if (hasValue){
@@ -223,8 +223,19 @@ void Parser::VarDef(vector<Entry*> &entries) {
             }
         }else{
             if (op == 0){
+                //后台更新全局变量的初始值
+                if (ISGLOBAL){
+                    IEntries.at(iEntry->values_Id->at(0))->canGetValue = true;
+                    IEntries.at(iEntry->values_Id->at(0))->imm = 0;
+                }
                 intermediateCode.addDef(ISGLOBAL,VAR_Def_No_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
             }else{
+                if (ISGLOBAL){
+                    for (auto id: *iEntry->values_Id) {
+                        IEntries.at(id)->canGetValue = true;
+                        IEntries.at(id)->imm = 0;
+                    }
+                }
                 intermediateCode.addDef(ISGLOBAL,ARRAY_Def_No_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
             }
 
@@ -696,7 +707,9 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         Number(iEntry, value, InOtherFunc);
     }else{  //  指向ident
         LVal(iEntry, value, InOtherFunc);//不在这一层报错？   放到下一层LVal = getint() | Exp
-        if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的
+        if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的  如果LVal为全局  或者非全局的赋值呢  标签？ lw？
+            //TODO：使用全局变量 直接读值 编译时存好 0 或者具体值  这点在语法分析时没做好 需要MIPS code 进行进一步
+            //TODO:   写入全局变量  如果写入值编译时确定 则直接更新编译时的IEntry|否则
             PRINT_WORD;//PRINT =
             GET_A_WORD;
             if (WORD_TYPE == GETINTTK){

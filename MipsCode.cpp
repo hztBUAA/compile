@@ -13,6 +13,8 @@ using namespace std;
 void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) {
     /*
      * 值传递  地址赋
+     * TODO:需要对全局变量的分类讨论   局部变量也是    写入值编译时不确定时
+     * TODO：多次写入的更新原则！！！
      * */
     if (src1->type == 0){
         if (src1->canGetValue){
@@ -21,6 +23,7 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) {
         }else{
             cout << "lw " << "$t0, " << src1->startAddress<<"$(zero)"<<endl;
             cout << "sw " << "$t0, " << dst->startAddress<<"$(zero)"<<endl;
+            dst->canGetValue =  false;//后台更新
         }
     }else{
         dst->canGetValue = false;
@@ -30,6 +33,7 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) {
         dst->total_length = src1->total_length;
         dst->dim1_length = src1->dim1_length;
         dst->offset_IEntry = src1->offset_IEntry;
+        dst->startAddress = src1->startAddress;//关于数组地址的属性都要拷贝
         //FIXME:其他属性就不用拷贝的？   理清楚？ isGlobal保持自己 has_return 不可能
     }
 
@@ -63,8 +67,8 @@ void MipsCode::translate() const {
                 break;
             case VAR_Def_No_Value:
                 cout<< "var_@"+ to_string(def->src1->Id) <<":  .word  " ;
-                for (int i = 0;i<def->src1->total_length;i++) {
-                    cout << "0 ";
+                for (int i = 0;i<def->src1->total_length;i++) { //单个普通全局变量
+                    cout << "0 ";//此时输出值也会是0 在语法分析部分进行了判断补充
                 }
                 cout << endl;
                 break;
