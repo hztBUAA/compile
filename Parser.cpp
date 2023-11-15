@@ -728,7 +728,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 }
                 intermediateCode.addICode(GetInt, nullptr, nullptr,iEntry);
             } else {
-                IEntry*exp;
+                auto*exp = new IEntry;
                 Exp(exp, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
                 if (exp->canGetValue){
                     iEntry->imm = exp->imm;//值传递  修改值就行
