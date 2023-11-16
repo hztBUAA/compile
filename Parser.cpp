@@ -761,6 +761,8 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         Print_Grammar_Output("<PrimaryExp>");
 }
 
+//TODO：LVal说明是引用曾经定义过的变量（源程序）   需要二级指针进行重定向
+//TODO：   值  地址    地址是需要拷贝原来数组的一切东西  只是type == 1  && offset is  valid      valueId 指向的IEntry就恒定为这个数组默认的值了   查询 如果canGet 就Get   不能  就lw sw 相对于这个IEntry的startAddress    || 写入值  置canGet为false  sw startAddress
 void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
     if (WORD_TYPE != IDENFR){
         //Error
