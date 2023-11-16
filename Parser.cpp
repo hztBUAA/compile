@@ -713,22 +713,6 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的  如果LVal为全局  或者非全局的赋值呢  标签？ lw？
             //TODO：使用全局变量 直接读值 编译时存好 0 或者具体值  这点在语法分析时没做好 需要MIPS code 进行进一步
             //TODO:   写入全局变量  如果写入值编译时确定 则直接更新编译时的IEntry|否则
-            //TODO:  要改变LVal的值  需要找到真正的父本real
-            IEntry * real_def;
-            IEntry * real_value;
-
-            Entry * lVal;
-            Entry * temp = tableManager.cur;
-            string name = iEntry->original_Name;
-            while(temp  != nullptr){
-                if(temp->entries->find(name) != temp->entries->end()){
-                    lVal = temp->entries->at(name);
-                    break;
-                }
-                temp = temp->Father_Entry;
-            }
-            real_def = IEntries.at(lVal->id);
-            real_value = IEntries.at(real_def->values_Id->at(0));
             PRINT_WORD;//PRINT =
             GET_A_WORD;
             if (WORD_TYPE == GETINTTK){
@@ -742,15 +726,15 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 }else{
                     errorHandler.Insert_Error(RPARENT_MISSING);
                 }
-                intermediateCode.addICode(GetInt, nullptr, nullptr, real_def);
+                intermediateCode.addICode(GetInt, nullptr, nullptr,iEntry);
             } else {
                 auto*exp = new IEntry;
                 Exp(exp, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
                 if (exp->canGetValue){
-                    real_def->imm = exp->imm;//值传递  修改值就行
-                    real_def->canGetValue =true;
+                    iEntry->imm = exp->imm;//值传递  修改值就行
+                    iEntry->canGetValue =true;
                 }else{
-                    intermediateCode.addICode(Assign, exp, nullptr, real_def);//一般的传递
+                    intermediateCode.addICode(Assign,exp, nullptr,iEntry);//一般的传递
                 }
             }
             //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
@@ -763,7 +747,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
 
 //TODO：LVal说明是引用曾经定义过的变量（源程序）   需要二级指针进行重定向
 //TODO：   值  地址    地址是需要拷贝原来数组的一切东西  只是type == 1  && offset is  valid      valueId 指向的IEntry就恒定为这个数组默认的值了   查询 如果canGet 就Get   不能  就lw sw 相对于这个IEntry的startAddress    || 写入值  置canGet为false  sw startAddress
-void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
+void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
     if (WORD_TYPE != IDENFR){
         //Error
     }
@@ -830,69 +814,46 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
         if (op == 2){
             if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
                 index = array_exps[1]->imm*dim1_length + array_exps[2]->imm;
-                if (find->kind == ARRAY_2_CONST){
-                    iEntry = new IEntry;
-                    iEntry->canGetValue = true;
-//                    value = find->values.at(index);
-                    value =IEntries.at(find->id)->values->at(index);
-                    iEntry->imm = value;
+                if (kind == ARRAY_2_CONST){
+                    iEntry = &IEntries.at(IEntries.at(find->id)->values->at(index));
                 }else{
-                    int id = IEntries.at(find->id)->values_Id->at(index);
-                    IEntry * e = IEntries.at(id);
-                    if (e->canGetValue){
-                        iEntry->canGetValue = true;
-                        iEntry->imm  = e->imm;
-                    }else{
-                        intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),iEntry);
-                    }
-                  //FIXME:后端生成代码时 判断src2 's type
+                    iEntry = &IEntries.at(IEntries.at(find->id)->values_Id->at(index));
                 }
             }else{
                 if (array_exps[1]->canGetValue){
                     int t = array_exps[1]->imm*dim1_length;
                     intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[2],index_entry);
+                    intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),*iEntry);
                 }
                 else if(array_exps[2]->canGetValue){
                     auto *t = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
                     intermediateCode.addICode(IntermediateCodeType::Add,array_exps[2],t,index_entry);
+                    intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),*iEntry);
                 }else{
-                    intermediateCode.addICode(IntermediateCodeType::Add,array_exps[1],array_exps[2],index_entry);
+                    auto *t = new IEntry;
+                    intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
+                    intermediateCode.addICode(IntermediateCodeType::Add,array_exps[2],t,index_entry);
+                    intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),*iEntry);
                 }
-                intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),iEntry);
             }//FIXME:数组定义时的IEntry （src2）   偏移index（不乘4）index_entry-》能get就get 不能就lw address
         }else if(op == 1){//FIXME:可能you缺漏
             if(array_exps[1]->canGetValue) {
                 index = array_exps[1]->imm;
-                if (find->kind == ARRAY_1_CONST){
-                    iEntry->canGetValue = true;
-                    value = IEntries.at(find->id)->values->at(index);
-                    iEntry->imm = value;
+                if (kind == ARRAY_1_CONST){
+                    iEntry = &IEntries.at(IEntries.at(find->id)->values->at(index));
                 }else{
-                    int id = IEntries.at(find->id)->values_Id->at(index);
-                    IEntry * e = IEntries.at(id);
-                    if (e->canGetValue){
-                        iEntry->canGetValue = true;
-                        iEntry->imm  = e->imm;
-                    }else{
-                        intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),iEntry);
-                    }
-
+                    iEntry = &IEntries.at(IEntries.at(find->id)->values_Id->at(index));
                 }
             }else{
-                intermediateCode.addICode(GetArrayElement,array_exps[1],IEntries.at(find->id),iEntry);
+                intermediateCode.addICode(GetArrayElement,array_exps[1],IEntries.at(find->id),*iEntry);
             }
         }else{
-            //TODO:存在指针问题   上面传来的iEntry  已经指向  肯定是值  所以type肯定是0了  下面或许就是Assign的原型
-//            intermediateCode.addICode(Assign, intermediateCode.getIEntries.at(find->id), nullptr, iEntry);
-                IEntry *ref = IEntries.at(find->id);//引用时 引用的是本身      区别与函数调用时的普通变量  会是新生成IEntry  由后端解决函数参数问题
-                //FIXME:ref为定义变量时的IEntry  其值另外放在values_id    源程序定义时的变量都不是直接放在ref中 因为可能数组多个值 就统一数组、变量都在valus中
-                IEntry * ref_value = IEntries.at(ref->values_Id->at(0));
-                iEntry->canGetValue = ref_value->canGetValue; //这里如果值 是getint  也没问题   会MIPS进行判断
-                iEntry->imm = ref_value->imm;
-                iEntry->type = ref_value->type;
-                iEntry->startAddress = ref_value->startAddress;
-                iEntry->original_Name = ref_value->original_Name;
+            if (kind == Kind::CONST){
+                iEntry = &IEntries.at(IEntries.at(find->id)->values->at(index));
+            }else{
+                iEntry = &IEntries.at(IEntries.at(find->id)->values_Id->at(index));
+            }
         }
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中
         //一维地址
@@ -900,32 +861,27 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
          * 重新生成一个IEntry   用来表示内存位置
          * TODO:先不考虑烦人的array找不到对应的值的情况---需要进一步生成index的中间代码
          */
+
          if(op == 1){
-             //原生的一维数组
-             //只可能在函数实参中出现和函数形参
-             iEntry->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
-
-             iEntry->offset_IEntry = new IEntry;
-             iEntry->offset_IEntry->canGetValue = true;
-             iEntry->offset_IEntry->imm = 0;
-             iEntry->type = 1;
+           iEntry = & IEntries.at(find->id);
          }else if(op == 2){  //arr[2][3]二维数组  形参是arr[2] 要在iEntry新建  甚至可能是arr[t]  t编译时不清楚
-             if (array_exps[1]->canGetValue){
+             if (array_exps[1]->canGetValue){//TODO 重新生成一个带地址offset的克隆版
                  index = dim1_length *array_exps[1]->imm;
-                 iEntry->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
-
-                 iEntry->offset_IEntry = new IEntry;
-                 iEntry->offset_IEntry->canGetValue = true;
-                 iEntry->offset_IEntry->imm = index;//index 以数组下标作为索引
-                 iEntry->type = 1;
+                 (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
+                 (*iEntry)->values_Id = IEntries.at(find->id)->values_Id;
+                 (*iEntry)->values_Id = IEntries.at(find->id)->values;
+                 (*iEntry)->offset_IEntry = new IEntry;
+                 (*iEntry)->offset_IEntry->canGetValue = true;
+                 (*iEntry)->offset_IEntry->imm = index;//index 以数组下标作为索引
+                 (*iEntry)->type = 1;
              }else{
                  intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],index_entry);
-                 iEntry->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
-                 iEntry->offset_IEntry = index_entry;//包装好了地址
+                 (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
+                 (*iEntry)->offset_IEntry = index_entry;//包装好了地址
 //                 iEntry->offset_IEntry = new IEntry;
-                 iEntry->offset_IEntry->canGetValue = false;//需要lw sw
+                 (*iEntry)->offset_IEntry->canGetValue = false;//需要lw sw
 //                 iEntry->offset_IEntry->imm = index;//index 以数组下标作为索引
-                 iEntry->type = 1;
+                 (*iEntry)->type = 1;
              }
 
          }
@@ -933,9 +889,9 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
         //2维地址  伪造iEntry数组 不认为是type = 1
         int new_dim1_length = array_exps[2]->imm;
 //        iEntry->type = 1;
-        iEntry->startAddress = IEntries.at(find->id)->startAddress;
-        iEntry->dim1_length = new_dim1_length;
-        iEntry->values_Id = IEntries.at(find->id)->values_Id;
+        (*iEntry)->startAddress = IEntries.at(find->id)->startAddress;
+        (*iEntry)->dim1_length = new_dim1_length;
+        i (*iEntry)->values_Id = IEntries.at(find->id)->values_Id;
     }
 
 
@@ -978,54 +934,6 @@ void Parser::LVal(IEntry * iEntry,int & value,bool inOtherFunc) { // 这里面�
             }
             t = t->Father_Entry;
         }
-        if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的  如果LVal为全局  或者非全局的赋值呢  标签？ lw？
-            //TODO：使用全局变量 直接读值 编译时存好 0 或者具体值  这点在语法分析时没做好 需要MIPS code 进行进一步
-            //TODO:   写入全局变量  如果写入值编译时确定 则直接更新编译时的IEntry|否则
-            //TODO:  要改变LVal的值  需要找到真正的父本real
-            IEntry * real_def;
-            IEntry * real_value;
-
-            Entry * lVal;
-            Entry * temp = tableManager.cur;
-            string name = iEntry->original_Name;
-            while(temp  != nullptr){
-                if(temp->entries->find(name) != temp->entries->end()){
-                    lVal = temp->entries->at(name);
-                    break;
-                }
-                temp = temp->Father_Entry;
-            }
-            real_def = IEntries.at(lVal->id);
-            real_value = IEntries.at(real_def->values_Id->at(0));
-            PRINT_WORD;//PRINT =
-            GET_A_WORD;
-            if (WORD_TYPE == GETINTTK){
-                PRINT_WORD;//PRITN GETINT
-                GET_A_WORD;
-                PRINT_WORD;//PRINT (
-                GET_A_WORD;
-                if(WORD_TYPE == RPARENT){
-                    PRINT_WORD;
-                    GET_A_WORD;
-                }else{
-                    errorHandler.Insert_Error(RPARENT_MISSING);
-                }
-                intermediateCode.addICode(GetInt, nullptr, nullptr, real_def);
-            } else {
-                auto*exp = new IEntry;
-                Exp(exp, value, isInOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
-                if (exp->canGetValue){
-                    real_def->imm = exp->imm;//值传递  修改值就行
-                    real_def->canGetValue =true;
-                }else{
-                    intermediateCode.addICode(Assign, exp, nullptr, real_def);//一般的传递
-                }
-            }
-            //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
-            isLValInStmt = true;
-        }
-
-
     }else if (WORD_TYPE == IDENFR || WORD_TYPE == RBRACE
     || WORD_TYPE == CONSTTK || WORD_TYPE == RETURNTK
     || WORD_TYPE == IFTK || WORD_TYPE == ELSETK

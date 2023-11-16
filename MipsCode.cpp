@@ -311,6 +311,7 @@ syscall
                             dst->canGetValue = true;
                             dst->imm = IEntries.at(src2->values_Id->at(index))->imm;
                         }else{
+                            //TODO:如果本身是可以从get到的值  但是由于输入的原因？  这个应该怎么规避问题 ！！！
                             //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
                             dst->canGetValue = false;
                             cout << "lw " << "$t0" << ", " << IEntries.at(src2->values_Id->at(index))->startAddress << "($zero)" << endl;
