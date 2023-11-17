@@ -207,10 +207,13 @@ void Parser::VarDef(vector<Entry*> &entries) {
         hasValue = true;
         PRINT_WORD;
         GET_A_WORD;
-        iEntry->values_Id = new vector<int>;//values_Id给变量数组    values直接给常量数组
+        iEntry->values_Id = new vector<int>;//values_Id给变量数组
         InitVal(iEntry,nums);
     }else{
-        ;
+        iEntry->values_Id = new vector<int>;
+        for (int i = 0; i <total_length;i++){
+            iEntry->values_Id->push_back((new IEntry)->Id);
+        }
     }
     if(!error){
         entries.push_back(entry);
@@ -716,7 +719,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
     }else if(WORD_TYPE == INTCON){
         Exp_type = 0;
         Number(iEntry, value, InOtherFunc);
-    }else{  //  指向ident
+    }else{  //  指向ident LVal->GetInt
         auto *lVal = new IEntry;
         LVal(&lVal, value, InOtherFunc);//不在这一层报错？   放到下一层LVal = getint() | Exp  &是为了改变iEntry指向
         if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的  如果LVal为全局  或者非全局的赋值呢  标签？ lw？
@@ -736,6 +739,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                     errorHandler.Insert_Error(RPARENT_MISSING);
                 }
                 intermediateCode.addICode(GetInt, nullptr, nullptr,lVal);
+                lVal->canGetValue = false;
             } else {
                 auto*exp = new IEntry;
                 Exp(exp, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
@@ -744,6 +748,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                     lVal->canGetValue =true;
                 }else{
                     intermediateCode.addICode(Assign,exp, nullptr,lVal);//一般的传递
+                    lVal->canGetValue = exp->canGetValue;
                 }
             }
             //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
@@ -864,11 +869,6 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
             }
         }else{//TODO:统一都在values_Id
             *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(index));
-            if (IEntries.at(find->id)->values_Id->empty()){
-
-            }else{
-
-            }
         }
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中
         //一维地址

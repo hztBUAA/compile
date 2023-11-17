@@ -19,13 +19,14 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) {
      * TODO:需要对全局变量的分类讨论   局部变量也是    写入值编译时不确定时
      * TODO：多次写入的更新原则！！！
      * */
+    cout << "#assign" << endl;
     if (src1->type == 0){
         if (src1->canGetValue){
             dst->canGetValue = true;
             dst->imm = src1->imm;
         }else{
-            cout << "lw " << "$t0, " << src1->startAddress<<"$(zero)"<<endl;
-            cout << "sw " << "$t0, " << dst->startAddress<<"$(zero)"<<endl;
+            cout << "lw " << "$t0, " << src1->startAddress<<"($zero)"<<endl;
+            cout << "sw " << "$t0, " << dst->startAddress<<"($zero)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的
             dst->canGetValue =  false;//后台更新
         }
     }else{
@@ -149,7 +150,7 @@ syscall
                      */
                     if (IEntries.at(id)->str == "%d"){//lw  li  1 syscall
                         IEntry * p = IEntries.at( src2->values_Id->at(cnt_param++));
-//                        IEntry * p_val = IEntries.at(p->values_Id->at(0));
+//                        IEntry * p_val = IEntries.at(p->values_Id->at(0));//VALUE!!!
 IEntry * p_val = p;
                         if (p_val->canGetValue){
                             cout << "li $a0, "<< p_val->imm<< endl;
@@ -305,6 +306,7 @@ IEntry * p_val = p;
                 cout << "\nli $v0, 5\n";
                 cout<<"syscall\n";
                 cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)"<< endl;
+                dst->canGetValue = false;
                 break;
                 //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
             case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
