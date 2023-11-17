@@ -209,6 +209,8 @@ void Parser::VarDef(vector<Entry*> &entries) {
         GET_A_WORD;
         iEntry->values_Id = new vector<int>;//values_Id给变量数组    values直接给常量数组
         InitVal(iEntry,nums);
+    }else{
+        ;
     }
     if(!error){
         entries.push_back(entry);
@@ -862,6 +864,11 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
             }
         }else{//TODO:统一都在values_Id
             *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(index));
+            if (IEntries.at(find->id)->values_Id->empty()){
+
+            }else{
+
+            }
         }
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中
         //一维地址
