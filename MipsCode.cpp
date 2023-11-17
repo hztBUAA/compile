@@ -128,7 +128,7 @@ str_5:  .asciiz   "ha"
         IEntry *dst= ICode->dst;
         IEntry **dst_ptr = &dst;
         int cnt_param;//for printf_exp
-
+        int cnt = 0;//for def sw address
         vector<int> *rParam_ids ;
         vector<int> *fParam_ids ;
 
@@ -308,14 +308,14 @@ syscall
                 if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
                     if (src1->canGetValue){//array就是数组首地址 index索引知道是第几个元素
                         index += src1->imm;
-                        dst_ptr = &IEntries.at(src2->values_Id->at(index));
+                        dst->startAddress = IEntries.at(src2->values_Id->at(index))->startAddress;
                     }else{//array就是数组首地址 index索引还不知道是第几个元素 即索引也是取决于getint  需要lw   拿不到直接值  把*dst_ptr 拷贝地址  之后都会这样使用
                          cout << "li " << "$t0" << ", " << src2->startAddress << endl;
                         cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                         cout << "sll " << "$t1" << ", " << "$t1"<< ", 2" << endl;
                         cout << "addu " << "$t2" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
                         cout << "lw " << "$t3" << ", 0($t2)" << endl;
-                        cout << "sw " << "$t3" << dst->startAddress << "($zero)" << endl;
+                        cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                     }
                 }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
                     IEntry* offset = src2->offset_IEntry;
@@ -324,11 +324,9 @@ syscall
                         if (src1->canGetValue){
                             index += src1->imm;
                             if (IEntries.at(src2->values_Id->at(index))->canGetValue){
-                                dst->canGetValue = true;
-                                dst->imm = IEntries.at(src2->values_Id->at(index))->imm;
+                                dst->startAddress = IEntries.at(src2->values_Id->at(index))->startAddress;
                             }else{
                                 //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
-                                dst->canGetValue = false;
                                 cout << "lw " << "$t0" << ", " << IEntries.at(src2->values_Id->at(index))->startAddress << "($zero)" << endl;
                                 cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                             }
@@ -340,7 +338,7 @@ syscall
                             cout << "addu " << "$t3" << ", "  << "$t0" << ", " << "$t1"<< endl;
                             cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
                             cout << "lw " << "$t4" << ", 0($t3)" << endl;
-                            cout << "sw " << "$t4" << dst->startAddress << "($zero)" << endl;
+                            cout << "sw " << "$t4, " <<  dst->startAddress << "($zero)" << endl;
                         }
                     }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
                         cout << "lw " << "$t0" << ", " << src2->offset_IEntry->startAddress<<"$(zero)" << endl;//t in $t0
@@ -354,7 +352,7 @@ syscall
                         cout << "li " << "$t3" << ", " << src2->startAddress << endl;
                         cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
                         cout << "lw " << "$t3" << ",  0($t3)" << endl;
-                        cout << "sw " << "$t3" << dst->startAddress << "($zero)" << endl;
+                        cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;
                     }
                 }
                 break;
@@ -405,7 +403,13 @@ syscall
                     //                    cout << "sw " << "$t0" << ", " << (src1->startAddress) << "($zero)" << endl;
                     cout<<"@("<<src1->values_Id->at(0)<<")"<< " ";
                 }
-                cout <<endl;
+                cout<<endl;
+                if(IEntries.at(src1->values_Id->at(0))->canGetValue){
+                    cout << "li " << "$t0" << ",  "<<IEntries.at(src1->values_Id->at(0))->imm << endl;
+                }else{
+                    cout << "lw " << "$t0" << ",  "<<IEntries.at(src1->values_Id->at(0))->startAddress<< "($zero)" << endl;
+                }
+                cout << "sw " << "$t0, " <<  IEntries.at(src1->values_Id->at(0))->startAddress << "($zero)" << endl;
                 break;
             case VAR_Def_No_Value:
                 cout<< "#local_var_@"+ to_string(ICode->src1->Id) <<"_"+src1->original_Name<<"no_value_def\n  " ;
@@ -422,6 +426,14 @@ syscall
                     }
                 }
                 cout<<endl;
+                for (auto id_init_value:*(src1->values_Id)) {
+                    if (IEntries.at(id_init_value)->canGetValue){ //认为数组内存是连续存储？
+                        cout << "li " << "$t0" << ",  "<<IEntries.at(id_init_value)->imm << endl;
+                    }else{
+                        cout << "lw " << "$t0" << ",  "<<IEntries.at(id_init_value)->startAddress<< "($zero)" << endl;
+                    }
+                    cout << "sw " << "$t0, " <<  IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
+                }
                 break;
             case ARRAY_Def_No_Value:
                 cout<< "#local_array_@"+ to_string(ICode->src1->Id) <<"_"+src1->original_Name<<"_def\n  " ;
@@ -432,6 +444,14 @@ syscall
                     cout<<init_value<<" ";
                 }
                 cout<<endl;
+                for (auto id_init_value:*(src1->values_Id)) {
+                    if (IEntries.at(id_init_value)->canGetValue){ //认为数组内存是连续存储？
+                        cout << "li " << "$t0" << ",  "<<IEntries.at(id_init_value)->imm << endl;
+                    }else{
+                        cout << "lw " << "$t0" << ",  "<<IEntries.at(id_init_value)->startAddress<< "($zero)" << endl;
+                    }
+                    cout << "sw " << "$t0" <<  IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
+                }
                 break;
             case ARRAY_CONST_Def_Has_Value:
                 cout<< "#array_const@"+ to_string(ICode->src1->Id)<<"_"+src1->original_Name <<"def   " ;

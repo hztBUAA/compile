@@ -200,6 +200,7 @@ void Parser::VarDef(vector<Entry*> &entries) {
             break;
     }
     bool hasValue = false;
+    nums = 0;
     if (WORD_TYPE == ASSIGN){
         hasValue = true;
         PRINT_WORD;
@@ -340,6 +341,7 @@ void Parser::ConstDef(vector<Entry*>& entries) {
         default:
             break;
     }
+    nums = 0;
 //常量定义  必须赋值
     if (WORD_TYPE != ASSIGN){
         //Error
@@ -390,9 +392,10 @@ void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
         iEntry->dim1_length = nums;
     }else{
         int value;
-        auto* _constExp = new IEntry;
+        auto* _constExp = new IEntry;//true canGet 会在内部进行设置
         ConstExp(_constExp, value, isInOtherFunc);
-        iEntry->values->push_back(_constExp->imm);//值要不统一存到values中  定义时  因为你不知道是数组还是啥 TODO： imm是确定的中间变量再用？
+        _constExp->startAddress = iEntry->startAddress + 4*nums;
+        iEntry->values_Id->push_back(_constExp->Id);//值要不统一存到values中  定义时  因为你不知道是数组还是啥 TODO： imm是确定的中间变量再用？
         nums++;
     }
     Print_Grammar_Output("<ConstInitVal>");
@@ -709,7 +712,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         Exp_type = 0;
         Number(iEntry, value, InOtherFunc);
     }else{  //  指向ident
-        LVal(iEntry, value, InOtherFunc);//不在这一层报错？   放到下一层LVal = getint() | Exp
+        LVal(&iEntry, value, InOtherFunc);//不在这一层报错？   放到下一层LVal = getint() | Exp  &是为了改变iEntry指向
         if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的  如果LVal为全局  或者非全局的赋值呢  标签？ lw？
             //TODO：使用全局变量 直接读值 编译时存好 0 或者具体值  这点在语法分析时没做好 需要MIPS code 进行进一步
             //TODO:   写入全局变量  如果写入值编译时确定 则直接更新编译时的IEntry|否则
@@ -740,6 +743,8 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
             //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
             isLValInStmt = true;
         }
+        //不是赋值语句   需要将LVal找到的IEntry 传回上面 我现在不想用二级指针
+        iEntry->canGetValue = false;
     }
     if (!isLValInStmt)
         Print_Grammar_Output("<PrimaryExp>");
@@ -814,16 +819,12 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
         if (op == 2){
             if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
                 index = array_exps[1]->imm*dim1_length + array_exps[2]->imm;
-                if (kind == ARRAY_2_CONST){
-                    iEntry = &IEntries.at(IEntries.at(find->id)->values->at(index));
-                }else{
-                    iEntry = &IEntries.at(IEntries.at(find->id)->values_Id->at(index));
-                }
+                *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(index));
             }else{
                 if (array_exps[1]->canGetValue){
                     int t = array_exps[1]->imm*dim1_length;
                     intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[2],index_entry);
-                    intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),*iEntry);
+                    intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),*iEntry);//此时iEntry在getArrayElement中会储存对应的address 方便之后的lw
                 }
                 else if(array_exps[2]->canGetValue){
                     auto *t = new IEntry;
@@ -840,20 +841,12 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
         }else if(op == 1){//FIXME:可能you缺漏
             if(array_exps[1]->canGetValue) {
                 index = array_exps[1]->imm;
-                if (kind == ARRAY_1_CONST){
-                    iEntry = &IEntries.at(IEntries.at(find->id)->values->at(index));
-                }else{
-                    iEntry = &IEntries.at(IEntries.at(find->id)->values_Id->at(index));
-                }
+                *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(index));
             }else{
                 intermediateCode.addICode(GetArrayElement,array_exps[1],IEntries.at(find->id),*iEntry);
             }
-        }else{
-            if (kind == Kind::CONST){
-                iEntry = &IEntries.at(IEntries.at(find->id)->values->at(index));
-            }else{
-                iEntry = &IEntries.at(IEntries.at(find->id)->values_Id->at(index));
-            }
+        }else{//TODO:统一都在values_Id
+            *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(index));
         }
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中
         //一维地址
@@ -863,13 +856,13 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
          */
 
          if(op == 1){
-           iEntry = & IEntries.at(find->id);
+           *iEntry =  IEntries.at(find->id);
          }else if(op == 2){  //arr[2][3]二维数组  形参是arr[2] 要在iEntry新建  甚至可能是arr[t]  t编译时不清楚
              if (array_exps[1]->canGetValue){//TODO 重新生成一个带地址offset的克隆版
                  index = dim1_length *array_exps[1]->imm;
                  (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
                  (*iEntry)->values_Id = IEntries.at(find->id)->values_Id;
-                 (*iEntry)->values_Id = IEntries.at(find->id)->values;
+                 (*iEntry)->values = IEntries.at(find->id)->values;
                  (*iEntry)->offset_IEntry = new IEntry;
                  (*iEntry)->offset_IEntry->canGetValue = true;
                  (*iEntry)->offset_IEntry->imm = index;//index 以数组下标作为索引
@@ -891,7 +884,7 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
 //        iEntry->type = 1;
         (*iEntry)->startAddress = IEntries.at(find->id)->startAddress;
         (*iEntry)->dim1_length = new_dim1_length;
-        i (*iEntry)->values_Id = IEntries.at(find->id)->values_Id;
+        (*iEntry)->values_Id = IEntries.at(find->id)->values_Id;
     }
 
 
@@ -1607,6 +1600,7 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
         int value;
         auto *exp_iEntry = new IEntry;
         Exp(exp_iEntry, value, isInOtherFunc);//下放错误
+        exp_iEntry->startAddress = iEntry->startAddress + 4*nums;//TODo:设置MIPS中的地址  为MIPS服务
         iEntry->values_Id->push_back(exp_iEntry->Id);
         nums++;
     }
@@ -1625,7 +1619,7 @@ void Parser::ForStmt() {
     //TODO:ForStmt ICode  ASSIGN
     IEntry *lVal,*exp;
     int v1,v2;
-    LVal(lVal,v1,isInOtherFunc);
+    LVal(&lVal,v1,isInOtherFunc);
     PRINT_WORD;//PRINT =
     GET_A_WORD;
     Exp(exp,v2,isInOtherFunc);
