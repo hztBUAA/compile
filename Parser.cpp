@@ -712,7 +712,8 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         Exp_type = 0;
         Number(iEntry, value, InOtherFunc);
     }else{  //  指向ident
-        LVal(&iEntry, value, InOtherFunc);//不在这一层报错？   放到下一层LVal = getint() | Exp  &是为了改变iEntry指向
+        auto *lVal = new IEntry;
+        LVal(&lVal, value, InOtherFunc);//不在这一层报错？   放到下一层LVal = getint() | Exp  &是为了改变iEntry指向
         if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的  如果LVal为全局  或者非全局的赋值呢  标签？ lw？
             //TODO：使用全局变量 直接读值 编译时存好 0 或者具体值  这点在语法分析时没做好 需要MIPS code 进行进一步
             //TODO:   写入全局变量  如果写入值编译时确定 则直接更新编译时的IEntry|否则
@@ -729,22 +730,34 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 }else{
                     errorHandler.Insert_Error(RPARENT_MISSING);
                 }
-                intermediateCode.addICode(GetInt, nullptr, nullptr,iEntry);
+                intermediateCode.addICode(GetInt, nullptr, nullptr,lVal);
             } else {
                 auto*exp = new IEntry;
                 Exp(exp, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
                 if (exp->canGetValue){
-                    iEntry->imm = exp->imm;//值传递  修改值就行
-                    iEntry->canGetValue =true;
+                    lVal->imm = exp->imm;//值传递  修改值就行
+                    lVal->canGetValue =true;
                 }else{
-                    intermediateCode.addICode(Assign,exp, nullptr,iEntry);//一般的传递
+                    intermediateCode.addICode(Assign,exp, nullptr,lVal);//一般的传递
                 }
             }
             //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
             isLValInStmt = true;
+        }else{
+            //拷贝
+            iEntry->imm = lVal->imm;
+            iEntry->canGetValue = lVal->canGetValue;
+            iEntry->startAddress = lVal->startAddress;
+            iEntry->type = lVal->type;
+            iEntry->offset_IEntry = lVal->offset_IEntry;
+            iEntry->original_Name = lVal->original_Name;
+            iEntry->values_Id = lVal->values_Id;
+            iEntry->dim1_length = lVal->dim1_length;
+            iEntry->total_length = lVal->total_length;
+            iEntry->has_return = lVal->has_return;
         }
         //不是赋值语句   需要将LVal找到的IEntry 传回上面 我现在不想用二级指针
-        iEntry->canGetValue = false;
+
     }
     if (!isLValInStmt)
         Print_Grammar_Output("<PrimaryExp>");
