@@ -47,7 +47,7 @@ private:
 public:
 
     Parser(Lexer& lexer1,TableManager& tableManager1,ErrorHandler &errorHandler1,Semantic& semantic1,IntermediateCode & intermediateCode1):lexer(lexer1),tableManager(tableManager1),errorHandler(errorHandler1),semantic(semantic1),intermediateCode(intermediateCode1),enablePrint(false),isLValInStmt(false){};
-    void Print_Grammar_Output(string s);
+    void Print_Grammar_Output(const string& s);
     void CompUnit();
     int Kind2Exp_type (Kind kind);
     void Decl();

@@ -15,7 +15,7 @@
 using namespace std;
 extern bool isInOtherFunc;
 extern string funcLabel;
-
+extern vector<int> strings;
 
 /**
  * Assign是一对一的赋值
@@ -110,12 +110,8 @@ private:
      * 定义一条中间代码中的小部件
      */
 public:
-    vector<int> strings ;
-    vector<ICode *> mainICodes;
-    map<string, vector<ICode *>> otherFuncICodes;
     ICode *iCode;
-    IntermediateCode();
-    vector<ICode *> globalDef;
+
 
     static string iCode2str(ICode *iCode);
 

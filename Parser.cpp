@@ -8,11 +8,13 @@
 #include "Lexer.h"
 #include <iostream>
 using namespace std;
-extern vector<IEntry *> IEntries;
+
+
+
 string funcLabel;
 bool isInOtherFunc;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
 
-void Parser::Print_Grammar_Output(string s) {
+void Parser::Print_Grammar_Output(const string& s) {
     if (enablePrint){
 
         //cout << s << endl;
@@ -757,7 +759,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
             iEntry->has_return = lVal->has_return;
         }
         //不是赋值语句   需要将LVal找到的IEntry 传回上面 我现在不想用二级指针
-
+        iEntry->canGetValue = false;
     }
     if (!isLValInStmt)
         Print_Grammar_Output("<PrimaryExp>");
@@ -1535,7 +1537,7 @@ void Parser::Stmt() {
     Print_Grammar_Output("<Stmt>");
 }
 
-void  Parser::FormatString(IEntry * strings) {
+void  Parser::FormatString(IEntry * _strings) {
     IEntry* p ;
     int pos = 0;
 //    strings->strings_iEntry_id = new vector<int>;
@@ -1553,14 +1555,14 @@ void  Parser::FormatString(IEntry * strings) {
                     //[pos,i)
                     p = new IEntry;
                     p->str = whole->substr(pos,i-pos);
-                    strings->strings_iEntry_id->push_back(p->Id);
-                    intermediateCode.strings.push_back(p->Id);
+                    _strings->strings_iEntry_id->push_back(p->Id);
+                   strings.push_back(p->Id);//问题应该出现与vector的地址被改变了？！！！！
                 }
                 i++;//跳过d
                 p = new IEntry;
                 p->str = "%d";
-                strings->strings_iEntry_id->push_back(p->Id);
-                intermediateCode.strings.push_back(p->Id);
+                _strings->strings_iEntry_id->push_back(p->Id);
+                strings.push_back(p->Id);
                 pos = i+1;//下一个有效的可能为真正字符串的位置
             }
         }
@@ -1568,8 +1570,8 @@ void  Parser::FormatString(IEntry * strings) {
             //[pos,i)
             p = new IEntry;
             p->str = whole->substr(pos,i-pos);
-            strings->strings_iEntry_id->push_back(p->Id);
-            intermediateCode.strings.push_back(p->Id);
+            _strings->strings_iEntry_id->push_back(p->Id);
+           strings.push_back(p->Id);
         }
     }
 

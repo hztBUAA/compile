@@ -3,8 +3,12 @@
 //
 
 #include "IntermediateCode.h"
-
+vector<int> strings;
+vector<ICode *> mainICodes ;
+map<string, vector<ICode *>> otherFuncICodes;
+vector<ICode *>globalDef ;
 vector<IEntry *> IEntries;
+
 int IEntry::generateId() {
     static int  id_generate = 0;
     return id_generate++;
@@ -100,8 +104,6 @@ void IntermediateCode::addDef(bool isGlobal, IntermediateCodeType type, IEntry *
     }
 }
 
-
-
 void IntermediateCode::addICode(IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry *dst) {
 
     iCode = new ICode();
@@ -163,9 +165,5 @@ void IntermediateCode::debug_print() {
 
         }
     }
-}
-
-IntermediateCode::IntermediateCode() {
-
 }
 

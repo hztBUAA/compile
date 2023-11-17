@@ -7,8 +7,11 @@
 #include <string>
 #include "IntermediateCode.h"
 #include "MipsCode.h"
-using namespace std;
 
+using namespace std;
+extern vector<ICode *> mainICodes ;
+extern map<string, vector<ICode *>> otherFuncICodes;
+extern vector<ICode *>globalDef ;
 
 void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) {
     /*
@@ -42,9 +45,10 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) {
 
 void MipsCode::translate() const {
 
-    vector<ICode *> mainCodes = intermediateCode.mainICodes;
-    map<string, vector<ICode *>> otherFuncICodes = intermediateCode.otherFuncICodes;
-    vector<ICode *> globalDefs = intermediateCode.globalDef;
+//    vector<ICode *> *mainCodes = &intermediateCode.mainICodes;
+//    map<string, vector<ICode *>> *otherFuncICodes = &intermediateCode.otherFuncICodes;
+//    vector<ICode *> *globalDefs = &intermediateCode.globalDef;
+//    vector<int > * strings = intermediateCode.strings;
 
     /**
      * 输出全局的变量定义data段  以及全局变量的初始化
@@ -60,10 +64,10 @@ str_5:  .asciiz   "ha"
 
      */
      cout<<"#strings in printf\n";
-    for (auto id: intermediateCode.strings) {
+    for (auto id: strings) {
         cout << "str_"<<id<<": .asciiz " << "\""<<IEntries.at(id)->str << "\""<< endl;
     }
-    for (auto def:globalDefs) {
+    for (auto def:globalDef) {
         //形如 def src1
         IntermediateCodeType type = def->type;
         //TODO:名字需要注意  是否在语法分析时准备好名字
@@ -120,7 +124,7 @@ str_5:  .asciiz   "ha"
     cout<<".text\n";
      cout<<"#主函数main的代码ICode\n";
      cout<<"main:\n";
-    for (auto ICode: mainCodes) {
+    for (auto ICode: mainICodes) {
         IntermediateCodeType type = ICode->type;
         IEntry *src1 = ICode->src1;
         IEntry *src2 = ICode->src2;
@@ -145,10 +149,12 @@ syscall
                      */
                     if (IEntries.at(id)->str == "%d"){//lw  li  1 syscall
                         IEntry * p = IEntries.at( src2->values_Id->at(cnt_param++));
-                        if (p->canGetValue){
-                            cout << "li $a0, "<< p->imm<< endl;
+//                        IEntry * p_val = IEntries.at(p->values_Id->at(0));
+IEntry * p_val = p;
+                        if (p_val->canGetValue){
+                            cout << "li $a0, "<< p_val->imm<< endl;
                         }else{
-                            cout << "lw $a0, "<<p->startAddress<<"($zero)"<<endl;
+                            cout << "lw $a0, "<<p_val->startAddress<<"($zero)"<<endl;
                         }
                         cout <<"li $v0, 1"<<endl;
                         cout <<"syscall"<<endl;
@@ -470,7 +476,7 @@ syscall
      * 输出其他函数的代码ICode
      */
     cout<<"#自定义函数main的代码ICode\n";
-    for (auto ICode: otherFuncICodes) {
+    for (auto ICode:otherFuncICodes) {
     ;
     }
 

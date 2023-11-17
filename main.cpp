@@ -18,7 +18,7 @@ int main() {
     Semantic semantic(my_lexer,tableManager,errorHandler);
     Parser parser(my_lexer,tableManager,errorHandler,semantic,intermediateCode);
     parser.CompUnit();
-    errorHandler.Print_Errors();
+    //errorHandler.Print_Errors();
 //    intermediateCode.debug_print();
     mipsCode.translate();
     //my_lexer.analyze();
