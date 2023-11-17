@@ -110,7 +110,7 @@ private:
      * 定义一条中间代码中的小部件
      */
 public:
-    vector<int> *strings = new std::vector<int>;
+    vector<int> strings;
     vector<ICode *> mainICodes;
     map<string, vector<ICode *>> otherFuncICodes;
     ICode *iCode;
