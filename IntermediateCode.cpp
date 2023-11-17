@@ -166,6 +166,6 @@ void IntermediateCode::debug_print() {
 }
 
 IntermediateCode::IntermediateCode() {
-    this->strings  = new vector<int>;
+
 }
 

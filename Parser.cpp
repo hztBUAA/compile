@@ -1554,24 +1554,13 @@ void  Parser::FormatString(IEntry * strings) {
                     p = new IEntry;
                     p->str = whole->substr(pos,i-pos);
                     strings->strings_iEntry_id->push_back(p->Id);
-                    if (intermediateCode.strings == nullptr){
-                        cout<< "error nullptr";
-                    }
-                    cout<<intermediateCode.strings->size();
-                    if (intermediateCode.strings == nullptr){
-                        cout<< "error nullptr";
-                    }else if (intermediateCode.strings->empty()){
-                        ;
-                    }else{
-                        intermediateCode.strings->push_back(p->Id);
-                    }
-
+                    intermediateCode.strings.push_back(p->Id);
                 }
                 i++;//跳过d
                 p = new IEntry;
                 p->str = "%d";
                 strings->strings_iEntry_id->push_back(p->Id);
-                intermediateCode.strings->push_back(p->Id);
+                intermediateCode.strings.push_back(p->Id);
                 pos = i+1;//下一个有效的可能为真正字符串的位置
             }
         }
@@ -1580,7 +1569,7 @@ void  Parser::FormatString(IEntry * strings) {
             p = new IEntry;
             p->str = whole->substr(pos,i-pos);
             strings->strings_iEntry_id->push_back(p->Id);
-            intermediateCode.strings->push_back(p->Id);
+            intermediateCode.strings.push_back(p->Id);
         }
     }
 

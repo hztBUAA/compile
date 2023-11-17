@@ -60,7 +60,7 @@ str_5:  .asciiz   "ha"
 
      */
      cout<<"#strings in printf\n";
-    for (auto id: *intermediateCode.strings) {
+    for (auto id: intermediateCode.strings) {
         cout << "str_"<<id<<": .asciiz " << "\""<<IEntries.at(id)->str << "\""<< endl;
     }
     for (auto def:globalDefs) {
