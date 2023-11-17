@@ -13,7 +13,7 @@ extern vector<ICode *> mainICodes ;
 extern map<string, vector<ICode *>> otherFuncICodes;
 extern vector<ICode *>globalDef ;
 
-void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) {
+void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要已经values_Id处理好
     /*
      * 值传递  地址赋
      * TODO:需要对全局变量的分类讨论   局部变量也是    写入值编译时不确定时
@@ -383,10 +383,13 @@ IEntry * p_val = p;
 
                 /**
                  * 函数名标签  就是函数头的名字  形参的IEntry需要在中间代码就生成
+                 *  for (auto entry :entries) {
+                func->values_Id->push_back(entry->id);//传递的最终都是IEntry  值或地址！
+            }
                  */
             case FuncDef:
+                cout <<"_"<<src1->original_Name <<":\n";
                 cout << "#" << src1->original_Name << "部分: ";
-                cout << <<"";
                 for (auto id: *src1->values_Id) {
                     if(IEntries.at(id)->type == 0){
                         cout <<"value:@" << id <<" ";
@@ -395,6 +398,7 @@ IEntry * p_val = p;
                     }
                 }
                 cout << endl;
+
                 break;
                 /**
                  * 非全局变量的初始化定义

@@ -629,7 +629,7 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 }else{//没有参数的函数调用  src1函数定义头  src2函数参数IEntry  放在valueId
                     auto * params = new IEntry;
                     params->values_Id = new vector<int>;
-                    if (func->kind == FUNC_INT){
+                    if (func->kind == FUNC_INT){//空参数
                         intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
                     }else{
                         intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, nullptr);
@@ -657,13 +657,22 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 func_name = ident;
                 errorHandler.error_line = func_ident_line;//记录可能发生错误的行号
                 auto * find_func = IEntries.at(func->id);//这个是函数定义头
-                auto * params = new IEntry;//函数实参IEntry
+                auto * params = new IEntry;//函数实参IEntry  下面的id才是真正实在参数
                 auto *func_rParams = params->values_Id;//FIXME:values_address解决了有些值可能不是直接imm显示的
                 FuncRParams(func_ident_line,func_rParams);
                 if (WORD_TYPE != RPARENT){
                     //Error  缺少右括号）
                     errorHandler.Insert_Error(RPARENT_MISSING);
                 }else {
+                        //有参数的函数调用  src1函数定义头  src2函数参数IEntry  放在valueId
+                        params->values_Id = new vector<int>;
+                        //TODO:明确传的是啥
+                        //FParams->push_back(exp_iEntry->Id);//后端去拷贝assign
+                        if (func->kind == FUNC_INT){//空参数
+                            intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
+                        }else{
+                            intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, nullptr);
+                        }
                     PRINT_WORD;//PRINT )
                     GET_A_WORD;//point to next WORD
                 }
