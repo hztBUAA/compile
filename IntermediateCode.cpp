@@ -8,6 +8,7 @@ vector<ICode *> mainICodes ;
 map<string, vector<ICode *>> otherFuncICodes;
 vector<ICode *>globalDef ;
 vector<IEntry *> IEntries;
+int tempMemoryAddressTop = 268500992;
 
 int IEntry::generateId() {
     static int  id_generate = 0;

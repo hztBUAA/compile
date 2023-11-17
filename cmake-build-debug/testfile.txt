@@ -5,6 +5,8 @@
 int main(){
 //int t =  getint();
 //int arr[4] = {1,2,6,4};
+int ad[2] = {10,111};
+int a = ad[1]+1;
 int b = 1;
 b = 3;
 printf("hello!%d haha %dha",a,b);

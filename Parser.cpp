@@ -397,6 +397,7 @@ void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
         auto* _constExp = new IEntry;//true canGet 会在内部进行设置
         ConstExp(_constExp, value, isInOtherFunc);
         _constExp->startAddress = iEntry->startAddress + 4*nums;
+        _constExp->original_Name = iEntry->original_Name.append(to_string(nums));
         iEntry->values_Id->push_back(_constExp->Id);//值要不统一存到values中  定义时  因为你不知道是数组还是啥 TODO： imm是确定的中间变量再用？
         nums++;
     }
@@ -759,7 +760,6 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
             iEntry->has_return = lVal->has_return;
         }
         //不是赋值语句   需要将LVal找到的IEntry 传回上面 我现在不想用二级指针
-        iEntry->canGetValue = false;
     }
     if (!isLValInStmt)
         Print_Grammar_Output("<PrimaryExp>");
@@ -1615,6 +1615,7 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
         int value;
         auto *exp_iEntry = new IEntry;
         Exp(exp_iEntry, value, isInOtherFunc);//下放错误
+        exp_iEntry->original_Name = iEntry->original_Name.append(to_string(nums));
         exp_iEntry->startAddress = iEntry->startAddress + 4*nums;//TODo:设置MIPS中的地址  为MIPS服务
         iEntry->values_Id->push_back(exp_iEntry->Id);
         nums++;

@@ -57,7 +57,7 @@ enum IntermediateCodeType{
 
 class IEntry{
 private:
-    int tempMemoryAddressTop = 268500992;
+
 public:
     int Id;
     int type;//0定位元素 1维地址 2表示函数调用FuncCALL--
