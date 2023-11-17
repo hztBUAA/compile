@@ -126,6 +126,7 @@ str_5:  .asciiz   "ha"
         IEntry *src1 = ICode->src1;
         IEntry *src2 = ICode->src2;
         IEntry *dst= ICode->dst;
+        IEntry **dst_ptr = &dst;
         int cnt_param;//for printf_exp
 
         vector<int> *rParam_ids ;
@@ -307,19 +308,11 @@ syscall
                 if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
                     if (src1->canGetValue){//array就是数组首地址 index索引知道是第几个元素
                         index += src1->imm;
-                        if (IEntries.at(src2->values_Id->at(index))->canGetValue){
-                            dst->canGetValue = true;
-                            dst->imm = IEntries.at(src2->values_Id->at(index))->imm;
-                        }else{
-                            //TODO:如果本身是可以从get到的值  但是由于输入的原因？  这个应该怎么规避问题 ！！！
-                            //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
-                            dst->canGetValue = false;
-                            cout << "lw " << "$t0" << ", " << IEntries.at(src2->values_Id->at(index))->startAddress << "($zero)" << endl;
-                            cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
-                        }
-                    }else{//array就是数组首地址 index索引还不知道是第几个元素 即索引也是取决于getint  需要lw
-                        cout << "li " << "$t0" << ", " << src2->startAddress << endl;
+                        dst_ptr = &IEntries.at(src2->values_Id->at(index));
+                    }else{//array就是数组首地址 index索引还不知道是第几个元素 即索引也是取决于getint  需要lw   拿不到直接值  把*dst_ptr 拷贝地址  之后都会这样使用
+                         cout << "li " << "$t0" << ", " << src2->startAddress << endl;
                         cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        cout << "sll " << "$t1" << ", " << "$t1"<< ", 2" << endl;
                         cout << "addu " << "$t2" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
                         cout << "lw " << "$t3" << ", 0($t2)" << endl;
                         cout << "sw " << "$t3" << dst->startAddress << "($zero)" << endl;

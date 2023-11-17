@@ -99,6 +99,25 @@ void IntermediateCode::addDef(bool isGlobal, IntermediateCodeType type, IEntry *
         }
     }
 }
+//TODO:只用于GetArrayElement   取到父本
+void IntermediateCode::addICode(IntermediateCodeType type , IEntry *src1, IEntry *src2, IEntry **dst) {
+
+    iCode = new ICode();
+    iCode->type = type;
+    iCode->src1 = src1;
+    iCode->src2 = src2;
+    iCode->dst = *dst;
+    if (isInOtherFunc) {
+        if (otherFuncICodes.find(funcLabel) == otherFuncICodes.end()) {
+            otherFuncICodes.insert(pair<string, vector<ICode *>>(funcLabel, vector<ICode *>()));
+        }
+        otherFuncICodes.at(funcLabel).push_back(iCode);
+    } else {
+        mainICodes.push_back(iCode);
+    }
+}
+
+
 void IntermediateCode::addICode(IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry *dst) {
 
     iCode = new ICode();

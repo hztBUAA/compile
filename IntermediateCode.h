@@ -122,6 +122,7 @@ public:
     void addDef(bool isGlobal, IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry *dst);
 
     void addICode(IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry *dst);
+    void addICode(IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry **dst);
 
     void addICode(IntermediateCodeType type, int src1, IEntry *src2, IEntry *dst);
 
