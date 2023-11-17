@@ -14,6 +14,8 @@ using namespace std;
 string funcLabel;
 bool isInOtherFunc;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
 extern vector<ICode *> mainICodes ;
+extern vector<ICode *>globalDef ;
+extern int  tempMemoryAddressTop;
 void Parser::Print_Grammar_Output(const string& s) {
     if (enablePrint){
 
@@ -179,14 +181,13 @@ void Parser::VarDef(vector<Entry*> &entries) {
     }else if(op == 1){
         total_length = dim1_length = exp_iEntries[1]->imm;
         iEntry = new IEntry(total_length);
-        iEntry->dim1_length = dim1_length;
     }else if(op == 2){
         total_length = exp_iEntries[1]->imm*exp_iEntries[2]->imm;//FIXME；数组初始大小
         dim1_length = exp_iEntries[2]->imm;
         iEntry = new IEntry(total_length);
-        iEntry->dim1_length = dim1_length;
     }
-
+    iEntry->dim1_length = dim1_length;
+    iEntry->total_length = total_length;
     Entry * entry;
     switch (op) {
         case 0:
@@ -203,6 +204,7 @@ void Parser::VarDef(vector<Entry*> &entries) {
     }
     bool hasValue = false;
     nums = 0;
+    iEntry->original_Name = ident;
     if (WORD_TYPE == ASSIGN){
         hasValue = true;
         PRINT_WORD;
@@ -222,7 +224,7 @@ void Parser::VarDef(vector<Entry*> &entries) {
         if (ISGLOBAL){
             iEntry->isGlobal = true;//MIPS依据这个生成标签或者地址  lw  FIXME:标签采用   originalName_id：
         }
-        iEntry->original_Name = ident;
+
         if (hasValue){
             if (op == 0){
                 intermediateCode.addDef(ISGLOBAL,VAR_Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
@@ -309,6 +311,7 @@ void Parser::ConstDef(vector<Entry*>& entries) {
         op++;
         PRINT_WORD;
         GET_A_WORD;
+        exp_iEntries[op] = new IEntry;
         ConstExp(exp_iEntries[op],values[op],isInOtherFunc);
         if (WORD_TYPE == RBRACK){
             PRINT_WORD;
@@ -326,14 +329,15 @@ void Parser::ConstDef(vector<Entry*>& entries) {
         total_length = dim1_length = 1;
         iEntry = new IEntry;
     }else if(op == 1){
-        total_length = dim1_length = values[1];
+        total_length = dim1_length = exp_iEntries[1]->imm;
         iEntry = new IEntry(total_length);
     }else if(op == 2){
-        total_length = values[1]*values[2];//FIXME；数组初始大小
-        dim1_length = values[2];
+        total_length = exp_iEntries[1]->imm*exp_iEntries[2]->imm;//FIXME；数组初始大小
+        dim1_length = exp_iEntries[2]->imm;
         iEntry = new IEntry(total_length);
     }
-
+    iEntry->dim1_length = dim1_length;
+    iEntry->total_length = total_length;
     Entry * entry;
     switch (op) {
         case 0:
@@ -349,6 +353,7 @@ void Parser::ConstDef(vector<Entry*>& entries) {
             break;
     }
     nums = 0;
+    iEntry->original_Name = ident;
 //常量定义  必须赋值
     if (WORD_TYPE != ASSIGN){
         //Error
@@ -369,7 +374,7 @@ void Parser::ConstDef(vector<Entry*>& entries) {
         if(ISGLOBAL){
             iEntry->isGlobal = true;
         }
-        iEntry->original_Name = ident;
+
         if (op == 0){
             intermediateCode.addDef(ISGLOBAL,Const_Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
         }else{
@@ -396,13 +401,12 @@ void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
         }
         PRINT_WORD;//PRINT }
         GET_A_WORD;
-        iEntry->dim1_length = nums;
     }else{
         int value;
         auto* _constExp = new IEntry;//true canGet 会在内部进行设置
         ConstExp(_constExp, value, isInOtherFunc);
         _constExp->startAddress = iEntry->startAddress + 4*nums;
-        _constExp->original_Name = iEntry->original_Name.append(to_string(nums));
+        _constExp->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
         iEntry->values_Id->push_back(_constExp->Id);//值要不统一存到values中  定义时  因为你不知道是数组还是啥 TODO： imm是确定的中间变量再用？
         nums++;
     }
@@ -1221,6 +1225,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             if(WORD_TYPE == RBRACK){
                 //ERROR  二维数组 最后一维需要常数
             }
+            exp_iEntrys[op] = new IEntry;
             ConstExp(exp_iEntrys[op],values[2],isInOtherFunc);
             //FIXME:无关紧要  实参拷贝到形参时默认是正确的通过实参就可以断定type
             if(WORD_TYPE != RBRACK){
@@ -1247,7 +1252,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             kind = ARRAY_2_VAR;
         }
         INFO_ENTRY = semantic.fillInfoEntry(ident,kind);
-        INFO_ENTRY->id = (new IEntry)->Id;//FIXME：函数形参站住位置
+        INFO_ENTRY->id = (new IEntry)->Id;//TODo：函数形参站住位置  类似于定义变量！！！
         arguments.push_back(INFO_ENTRY);
         semantic.recordEntries(INFO_ENTRY);
     }
@@ -1617,12 +1622,11 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
             PRINT_WORD;//PRINT }
             GET_A_WORD;
         }
-        iEntry->dim1_length = nums;
     }else{
         int value;
         auto *exp_iEntry = new IEntry;
         Exp(exp_iEntry, value, isInOtherFunc);//下放错误
-        exp_iEntry->original_Name = iEntry->original_Name.append(to_string(nums));
+        exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
         exp_iEntry->startAddress = iEntry->startAddress + 4*nums;//TODo:设置MIPS中的地址  为MIPS服务
         iEntry->values_Id->push_back(exp_iEntry->Id);
         nums++;

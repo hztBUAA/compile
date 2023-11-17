@@ -74,44 +74,44 @@ str_5:  .asciiz   "ha"
         //TODO:名字需要注意  是否在语法分析时准备好名字
         switch (type) {
             case VAR_Def_Has_Value:
-                cout<< "var_@"+ to_string(def->src1->Id) <<":  .word  " ;
+                cout<< "var_"+ def->src1->original_Name <<":  .word  " ;
                 for (auto id_init_value:*(def->src1->values_Id)) {
                     cout << IEntries.at(id_init_value )->imm<< " ";
                 }
                 cout << endl;
                 break;
             case VAR_Def_No_Value:
-                cout<< "var_@"+ to_string(def->src1->Id) <<":  .word  " ;
+                cout<< "var_"+ def->src1->original_Name <<":  .word  " ;
                 for (int i = 0;i<def->src1->total_length;i++) { //单个普通全局变量
                     cout << "0 ";//此时输出值也会是0 在语法分析部分进行了判断补充
                 }
                 cout << endl;
                 break;
             case ARRAY_VAR_Def_Has_Value:
-                cout<< "array_@"+ to_string(def->src1->Id) <<":  .word  " ;
+                cout<< "array_"+ def->src1->original_Name <<":  .word  " ;
                 for (auto id_init_value:*(def->src1->values_Id)) {
                     cout << IEntries.at(id_init_value)->imm << " ";
                 }
                 cout << endl;
                 break;
             case ARRAY_Def_No_Value:
-                cout<< "array_@"+ to_string(def->src1->Id) <<":  .word  " ;
+                cout<< "array_"+ def->src1->original_Name <<":  .word  " ;
                 for (int i = 0;i<def->src1->total_length;i++) {
                     cout << "0 ";
                 }
                 cout << endl;
                 break;
             case Const_Def_Has_Value:
-                cout<< "const_@"+ to_string(def->src1->Id) <<":  .word  " ;
-                for (auto init_value:*(def->src1->values)) {
-                    cout << init_value << " ";
+                cout<< "const_"+ def->src1->original_Name <<":  .word  " ;
+                for (auto id_value:*(def->src1->values_Id)) {
+                    cout << IEntries.at(id_value)->imm << " ";
                 }
                 cout << endl;
                 break;
             case ARRAY_CONST_Def_Has_Value:
-                cout<< "array_@"+ to_string(def->src1->Id) <<":  .word  " ;
-                for (auto init_value:*(def->src1->values)) {
-                    cout <<init_value << " ";
+                cout<< "array_"+ def->src1->original_Name <<":  .word  " ;
+                for (auto id_value:*(def->src1->values_Id)) {
+                    cout <<IEntries.at(id_value)->imm << " ";
                 }
                 cout << endl;
                 break;
@@ -386,6 +386,7 @@ IEntry * p_val = p;
                  */
             case FuncDef:
                 cout << "#" << src1->original_Name << "部分: ";
+                cout << <<"";
                 for (auto id: *src1->values_Id) {
                     if(IEntries.at(id)->type == 0){
                         cout <<"value:@" << id <<" ";

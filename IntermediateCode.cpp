@@ -125,7 +125,6 @@ void IntermediateCode::addICode(IntermediateCodeType type, IEntry *src1, IEntry 
 //TODO:dst需要运行时才知道value了   dst确保进入时已经new过
 void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src2, IEntry *dst) {
     iCode = new ICode();
-    dst->canGetValue = false;
     iCode->type = type;
     auto* s1 = new IEntry;
     s1->canGetValue = true;
