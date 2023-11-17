@@ -100,6 +100,8 @@ void IntermediateCode::addDef(bool isGlobal, IntermediateCodeType type, IEntry *
     }
 }
 
+
+
 void IntermediateCode::addICode(IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry *dst) {
 
     iCode = new ICode();
@@ -161,5 +163,9 @@ void IntermediateCode::debug_print() {
 
         }
     }
+}
+
+IntermediateCode::IntermediateCode() {
+    this->strings  = new vector<int>;
 }
 

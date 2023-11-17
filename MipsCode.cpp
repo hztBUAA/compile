@@ -45,8 +45,6 @@ void MipsCode::translate() const {
     vector<ICode *> mainCodes = intermediateCode.mainICodes;
     map<string, vector<ICode *>> otherFuncICodes = intermediateCode.otherFuncICodes;
     vector<ICode *> globalDefs = intermediateCode.globalDef;
-    vector<int >  inter_strings = intermediateCode.strings;
-    vector<int >* strings = &inter_strings;
 
     /**
      * 输出全局的变量定义data段  以及全局变量的初始化
@@ -62,7 +60,7 @@ str_5:  .asciiz   "ha"
 
      */
      cout<<"#strings in printf\n";
-    for (auto id: *strings) {
+    for (auto id: *intermediateCode.strings) {
         cout << "str_"<<id<<": .asciiz " << "\""<<IEntries.at(id)->str << "\""<< endl;
     }
     for (auto def:globalDefs) {
