@@ -13,7 +13,7 @@ using namespace std;
 
 string funcLabel;
 bool isInOtherFunc;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
-
+extern vector<ICode *> mainICodes ;
 void Parser::Print_Grammar_Output(const string& s) {
     if (enablePrint){
 
@@ -1525,7 +1525,7 @@ void Parser::Stmt() {
             //LVal
             //Exp
             //TODO:Exp
-            IEntry *exp_iEntry;
+            auto *exp_iEntry = new IEntry;
             int value;
             Exp(exp_iEntry,value,isInOtherFunc);
             if(WORD_TYPE != SEMICN){

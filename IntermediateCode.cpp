@@ -86,7 +86,7 @@ string IntermediateCode::iCode2str(ICode *iCode) {
 
 void IntermediateCode::addDef(bool isGlobal, IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry *dst) {
     iCode = new ICode();
-    dst = new IEntry;//最后翻译时 会根据约定的IEntryType去使用IEntry
+//    dst = new IEntry;//最后翻译时 会根据约定的IEntryType去使用IEntry
     iCode->type = type;
     iCode->src1 = src1;
     iCode->src2 = src2;
@@ -108,7 +108,6 @@ void IntermediateCode::addDef(bool isGlobal, IntermediateCodeType type, IEntry *
 void IntermediateCode::addICode(IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry *dst) {
 
     iCode = new ICode();
-    dst = new IEntry;//最后翻译时 会根据约定的IEntryType去使用IEntry
     iCode->type = type;
     iCode->src1 = src1;
     iCode->src2 = src2;
