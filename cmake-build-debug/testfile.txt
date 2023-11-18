@@ -1,21 +1,5 @@
-void fun1() {
-    return;
-}
-
-int fun2(int x) {
-    int a = 0;
-    return 114514;
-}
 
 int fun3(int a[], int b[][4]) {
     return a[1]+b[1][1];//8
 }
 
-int main() {
-int arr2[2][4] = {{1, 2, 3, 4}, {5, 6, 7, 8}};
-int t;
-t = fun3(arr2[0], arr2);
-printf("t = %d\n",t);
-
-    return 0;
-}
