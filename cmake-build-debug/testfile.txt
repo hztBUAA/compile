@@ -19,16 +19,12 @@ return n+a+b;
 }
 int main(){
 int a;
-a=fun1();
-printf("1_a = %d\n",a);
-a = getint();
-printf("2_a = %d\n",a);
 
-printf("1——fun5() = %d\n",fun5(10,11,12));
-printf("2——fun5() = %d\n",fun5(11,11,12));
-printf("3——fun5() = %d\n",fun5(n,11,12));
-printf("4——fun5() = %d\n",fun5(10,11,nnn[0][1]));
-printf("5——fun5() = %d\n",fun5(10,nnnn[0][3],12));
+
+
+printf("3_fun5() = %d\n",fun5(n,(fun1()+2*3),12));
+printf("4_fun5() = %d\n",fun5(10,11,nnn[0][0]));
+printf("5_fun5() = %d\n",fun5(10,nnnn[0][3],nn[0]));
 
 
 return 0;
