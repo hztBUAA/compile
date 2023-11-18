@@ -660,17 +660,18 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 errorHandler.error_line = func_ident_line;//记录可能发生错误的行号
                 auto * find_func = IEntries.at(func->id);//这个是函数定义头
                 auto * params = new IEntry;//函数实参IEntry  下面的id才是真正实在参数
+                params->values_Id = new vector<int>;
                 auto *func_rParams = params->values_Id;//FIXME:values_address解决了有些值可能不是直接imm显示的
+
                 FuncRParams(func_ident_line,func_rParams);
                 if (WORD_TYPE != RPARENT){
                     //Error  缺少右括号）
                     errorHandler.Insert_Error(RPARENT_MISSING);
                 }else {
                         //有参数的函数调用  src1函数定义头  src2函数参数IEntry  放在valueId
-                        params->values_Id = new vector<int>;
                         //TODO:明确传的是啥
                         //FParams->push_back(exp_iEntry->Id);//后端去拷贝assign
-                        if (func->kind == FUNC_INT){//空参数
+                        if (func->kind == FUNC_INT){
                             intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
                         }else{
                             intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, nullptr);
@@ -1055,7 +1056,7 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *FParams) {
         already_error_func_count = true;
     }
     errorHandler.error_type = NORMAL;//先清除之前的  只在第一个实参前这样
-    IEntry * exp_iEntry;
+    auto * exp_iEntry = new IEntry;
     int value;
     Exp(exp_iEntry, value, true);//里面进行实参的未定义报错
     if(func != nullptr&& !already_error_func_count&&!already_error_func_type){//如果函数是未定义的函数 也就不需要检查实参的两种类型错误
@@ -1076,6 +1077,7 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *FParams) {
     while(WORD_TYPE == COMMA){
         PRINT_WORD;
         GET_A_WORD;
+        exp_iEntry = new IEntry;
         Exp(exp_iEntry,value,isInOtherFunc);
         if(func != nullptr && !already_error_func_count&&!already_error_func_type&& errorHandler.error_type != NOT_DEFINE){
             if(cnt >= FArguments.size()){//实际调用参数多
@@ -1091,8 +1093,8 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *FParams) {
                 already_error_func_type = true;
             }
         }
-//        FParams->push_back(exp_iEntry->Id);
-        intermediateCode.addICode(Assign, exp_iEntry,nullptr,IEntries.at(FParams->at(cnt-1)));
+        FParams->push_back(exp_iEntry->Id);
+        ;
     }
     if(cnt < FArguments.size() &&!already_error_func_type&&!already_error_func_count&& func != nullptr){//实际调用参数少
         errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);//不会出现一行两个错误 既有
@@ -1131,6 +1133,7 @@ void Parser::FuncDef(Kind func_type) {
         INFO_ENTRY->id = func->Id;//后续被引用时才知道是这个IEntry的函数头
         semantic.recordEntries(INFO_ENTRY);
         if (WORD_TYPE == RPARENT){
+            intermediateCode.addICode(IntermediateCodeType::FuncDef,func, nullptr, nullptr);
             PRINT_WORD;
             GET_A_WORD;//point to {
         }else{
@@ -1160,6 +1163,9 @@ void Parser::FuncDef(Kind func_type) {
                 //ERROR
                 errorHandler.Insert_Error(RPARENT_MISSING);
             }else{
+                if (func->has_return ){
+                    func->return_IEntry = new IEntry;
+                }
                 intermediateCode.addICode(IntermediateCodeType::FuncDef,func, nullptr, nullptr);
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
@@ -1269,12 +1275,13 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             kind = ARRAY_2_VAR;
         }
         auto * rParam = new IEntry;
+       //TODo：函数形参站住位置  指向的是定义本身不是值本身 类似于定义变量！！！
         INFO_ENTRY = semantic.fillInfoEntry(ident,kind);
+        INFO_ENTRY->id = rParam->Id;
         rParam->original_Name = ident;
         rParam->values_Id = new vector<int>;
         auto * _val = new Entry;//存储实参的具体值！地址
         rParam->values_Id->push_back(_val->id);
-        INFO_ENTRY->id = rParam->Id;//TODo：函数形参站住位置  指向的是定义本身不是值本身 类似于定义变量！！！
         arguments.push_back(INFO_ENTRY);
         semantic.recordEntries(INFO_ENTRY);
     }

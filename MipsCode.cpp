@@ -375,12 +375,12 @@ IEntry * p_val = p;
                      */
             //TODO:函数的格式理解  sp  压栈~虚拟？  IEntry:has_return?
             case FuncCall:
-                rParam_ids = src2->values_Id;
-                fParam_ids = src1->values_Id;
-                if (rParam_ids->size() != fParam_ids->size()){
-                    cout << "error!!!!\n";
+                rParam_ids = src2->values_Id;//point to value
+                fParam_ids = src1->values_Id;//point to def
+                if (rParam_ids->size() != fParam_ids->size()) {
+                    cout << "error!!!!  rParam_ids->size() = "<<rParam_ids->size()<<"fParam_ids->size() = "<<fParam_ids->size()<<"\n";
                 }
-                cout << "#调用函数" << src1->original_Name << ": ";
+                cout << "#调用函数" << src1->original_Name << ":\n ";
                 for (int i = 0; i < rParam_ids->size();i++){
                     assign(IEntries.at(rParam_ids->at(i)), nullptr,IEntries.at(IEntries.at(fParam_ids->at(i))->values_Id->at(0)));
                 }
@@ -404,7 +404,10 @@ addiu $sp, $sp, 30000
                 cout << "addiu $sp, $sp, 4\n";
                 cout <<"lw $ra, 0($sp)\n";
                 //函数返回值在v0中  要sw
-                cout << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)" << endl;//src2 = IEntries.at(func->id)
+//                cout << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)" << endl;//src2 = IEntries.at(func->id)
+                if (dst != nullptr){
+                    cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
+                }
                 break;
 
                 /**
@@ -510,7 +513,7 @@ addiu $sp, $sp, 30000
     cout<<"#自定义函数main的代码ICode\n";
     for (auto func_codes:otherFuncICodes) {
 
-        cout << "_" << func_codes.first << ":\n";
+//        cout << "_" << func_codes.first << ":\n";  第一行总是函数的定义头
         for (auto ICode: func_codes.second) {
             IntermediateCodeType type = ICode->type;
             IEntry *src1 = ICode->src1;
@@ -773,9 +776,9 @@ addiu $sp, $sp, 30000
                     rParam_ids = src2->values_Id;
                     fParam_ids = src1->values_Id;
                     if (rParam_ids->size() != fParam_ids->size()) {
-                        cout << "error!!!!\n";
+                        cout << "error!!!!  rParam_ids->size() = "<<rParam_ids->size()<<"fParam_ids->size() = "<<fParam_ids->size()<<"\n";
                     }
-                    cout << "#调用函数" << src1->original_Name << ": ";
+                    cout << "#调用函数" << src1->original_Name << ": \n";
                     for (int i = 0; i < rParam_ids->size(); i++) {
                         assign(IEntries.at(rParam_ids->at(i)), nullptr,
                                IEntries.at(IEntries.at(fParam_ids->at(i))->values_Id->at(0)));
@@ -800,7 +803,7 @@ addiu $sp, $sp, 30000
                     cout << "addiu $sp, $sp, 4\n";
                     cout << "lw $ra, 0($sp)\n";
                     //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
-                    cout << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
+//                    cout << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
                     if (dst != nullptr){
                         cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
                     }
