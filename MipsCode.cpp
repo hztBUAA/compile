@@ -492,8 +492,8 @@ addiu $sp, $sp, 30000
                 break;
             case Const_Def_Has_Value:
                 cout<< "#const_@"+ to_string(ICode->src1->Id) <<"_"+src1->original_Name<<"_def:  " ;
-                for (auto init_value:*(src1->values)) {
-                    cout<<init_value<<" ";
+                for (auto init_id:*(src1->values_Id)) {
+                    cout<<IEntries.at(init_id)->imm<<" ";
                 }
                 cout<<endl;
                 for (auto id_init_value:*(src1->values_Id)) {
@@ -507,8 +507,8 @@ addiu $sp, $sp, 30000
                 break;
             case ARRAY_CONST_Def_Has_Value:
                 cout<< "#array_const@"+ to_string(ICode->src1->Id)<<"_"+src1->original_Name <<"def   " ;
-                for (auto init_value:*(src1->values)) {
-                    cout<<init_value<<" ";
+                for (auto init_id:*(src1->values_Id)) {
+                    cout<<IEntries.at(init_id)->imm<<" ";
                 }
                 cout<<endl;
                 break;

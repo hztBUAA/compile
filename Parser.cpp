@@ -361,6 +361,7 @@ void Parser::ConstDef(vector<Entry*>& entries) {
         PRINT_WORD;
         GET_A_WORD;
         //FIXME:这里的iEntry可以作为存放初值  --数组  --普通变量
+        iEntry->values_Id = new vector<int>;
 //        iEntry->values = new vector<int>;
         ConstInitVal(iEntry,nums);
     }
