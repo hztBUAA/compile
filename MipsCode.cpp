@@ -21,14 +21,9 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
      * */
     cout << "#assign" << endl;
     if (src1->type == 0){
-        if (src1->canGetValue){
-            dst->canGetValue = true;
-            dst->imm = src1->imm;
-        }else{
             cout << "lw " << "$t0, " << src1->startAddress<<"($zero)"<<endl;
             cout << "sw " << "$t0, " << dst->startAddress<<"($zero)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的
             dst->canGetValue =  false;//后台更新
-        }
     }else{
         dst->canGetValue = false;
         dst->values_Id = src1->values_Id;

@@ -1154,7 +1154,7 @@ void Parser::FuncDef(Kind func_type) {
         if(WORD_TYPE == INTTK){
             FuncFParams(entries);
             //指向）
-            //FIXME:将IEntry的对应形参存储完善
+            //FIXME:将IEntry的对应形参存储完善!!!!
             for (auto entry :entries) {
                 func->values_Id->push_back(entry->id);
             }
@@ -1280,8 +1280,8 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
         INFO_ENTRY->id = rParam->Id;
         rParam->original_Name = ident;
         rParam->values_Id = new vector<int>;
-        auto * _val = new Entry;//存储实参的具体值！地址
-        rParam->values_Id->push_back(_val->id);
+        auto * _val = new IEntry;//存储实参的具体值！地址
+        rParam->values_Id->push_back(_val->Id);
         arguments.push_back(INFO_ENTRY);
         semantic.recordEntries(INFO_ENTRY);
     }
