@@ -413,8 +413,9 @@ addiu $sp, $sp, 30000
                 //call function
                 cout << "jal " << "_" << src1->original_Name << endl;
                 //ra 出栈
-                cout << "addiu $sp, $sp, 4\n";
                 cout <<"lw $ra, 0($sp)\n";
+                cout << "addiu $sp, $sp, 4\n";
+
                 //函数返回值在v0中  要sw
 //                cout << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)" << endl;//src2 = IEntries.at(func->id)
                 if (dst != nullptr){
@@ -812,8 +813,9 @@ addiu $sp, $sp, 30000
                     //call function
                     cout << "jal " << "_" << src1->original_Name << endl;
                     //ra 出栈
-                    cout << "addiu $sp, $sp, 4\n";
+
                     cout << "lw $ra, 0($sp)\n";
+                    cout << "addiu $sp, $sp, 4\n";
                     //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
 //                    cout << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
                     if (dst != nullptr){
