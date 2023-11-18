@@ -862,7 +862,7 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
         if (op == 2){
             if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
                 index = array_exps[1]->imm*dim1_length + array_exps[2]->imm;
-                *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(index));
+                intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),*iEntry);
             }else{
                 if (array_exps[1]->canGetValue){
                     int t = array_exps[1]->imm*dim1_length;
@@ -882,12 +882,7 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
                 }
             }//FIXME:数组定义时的IEntry （src2）   偏移index（不乘4）index_entry-》能get就get 不能就lw address
         }else if(op == 1){//FIXME:可能you缺漏
-            if(array_exps[1]->canGetValue) {
-                index = array_exps[1]->imm;
-                *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(index));
-            }else{
-                intermediateCode.addICode(GetArrayElement,array_exps[1],IEntries.at(find->id),*iEntry);
-            }
+            intermediateCode.addICode(GetArrayElement,array_exps[1],IEntries.at(find->id),*iEntry);
         }else{//TODO:统一都在values_Id
             *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(index));
         }
@@ -897,10 +892,7 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
          * 重新生成一个IEntry   用来表示内存位置
          * TODO:先不考虑烦人的array找不到对应的值的情况---需要进一步生成index的中间代码
          */
-
          if(op == 1){
-           *iEntry =  IEntries.at(find->id);
-         }else if(op == 2){  //arr[2][3]二维数组  形参是arr[2] 要在iEntry新建  甚至可能是arr[t]  t编译时不清楚
              if (array_exps[1]->canGetValue){//TODO 重新生成一个带地址offset的克隆版
                  index = dim1_length *array_exps[1]->imm;
                  (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
@@ -919,7 +911,8 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
 //                 iEntry->offset_IEntry->imm = index;//index 以数组下标作为索引
                  (*iEntry)->type = 1;
              }
-
+         }else if(op == 0){  //arr[2][3]二维数组  形参是arr[2] 要在iEntry新建  甚至可能是arr[t]  t编译时不清楚
+             *iEntry =  IEntries.at(find->id);
          }
     }else{ // 二级地址要小心 TODO: 形参的ConstExp是有用的  const不能作为数组参数！！！ 所以只用伪造valuesID
         //2维地址  伪造iEntry数组 不认为是type = 1
@@ -1223,6 +1216,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
 
     IEntry*exp_iEntrys[3];
     int values[3];
+    IEntry *rParam;
     PRINT_WORD;//PRINT IDENT
     GET_A_WORD;
     if(WORD_TYPE != LBRACK){
@@ -1274,19 +1268,37 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
         Kind kind;
         if (op == 0){
             kind = VAR;
+            rParam = new IEntry;
+            rParam->type = 1;
+            rParam->values_Id = new vector<int>;
+            rParam->original_Name = ident;
+            rParam->values_Id->push_back((new IEntry)->Id);//new IEntry存放值
         }else if(op == 1){
             kind = ARRAY_1_VAR;//关于kind 类型匹配 需要放宽 const常量  int变量？说明：常量数组不允许加到参数中  所以都是VAR类型即可
+            rParam = new IEntry();
+            rParam->type = 1;
+            rParam->values_Id = new vector<int>;
+            rParam->original_Name = ident;
+            IEntry * v;
+            v->type = 1;
+            rParam->values_Id->push_back((v = new IEntry)->Id);
+            rParam->offset_IEntry = new IEntry;
+            //new IEntry存放地址
         }else{
             kind = ARRAY_2_VAR;
+            rParam = new IEntry();
+            rParam->values_Id = new vector<int>;
+            rParam->original_Name = ident;
+            IEntry * v;
+            rParam->values_Id->push_back((v = new IEntry)->Id);
+            v->type =1;
+            rParam->offset_IEntry = new IEntry;
+            rParam->type = 1;
         }
-        auto * rParam = new IEntry;
+
        //TODo：函数形参站住位置  指向的是定义本身不是值本身 类似于定义变量！！！
         INFO_ENTRY = semantic.fillInfoEntry(ident,kind);
         INFO_ENTRY->id = rParam->Id;
-        rParam->original_Name = ident;
-        rParam->values_Id = new vector<int>;
-        auto * _val = new IEntry;//存储实参的具体值！地址
-        rParam->values_Id->push_back(_val->Id);
         arguments.push_back(INFO_ENTRY);
         semantic.recordEntries(INFO_ENTRY);
     }
