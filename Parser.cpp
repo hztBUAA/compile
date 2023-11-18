@@ -1412,7 +1412,7 @@ void Parser::Stmt() {
                         }
                         temp = temp->Father_Entry;
                     }
-
+                    exp = new IEntry;
                     Exp(exp,exp_value,isInOtherFunc);//错误下放
                     if (WORD_TYPE != SEMICN){
                         //ERROR
