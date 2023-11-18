@@ -1403,6 +1403,7 @@ void Parser::Stmt() {
             PRINT_WORD;//PRINT RETURN
             GET_A_WORD;
             if(WORD_TYPE == SEMICN){
+                intermediateCode.addICode(IntermediateCodeType::Return, nullptr, nullptr, nullptr);//void函数返回
                 PRINT_WORD;//PRINT ;
                 GET_A_WORD;//return；空
             }else{//如果是另起一行 并不算return后缺少分号
