@@ -1,31 +1,7 @@
- int n=1;
- int nn[1]={2};
- int nnn[1][1]={{3}};
- int nnnn[1][4]={{4,5,6,7}};
-int fun1(){
-return 1+9+100;
-}
-int fun2(){
-return n+nn[0];
-}
-int fun3(){
-return nnn[0][0]+nn[0];
-}
-int fun4(){
-return nnnn[0][0]+nn[0];
-}
-int fun5(int a,int b,int n){
-return n+a+b;
-}
+int test;
 int main(){
-int a;
-
-
-
-printf("3_fun5() = %d\n",fun5(n,(fun1()+2*3),12));
-printf("4_fun5() = %d\n",fun5(10,11,nnn[0][0]));
-printf("5_fun5() = %d\n",fun5(10,nnnn[0][3],nn[0]));
-
-
-return 0;
+    printf("Hello World\n");
+    test = getint();
+    printf("%d",test);
+    return 0;
 }

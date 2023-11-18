@@ -7,11 +7,18 @@
 #include <string>
 #include "IntermediateCode.h"
 #include "MipsCode.h"
+#include <fstream>
 
 using namespace std;
 extern vector<ICode *> mainICodes ;
 extern map<string, vector<ICode *>> otherFuncICodes;
 extern vector<ICode *>globalDef ;
+ofstream mipsCodeFile("mipsCode.txt");
+
+
+
+
+
 
 void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要已经values_Id处理好
     /*
@@ -45,18 +52,23 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
 
 
 void MipsCode::translate() const {
+// 创建一个ofstream对象
+    std::ofstream outputFile("mips.txt");
 
-//    vector<ICode *> *mainCodes = &intermediateCode.mainICodes;
-//    map<string, vector<ICode *>> *otherFuncICodes = &intermediateCode.otherFuncICodes;
-//    vector<ICode *> *globalDefs = &intermediateCode.globalDef;
-//    vector<int > * strings = intermediateCode.strings;
+// 保存cout的原始缓冲区指针
+    std::streambuf* coutBuffer = std::cout.rdbuf();
+
+// 将cout的流重定向到outputFile
+    std::cout.rdbuf(outputFile.rdbuf());
+
 
     /**
      * 输出全局的变量定义data段  以及全局变量的初始化
      */
-    cout << ".data 0x10010000\n";
+//    cout << ".data 0x10010000\n";
+    cout << ".data \n";
 
-    cout << "temp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
+//    cout << "temp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
     /**字符串区
 # string tokens:
 str_1:  .asciiz   "hello!"
