@@ -426,7 +426,8 @@ void Parser::ConstExp(IEntry *iEntry,int&value,bool InOtherFunc) {
 //认为iEntry由下一级反馈  如果是空 说明值已经算出来放进了value   非空说明值为临时变量
 void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
     int value1,value2;
-    auto*iEntry1 = new IEntry ,*iEntry2 = new IEntry;
+    IEntry*iEntry1 ,*iEntry2 ;
+    iEntry1 = new IEntry;
     //TODO:理解iEntry的原理
     MulExp(iEntry1, value1, iInOtherFunc);
 
@@ -441,6 +442,7 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
                 Print_Grammar_Output("<AddExp>");
             PRINT_WORD;//print + -
             GET_A_WORD;
+            iEntry2 = new IEntry;
             MulExp(iEntry2, value2, iInOtherFunc);
             if (op == 0){
                 if (iEntry1->canGetValue &&  iEntry2->canGetValue){
@@ -484,8 +486,9 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
 //MulExp →UnaryExp [*/%] {UnaryExp}
 void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
     int value1,value2;
-    auto*iEntry1 = new IEntry ,*iEntry2 = new IEntry;
+     IEntry *iEntry1, *iEntry2;
     IEntry * ans;
+    iEntry1 = new IEntry;
     UnaryExp(iEntry1, value1, InOtherFunc);
     if (WORD_TYPE == MULT || WORD_TYPE == DIV || WORD_TYPE == MOD){
         Exp_type = 0;
@@ -510,6 +513,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                 Print_Grammar_Output("<MulExp>");
             PRINT_WORD;//print the */%
             GET_A_WORD;
+            iEntry2 = new IEntry;
             UnaryExp(iEntry2, value2, InOtherFunc);
             if (op == 0){
                 if (iEntry1->canGetValue &&  iEntry2->canGetValue){
@@ -1728,6 +1732,7 @@ void Parser::UnaryOp(int &op) {
     Print_Grammar_Output("<UnaryOp>");
 }
 
+//TODO:  _addExp使用前自己一个一个new
 //RelExp-> AddExp {(< > <= >=) AddExp}
 void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
     IEntry *_addExp1,*_addExp2;
