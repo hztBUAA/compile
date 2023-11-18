@@ -364,6 +364,17 @@ IEntry * p_val = p;
                 }
                 break;
             }
+            case Return:{
+                if (src1!= nullptr){
+                    if (src1->canGetValue){
+                        cout << "li " << "$v0" << ", " << src1->imm << endl;
+                    }else{
+                        cout << "lw " << "$v0" << ", " << src1->startAddress << "($zero)" << endl;
+                    }
+                }
+                cout << "jr" << "$ra" << endl;
+                break;
+            }
                 /**
                      * 将实参的  值 地址 按格式给形参   IN src1->valuesId  存储了对应的形参时生成的IEntry
                      */
@@ -376,9 +387,29 @@ IEntry * p_val = p;
                 }
                 cout << "#调用函数" << src1->original_Name << ": ";
                 for (int i = 0; i < rParam_ids->size();i++){
-                    assign(IEntries.at(rParam_ids->at(i)), nullptr,IEntries.at(fParam_ids->at(i)));
+                    assign(IEntries.at(rParam_ids->at(i)), nullptr,IEntries.at(IEntries.at(fParam_ids->at(i))->values_Id->at(0)));
                 }
                 cout << endl;
+                /**
+                 * # Pushing Function Real Params:
+addiu $sp, $sp, -30000
+sw $ra, 0($sp)
+# Call function!
+jal Label_1
+lw $ra, 0($sp)
+# Pop params
+addiu $sp, $sp, 30000
+                 */
+                //ra 在sp中压栈
+                cout << "addiu $sp, $sp, -4\n";
+                cout <<"sw $ra, 0($sp)\n";
+                //call function
+                cout << "jal " << "_" << src1->original_Name << endl;
+                //ra 出栈
+                cout << "addiu $sp, $sp, 4\n";
+                cout <<"sw $ra, 0($sp)\n";
+                //函数返回值在v0中  要sw
+                cout << "sw " << "$v0" << ", " << src2->return_IEntry->startAddress << "($zero)" << endl;//src2 = IEntries.at(func->id)
                 break;
 
                 /**
@@ -388,7 +419,7 @@ IEntry * p_val = p;
             }
                  */
             case FuncDef:
-                cout <<"_"<<src1->original_Name <<":\n";
+                cout <<"_"<<src1->original_Name <<":\n";//函数名标签
                 cout << "#" << src1->original_Name << "部分: ";
                 for (auto id: *src1->values_Id) {
                     if(IEntries.at(id)->type == 0){
@@ -398,7 +429,6 @@ IEntry * p_val = p;
                     }
                 }
                 cout << endl;
-
                 break;
                 /**
                  * 非全局变量的初始化定义

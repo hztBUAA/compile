@@ -39,6 +39,7 @@ enum IntermediateCodeType{
     GetArrayElement,
     FuncCall,//调用时要进行参数压栈和临时内存上堆
     FuncDef,//定义函数时 形式参数需要当成local定义   进入符号表生成Entry的同时生成IEntry 并记录两者的映射
+Return,
 };
 
 
@@ -81,6 +82,7 @@ public:
     //--------FuncDef------
     //FIXME:函数形参 需要留好位置IEntry并与Entry进行映射   函数调用时 会将实参对应IEntry（已经放进函数调用中间代码的IEntry中的value_Id）的数据Assign到形参区有后端完成
     bool has_return{};
+    IEntry * return_IEntry;//函数返回值的IEntry，函数定义时生成new  就是值的IEntry
     string original_Name;
 
     //------printf-------//

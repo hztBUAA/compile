@@ -630,8 +630,10 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                     auto * params = new IEntry;
                     params->values_Id = new vector<int>;
                     if (func->kind == FUNC_INT){//空参数
+                        iEntry->canGetValue = false;
+                        iEntry->startAddress = IEntries.at(func->id)->return_IEntry->startAddress;//地址赋值 类似拷贝
                         intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
-                    }else{
+                    }else{//此时iEntry没用
                         intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, nullptr);
                     }
                 }
@@ -1120,6 +1122,10 @@ void Parser::FuncDef(Kind func_type) {
         //no FUNCFParams
         INFO_ENTRY = semantic.fillInfoEntry(ident,func_type);//空参数
         func->has_return = func_type == FUNC_INT;
+        func->original_Name = ident;
+        if (func->has_return ){
+            func->return_IEntry = new IEntry;
+        }
         func->values_Id = new vector<int>;
         INFO_ENTRY->fParams = new vector<Entry *>;
         INFO_ENTRY->id = func->Id;//后续被引用时才知道是这个IEntry的函数头
@@ -1136,6 +1142,7 @@ void Parser::FuncDef(Kind func_type) {
     }else{
         INFO_ENTRY = semantic.fillInfoEntry(ident,func_type);
         func->has_return = func_type == FUNC_INT;
+        func->original_Name = ident;
         func->values_Id = new vector<int>;
         INFO_ENTRY->id = func->Id;
         semantic.recordEntries(INFO_ENTRY);
@@ -1146,8 +1153,9 @@ void Parser::FuncDef(Kind func_type) {
             //指向）
             //FIXME:将IEntry的对应形参存储完善
             for (auto entry :entries) {
-                func->values_Id->push_back(entry->id);//传递的最终都是IEntry  值或地址！
+                func->values_Id->push_back(entry->id);
             }
+            func->original_Name = ident;
             if(WORD_TYPE != RPARENT){
                 //ERROR
                 errorHandler.Insert_Error(RPARENT_MISSING);
@@ -1167,7 +1175,6 @@ void Parser::FuncDef(Kind func_type) {
     }
     tableManager.cur->entries->erase("main");//如果是重定义的函数 需要抹掉它
     //TODO:FuncCall中间代码 FIXME：完成FuncCALL   src1为函数头
-    func->original_Name = ident;
     intermediateCode.addICode(IntermediateCodeType::FuncDef,func, nullptr, nullptr);
 
     Print_Grammar_Output("<FuncDef>");
@@ -1232,7 +1239,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             PRINT_WORD;//PRINT [
             GET_A_WORD;
             if(WORD_TYPE == RBRACK){
-                //ERROR  二维数组 最后一维需要常数
+                //ERROR  二维数组 最后一维需要常数  也只有exp_iEntrys[2] 有可能是值
             }
             exp_iEntrys[op] = new IEntry;
             ConstExp(exp_iEntrys[op],values[2],isInOtherFunc);
@@ -1260,8 +1267,13 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
         }else{
             kind = ARRAY_2_VAR;
         }
+        auto * rParam = new IEntry;
         INFO_ENTRY = semantic.fillInfoEntry(ident,kind);
-        INFO_ENTRY->id = (new IEntry)->Id;//TODo：函数形参站住位置  类似于定义变量！！！
+        rParam->original_Name = ident;
+        rParam->values_Id = new vector<int>;
+        auto * _val = new Entry;//存储实参的具体值！地址
+        rParam->values_Id->push_back(_val->id);
+        INFO_ENTRY->id = rParam->Id;//TODo：函数形参站住位置  指向的是定义本身不是值本身 类似于定义变量！！！
         arguments.push_back(INFO_ENTRY);
         semantic.recordEntries(INFO_ENTRY);
     }
@@ -1322,6 +1334,7 @@ void Parser::BlockItem() {
 void Parser::Stmt() {
     string ident;
     Entry * temp;
+    Entry * func;
     int printf_count = 0;
     bool loop_error = true;
     IEntry * exp;
@@ -1389,6 +1402,15 @@ void Parser::Stmt() {
                         }
                         temp = temp->Father_Entry;
                     }
+                    temp = tableManager.cur;
+                    func = nullptr;
+                    while(temp != nullptr){//无参函数返回值的错误
+                        if (temp->kind == FUNC_VOID || temp->kind ==FUNC_INT){
+                           func = temp;//肯定不可能是空
+                            break;
+                        }
+                        temp = temp->Father_Entry;
+                    }
 
                     Exp(exp,exp_value,isInOtherFunc);//错误下放
                     if (WORD_TYPE != SEMICN){
@@ -1396,6 +1418,14 @@ void Parser::Stmt() {
                         //Print_Grammar_Output("ERROR  :");
                         errorHandler.Insert_Error(SEMICOLON_MISSING);
                     }else{
+                        if(func->kind == FUNC_INT){
+                            auto * func_iEntry = IEntries.at(func->id);
+                            //func_iEntry->return_IEntry已经生成
+                            intermediateCode.addICode(IntermediateCodeType::Return,exp, nullptr, func_iEntry->return_IEntry);
+                        }else{
+                            intermediateCode.addICode(IntermediateCodeType::Return, nullptr, nullptr, nullptr);//void函数返回
+                        }
+
                         PRINT_WORD;//print ;
                         GET_A_WORD;
                     }

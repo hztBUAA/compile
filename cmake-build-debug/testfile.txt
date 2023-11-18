@@ -1,0 +1,8 @@
+int fun1(){
+return 1;
+}
+int main(){
+int a;
+a=fun1();
+printf("%d",a);
+}
