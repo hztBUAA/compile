@@ -1,7 +1,9 @@
-int test;
+/*cover basis, focus on Decl*/
 int main(){
-    printf("Hello World\n");
-    test = getint();
-    printf("%d",test);
-    return 0;
+	const int l_const_0 = 0;
+	const int l_const_1 = l_const_0 + 1;
+	const int l_const_6[2][2] = {{1, l_const_1}, {1,1}};
+
+
+	return 0;
 }

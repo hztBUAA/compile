@@ -66,7 +66,7 @@ void MipsCode::translate() const {
      * 输出全局的变量定义data段  以及全局变量的初始化
      */
 //    cout << ".data 0x10010000\n";
-    cout << ".data \n";
+    cout << ".data 0x1000\n";
 
 //    cout << "temp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
     /**字符串区
@@ -502,7 +502,7 @@ addiu $sp, $sp, 30000
                     }else{
                         cout << "lw " << "$t0" << ",  "<<IEntries.at(id_init_value)->startAddress<< "($zero)" << endl;
                     }
-                    cout << "sw " << "$t0" <<  IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
+                    cout << "sw " << "$t0, " <<  IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
                 }
                 break;
             case ARRAY_CONST_Def_Has_Value:
@@ -904,7 +904,7 @@ addiu $sp, $sp, 30000
                             cout << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)"
                                  << endl;
                         }
-                        cout << "sw " << "$t0" << IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
+                        cout << "sw " << "$t0, " << IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
                     }
                     break;
                 case ARRAY_CONST_Def_Has_Value:
