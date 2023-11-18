@@ -929,7 +929,7 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
 //                 iEntry->offset_IEntry->imm = index;//index 以数组下标作为索引
                  (*iEntry)->type = 1;
              }
-         }else if(op == 0){  //arr[2][3]二维数组  形参是arr[2] 要在iEntry新建  甚至可能是arr[t]  t编译时不清楚
+         }else if(op == 0){
              *iEntry =  IEntries.at(find->id);
          }
     }else{ // 二级地址要小心 TODO: 形参的ConstExp是有用的  const不能作为数组参数！！！ 所以只用伪造valuesID
