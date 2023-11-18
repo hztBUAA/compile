@@ -76,7 +76,7 @@ public:
     void Number(IEntry *iEntry,int & value,bool InOtherFunc);
     void UnaryExp(IEntry *iEntry,int&value,bool InOtherFunc);
     void UnaryOp(int &op);
-    void FuncRParams(int func_ident_line,vector<int> *FParams);
+    void FuncRParams(int func_ident_line,vector<int> *RParams);
     void MulExp(IEntry *iEntry,int&value,bool InOtherFunc);
     void AddExp(IEntry *iEntry,int&value,bool InOtherFunc);
     void RelExp(IEntry * iEntry,bool InOtherFunc);

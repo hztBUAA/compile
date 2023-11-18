@@ -476,8 +476,17 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
         iEntry->imm = iEntry1->imm;
         iEntry->canGetValue = true;
     }else{
-        iEntry->canGetValue = false;
-        iEntry->startAddress = iEntry1->startAddress;//TODO:新理解 要么给个具体值  要么给个将来运行时的具体地址
+       //TODO:新理解 要么给个具体值  要么给个将来运行时的具体地址
+        iEntry->imm = iEntry1->imm;
+        iEntry->canGetValue = iEntry1->canGetValue;
+        iEntry->startAddress = iEntry1->startAddress;
+        iEntry->type = iEntry1->type;
+        iEntry->offset_IEntry = iEntry1->offset_IEntry;
+        iEntry->original_Name = iEntry1->original_Name;
+        iEntry->values_Id = iEntry1->values_Id;
+        iEntry->dim1_length = iEntry1->dim1_length;
+        iEntry->total_length = iEntry1->total_length;
+        iEntry->has_return = iEntry1->has_return;
     }
     if (!isLValInStmt)
         Print_Grammar_Output("<AddExp>");
@@ -556,8 +565,17 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
         iEntry->imm = iEntry1->imm;
         iEntry->canGetValue = true;
     }else{
-        iEntry->canGetValue = false;
-        iEntry->startAddress = iEntry1->startAddress;//TODO:新理解 要么给个具体值  要么给个将来运行时的具体地址
+      //TODO:新理解 要么给个具体值  要么给个将来运行时的具体地址  地址的拷贝！！！
+        iEntry->imm = iEntry1->imm;
+        iEntry->canGetValue = iEntry1->canGetValue;
+        iEntry->startAddress = iEntry1->startAddress;
+        iEntry->type = iEntry1->type;
+        iEntry->offset_IEntry = iEntry1->offset_IEntry;
+        iEntry->original_Name = iEntry1->original_Name;
+        iEntry->values_Id = iEntry1->values_Id;
+        iEntry->dim1_length = iEntry1->dim1_length;
+        iEntry->total_length = iEntry1->total_length;
+        iEntry->has_return = iEntry1->has_return;
     }
     if (!isLValInStmt)
         Print_Grammar_Output("<MulExp>");
@@ -1026,7 +1044,7 @@ void Parser::MainFuncDef() {
 }
 
 //TODO:函数实参一一赋值给已经占住位置的形参FParams是   当初函数头的形参的values_Id
-void Parser::FuncRParams(int func_ident_line,vector<int>  *FParams) {
+void Parser::FuncRParams(int func_ident_line,vector<int>  *RParams) {
     bool already_error_func_type = false;
     bool already_error_func_count = false;
     //依次取出Exp的类型 然后判断函数符号表中的vector   类型只需要看 0 1 2 普通变量 一维数组 二维数组
@@ -1069,8 +1087,8 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *FParams) {
      * 将实参exp_iEntry放入
      */
      //TODO:在中间代码阶段就先不要多多去管闲事去想着分类讨论值  把IEntry看做抽象 能够加快效率  新建的exp_IEntry
-    FParams->push_back(exp_iEntry->Id);//后端去拷贝assign
-//    intermediateCode.addICode(Assign, exp_iEntry,nullptr,IEntries.at(FParams->at(cnt-1)));
+    RParams->push_back(exp_iEntry->Id);//后端去拷贝assign
+//    intermediateCode.addICode(Assign, exp_iEntry,nullptr,IEntries.at(RParams->at(cnt-1)));
 
     while(WORD_TYPE == COMMA){
         PRINT_WORD;
@@ -1091,7 +1109,7 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *FParams) {
                 already_error_func_type = true;
             }
         }
-        FParams->push_back(exp_iEntry->Id);
+        RParams->push_back(exp_iEntry->Id);
         ;
     }
     if(cnt < FArguments.size() &&!already_error_func_type&&!already_error_func_count&& func != nullptr){//实际调用参数少
@@ -1291,9 +1309,9 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             rParam->original_Name = ident;
             IEntry * v;
             rParam->values_Id->push_back((v = new IEntry)->Id);
-            v->type =1;
+            v->type =0;
             rParam->offset_IEntry = new IEntry;
-            rParam->type = 1;
+            rParam->type = 0;
         }
 
        //TODo：函数形参站住位置  指向的是定义本身不是值本身 类似于定义变量！！！
