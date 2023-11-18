@@ -5,4 +5,5 @@ int main(){
 int a;
 a=fun1();
 printf("%d",a);
+return 0;
 }

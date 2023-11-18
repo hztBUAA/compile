@@ -1160,6 +1160,7 @@ void Parser::FuncDef(Kind func_type) {
                 //ERROR
                 errorHandler.Insert_Error(RPARENT_MISSING);
             }else{
+                intermediateCode.addICode(IntermediateCodeType::FuncDef,func, nullptr, nullptr);
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
             }
@@ -1175,7 +1176,7 @@ void Parser::FuncDef(Kind func_type) {
     }
     tableManager.cur->entries->erase("main");//如果是重定义的函数 需要抹掉它
     //TODO:FuncCall中间代码 FIXME：完成FuncCALL   src1为函数头
-    intermediateCode.addICode(IntermediateCodeType::FuncDef,func, nullptr, nullptr);
+
 
     Print_Grammar_Output("<FuncDef>");
 }
