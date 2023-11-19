@@ -1,19 +1,37 @@
+void fun1(int a[],int b[],int c[][2]){
+    int t;
+    t = getint();
+    printf("in fun1: t = %d\n",t);
+    a[1]=t;
+    printf("in fun1: a[1] = %d\n",a[1]);
+    c[0][0] = a[1];
+    printf("in fun1: c[0][0] = %d\n",c[0][0]);
+    return;
+}
+void fun2(int a,int b,int c[][2]){
+return;
+}
+void fun3(int a,int b[],int c[][2]){
+return;
+}
+int main(){
+const int arr[3][3] = {{1,2,3},{4,5,6},{7,8,9}};
+int array[2][2] = {{1,2},{3,4}};
+fun1(array[0],array[1],array);
+fun2(array[0][0],array[1][0],array);
+fun3(array[0][0],array[1],array);
 
-int main() {
-
-     printf("in main:\n",c);
-
-    ;
-    {
-	}
-    int a,b,flag1,flag2,flag,i;
-    a = getint();
-    b = getint();
-    i=0;
-    int d = a*b-(a+b);
-    //d = 7;
-    printf("in main:d = %d\n",d);
+    int t;
+    t = getint();
+    int b ;
+    b=-t;
+    printf("b=%d\n",b);
+    printf("t = %d,t+1 = %d,t*t = %d,t/t = %d,t-t = %d,t_t = %d\n",t,t+1,t*t,t/t,t-t,t%t);
+    t = -t;
+    printf("-t = %d\n",t);
+    //int arr[2][2] = {{t,t+1}{t,t-t}};
+    //int arr[2][2] = {{1,2},{3,4}};
+    //func1(arr[0],arr[0],arr);
+    //func2(arr[0][0]/1,arr[0][1],arr[1][0]+arr[0][0]);
     return 0;
 }
-
-
