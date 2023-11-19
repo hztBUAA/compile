@@ -1301,8 +1301,10 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             rParam->values_Id = new vector<int>;
             rParam->original_Name = ident;
             IEntry * v;
-            v->type = 1;
+
             rParam->values_Id->push_back((v = new IEntry)->Id);
+            v->offset_IEntry = new IEntry;//不一定需要？
+            v->type = 1;
             rParam->offset_IEntry = new IEntry;
             //new IEntry存放地址
         }else{
@@ -1313,6 +1315,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             rParam->original_Name = ident;
             IEntry * v;
             rParam->values_Id->push_back((v = new IEntry)->Id);
+            v->offset_IEntry = new IEntry;
             v->type =1;
             rParam->offset_IEntry = new IEntry;
             rParam->type = 1;
