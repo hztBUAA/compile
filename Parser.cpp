@@ -1341,6 +1341,8 @@ void Parser::Block() {
         //空语句块  单独分号是放在stmt解析的  所以一个空语句块是存在的
         if (tableManager.cur->kind == FUNC_INT && tableManager.cur->return_error){
             errorHandler.Insert_Error(INT_FUNC_NO_RETURN);
+        }else if (tableManager.cur->kind == FUNC_VOID){
+            intermediateCode.addICode(Return, nullptr, nullptr, nullptr);
         }
         PRINT_WORD; // print }
         GET_A_WORD;
@@ -1356,6 +1358,8 @@ void Parser::Block() {
         }else{
             if (tableManager.cur->kind == FUNC_INT && tableManager.cur->return_error){
                 errorHandler.Insert_Error(INT_FUNC_NO_RETURN);
+            }else if (tableManager.cur->kind == FUNC_VOID){
+                intermediateCode.addICode(Return, nullptr, nullptr, nullptr);
             }
             PRINT_WORD; // print }
             GET_A_WORD;
