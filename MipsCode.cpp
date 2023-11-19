@@ -477,13 +477,15 @@ addiu $sp, $sp, 30000
                     }
                 }
                 cout<<endl;
+                cnt = 0;
                 for (auto id_init_value:*(src1->values_Id)) {
                     if (IEntries.at(id_init_value)->canGetValue){ //认为数组内存是连续存储？
                         cout << "li " << "$t0" << ",  "<<IEntries.at(id_init_value)->imm << endl;
                     }else{
                         cout << "lw " << "$t0" << ",  "<<IEntries.at(id_init_value)->startAddress<< "($zero)" << endl;
                     }
-                    cout << "sw " << "$t0, " <<  IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
+                    cout << "sw " << "$t0, " <<  src1->startAddress+cnt*4 << "($zero)" << endl;
+                    cnt++;
                 }
                 break;
             case ARRAY_Def_No_Value:
@@ -494,6 +496,7 @@ addiu $sp, $sp, 30000
                 for (auto init_id:*(src1->values_Id)) {
                     cout<<IEntries.at(init_id)->imm<<" ";
                 }
+                cnt = 0;
                 cout<<endl;
                 for (auto id_init_value:*(src1->values_Id)) {
                     if (IEntries.at(id_init_value)->canGetValue){ //认为数组内存是连续存储？
@@ -501,7 +504,8 @@ addiu $sp, $sp, 30000
                     }else{
                         cout << "lw " << "$t0" << ",  "<<IEntries.at(id_init_value)->startAddress<< "($zero)" << endl;
                     }
-                    cout << "sw " << "$t0, " <<  IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
+                    cout << "sw " << "$t0, " <<  src1->startAddress+cnt*4 << "($zero)" << endl;
+                    cnt++;
                 }
                 break;
             case ARRAY_CONST_Def_Has_Value:
@@ -871,6 +875,7 @@ addiu $sp, $sp, 30000
                         }
                     }
                     cout << endl;
+                    cnt = 0;
                     for (auto id_init_value: *(src1->values_Id)) {
                         if (IEntries.at(id_init_value)->canGetValue) { //认为数组内存是连续存储？
                             cout << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
@@ -878,7 +883,8 @@ addiu $sp, $sp, 30000
                             cout << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)"
                                  << endl;
                         }
-                        cout << "sw " << "$t0, " << IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
+                        cout << "sw " << "$t0, " <<  src1->startAddress+cnt*4 << "($zero)" << endl;
+                        cnt++;
                     }
                     break;
                 case ARRAY_Def_No_Value:
@@ -890,6 +896,7 @@ addiu $sp, $sp, 30000
                         cout << init_value << " ";
                     }
                     cout << endl;
+                    cnt = 0;
                     for (auto id_init_value: *(src1->values_Id)) {
                         if (IEntries.at(id_init_value)->canGetValue) { //认为数组内存是连续存储？
                             cout << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
@@ -897,7 +904,8 @@ addiu $sp, $sp, 30000
                             cout << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)"
                                  << endl;
                         }
-                        cout << "sw " << "$t0, " << IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
+                        cout << "sw " << "$t0, " <<  src1->startAddress+cnt*4 << "($zero)" << endl;
+                        cnt++;
                     }
                     break;
                 case ARRAY_CONST_Def_Has_Value:
