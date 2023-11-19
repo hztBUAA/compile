@@ -933,12 +933,15 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
              *iEntry =  IEntries.at(find->id);
          }
     }else{ // 二级地址要小心 TODO: 形参的ConstExp是有用的  const不能作为数组参数！！！ 所以只用伪造valuesID
-        //2维地址  伪造iEntry数组 不认为是type = 1
+        //2维地址  伪造iEntry数组 认为是type = 1!!!!  取元素才不会取到你、空
         int new_dim1_length = array_exps[2]->imm;
-//        iEntry->type = 1;
+        (*iEntry)->type = 1;
         (*iEntry)->startAddress = IEntries.at(find->id)->startAddress;
         (*iEntry)->dim1_length = new_dim1_length;
         (*iEntry)->values_Id = IEntries.at(find->id)->values_Id;
+        (*iEntry)->offset_IEntry = new IEntry;
+        (*iEntry)->offset_IEntry->canGetValue = true;
+        (*iEntry)->offset_IEntry->imm = 0;//index 以数组下标作为索引
     }
 
 
@@ -1305,13 +1308,14 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
         }else{
             kind = ARRAY_2_VAR;
             rParam = new IEntry();
+            rParam->dim1_length = exp_iEntrys[2]->imm;
             rParam->values_Id = new vector<int>;
             rParam->original_Name = ident;
             IEntry * v;
             rParam->values_Id->push_back((v = new IEntry)->Id);
-            v->type =0;
+            v->type =1;
             rParam->offset_IEntry = new IEntry;
-            rParam->type = 0;
+            rParam->type = 1;
         }
 
        //TODo：函数形参站住位置  指向的是定义本身不是值本身 类似于定义变量！！！

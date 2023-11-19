@@ -43,7 +43,7 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
         dst->values = src1->values;//none sense
         dst->type = 1;
         dst->total_length = src1->total_length;
-        dst->dim1_length = src1->dim1_length;
+        //dst->dim1_length = src1->dim1_length;//以FParam来标准 不需要传递
         dst->offset_IEntry = src1->offset_IEntry;
         dst->startAddress = src1->startAddress;//关于数组地址的属性都要拷贝
         //FIXME:其他属性就不用拷贝的？   理清楚？ isGlobal保持自己 has_return 不可能
@@ -330,7 +330,7 @@ IEntry * p_val = p;
                         index += src1->imm;
                         dst->startAddress = IEntries.at(src2->values_Id->at(index))->startAddress;
                     }else{//array就是数组首地址 index索引还不知道是第几个元素 即索引也是取决于getint  需要lw   拿不到直接值  把*dst_ptr 拷贝地址  之后都会这样使用
-                         cout << "li " << "$t0" << ", " << src2->startAddress << endl;
+                        cout << "li " << "$t0" << ", " << src2->startAddress << endl;
                         cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                         cout << "sll " << "$t1" << ", " << "$t1"<< ", 2" << endl;
                         cout << "addu " << "$t2" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
@@ -345,7 +345,7 @@ IEntry * p_val = p;
                         if (src1->canGetValue){
                             index += src1->imm;
                             //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
-                            cout << "li " << "$t0" << ", " << src2->startAddress + index *4<< endl;
+                            cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
                             cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                         }else{ //额外索引值是getint 函数调用的引用时
                             cout << "li " << "$t0" << ", " << src2->startAddress << endl;
@@ -724,8 +724,7 @@ addiu $sp, $sp, 30000
                             cout << "lw " << "$t3" << ", 0($t2)" << endl;
                             cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                         }
-                    }else{
-                        //不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
+                    }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
                         src2 = IEntries.at(src2->values_Id->at(0));
                         IEntry* offset = src2->offset_IEntry;
                         if (offset->canGetValue){ //引用数组的索引 已知
@@ -733,7 +732,7 @@ addiu $sp, $sp, 30000
                             if (src1->canGetValue){
                                 index += src1->imm;
                                 //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
-                                cout << "li " << "$t0" << ", " << src2->startAddress + index *4<< endl;
+                                cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
                                 cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                             }else{ //额外索引值是getint 函数调用的引用时
                                 cout << "li " << "$t0" << ", " << src2->startAddress << endl;
