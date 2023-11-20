@@ -42,7 +42,7 @@ private:
 public:
     int error_line;//对于ijk类型的缺少句末符号错误   line_lastWord    其他类型 还不一样可能就是当前行
     ErrorType error_type;
-    explicit ErrorHandler(Lexer &lexer1,ofstream & errorFile1) :lexer(lexer1),enable(true),errorFile(errorFile1),error_line(0),error_type(NORMAL){};//构造.h文件中直接定义  需要是一个（）{}的结构
+    explicit ErrorHandler(Lexer &lexer1,ofstream & errorFile1) :lexer(lexer1),enable(false),errorFile(errorFile1),error_line(0),error_type(NORMAL){};//构造.h文件中直接定义  需要是一个（）{}的结构
     void Insert_Error(ErrorType errorType_from_GRAMMAR);
     static char transformType2Char(ErrorType);//can be made static?   不用到实例变量？
     void Print_Errors();
