@@ -30,6 +30,7 @@ IEntry::IEntry(){
     this->Id = generateId();
     this->startAddress = tempMemoryAddressTop;
     this->values_Id = new vector<int>;
+    this->values = new vector<int>;
     this->name = "@"+ to_string(this->Id);
     this->imm = 0;
     tempMemoryAddressTop += length*4;

@@ -13,7 +13,6 @@ using namespace std;
 extern vector<ICode *> mainICodes ;
 extern map<string, vector<ICode *>> otherFuncICodes;
 extern vector<ICode *>globalDef ;
-ofstream mipsCodeFile("mipsCode.txt");
 
 
 
@@ -66,8 +65,8 @@ void MipsCode::translate() const {
     /**
      * 输出全局的变量定义data段  以及全局变量的初始化
      */
-//    cout << ".data 0x10010000\n";
-    cout << ".data 0x1000\n";
+    cout << ".data 0x10010000\n";
+//    cout << ".data 0x1000\n";
 
 //    cout << "temp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
     /**字符串区
@@ -135,7 +134,7 @@ str_5:  .asciiz   "ha"
     /**
      * 输出主函数main的代码ICode
      */
-    cout<<".text\n";
+    cout<<".text 0x00400000 \n";
      cout<<"#主函数main的代码ICode\n";
      cout<<"main:\n";
     for (auto ICode: mainICodes) {
@@ -525,8 +524,8 @@ addiu $sp, $sp, 30000
     /**
      * 输出其他函数的代码ICode
      */
-    cout<<"#自定义函数main的代码ICode\n";
-    for (auto func_codes:otherFuncICodes) {
+    cout<<"#自定义函数的代码ICode\n";
+    for (const auto& func_codes:otherFuncICodes) {
 
 //        cout << "_" << func_codes.first << ":\n";  第一行总是函数的定义头
         for (auto ICode: func_codes.second) {
@@ -688,13 +687,13 @@ addiu $sp, $sp, 30000
                         } else if (src2->canGetValue) {
                             cout << "li " << "$t0" << ", " << src2->imm << endl;
                             cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                            cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                            cout << "div "  << "$t0" << ", " << "$t1" << endl;
                             cout << "mfhi " << "$t2" << endl;
                             cout << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         } else {
                             cout << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
                             cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                            cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                            cout << "div " << "$t0" << ", " << "$t1" << endl;
                             cout << "mfhi " << "$t2" << endl;
                             cout << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         }

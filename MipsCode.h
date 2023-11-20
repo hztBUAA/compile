@@ -70,8 +70,6 @@ private:
 
 public:
     //TODO: 用于存储全局变量和数组的内存地址  MIPS只用使用IEntry中的地址
-    int tempMemoryAddressTop = 268500992;
-    const int tempMemoryAddressBase = 268500992;
     explicit MipsCode(IntermediateCode &intermediateCode1):intermediateCode(intermediateCode1){};
     /**
      * 根据type进行中间代码到MIPS的翻译

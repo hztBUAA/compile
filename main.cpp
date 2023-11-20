@@ -10,7 +10,7 @@ int main() {
     ofstream output("output.txt");
     ofstream errorFile("error.txt");
     Lexer & my_lexer = Lexer::initLexer(input,output);//相当于 放给语法Parser去指导Lexer
-    IntermediateCode intermediateCode;
+    IntermediateCode intermediateCode{};
     MipsCode mipsCode(intermediateCode);
 
     ErrorHandler errorHandler(my_lexer,errorFile);
