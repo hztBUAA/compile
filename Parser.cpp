@@ -815,7 +815,11 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
 
 //TODO：LVal说明是引用曾经定义过的变量（源程序）   需要二级指针进行重定向
 //TODO：   值  地址    地址是需要拷贝原来数组的一切东西  只是type == 1  && offset is  valid      valueId 指向的IEntry就恒定为这个数组默认的值了   查询 如果canGet 就Get   不能  就lw sw 相对于这个IEntry的startAddress    || 写入值  置canGet为false  sw startAddress
-void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
+void Parser::
+
+
+
+LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
     if (WORD_TYPE != IDENFR){
         //Error
     }
@@ -902,6 +906,9 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
                 }
             }//FIXME:数组定义时的IEntry （src2）   偏移index（不乘4）index_entry-》能get就get 不能就lw address
         }else if(op == 1){//FIXME:可能you缺漏
+            if (array_exps[1]->canGetValue){
+                *iEntry = IEntries.at()
+            }
             intermediateCode.addICode(GetArrayElement,array_exps[1],IEntries.at(find->id),*iEntry);
         }else{//TODO:统一都在values_Id
             *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(index));
@@ -1723,6 +1730,7 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
         auto *exp_iEntry = new IEntry;
         Exp(exp_iEntry, value, isInOtherFunc);//下放错误
         exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
+        //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;
         //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;//TODo:设置MIPS中的地址  为MIPS服务   由于我会在初始数组时sw
         iEntry->values_Id->push_back(exp_iEntry->Id);
         nums++;

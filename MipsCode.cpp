@@ -230,6 +230,7 @@ IEntry * p_val = p;
             }
                 break;
             case Mult:{
+                cout <<"#执行乘法\n";
                 if (src1->canGetValue && src2->canGetValue){
                     dst->canGetValue = true;
                     dst->imm = src1->imm * src2->imm;
@@ -323,6 +324,7 @@ IEntry * p_val = p;
                 break;
                 //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
             case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
+                cout << "#GetArray Element\n";
                 int index = 0;
                 int isNormalArray = src2->type;
                 if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
