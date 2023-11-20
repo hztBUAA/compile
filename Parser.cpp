@@ -765,6 +765,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         if (WORD_TYPE == ASSIGN){//FIXME:从Stmt-> LVal = ...来的  如果LVal为全局  或者非全局的赋值呢  标签？ lw？
             //TODO：使用全局变量 直接读值 编译时存好 0 或者具体值  这点在语法分析时没做好 需要MIPS code 进行进一步
             //TODO:   写入全局变量  如果写入值编译时确定 则直接更新编译时的IEntry|否则
+            //赋值语句 需要找对真正的写地址！！！
             PRINT_WORD;//PRINT =
             GET_A_WORD;
             if (WORD_TYPE == GETINTTK){
@@ -881,6 +882,8 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
     }else if(Exp_type < 0){
         //超出维数的引用   不出现
     }else if(Exp_type == 0){
+
+                //address for writing
         //
         IEntry *_val;
         if (IEntries.at(find->id)->type == 0){
@@ -897,6 +900,7 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
                     int t = array_exps[1]->imm*dim1_length;
                     intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[2],index_entry);
                     intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);//此时iEntry在getArrayElement中会储存对应的address 方便之后的lw
+
                 }
                 else if(array_exps[2]->canGetValue){
                     auto *t = new IEntry;
@@ -937,12 +941,14 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
                  (*iEntry)->offset_IEntry->canGetValue = true;
                  (*iEntry)->offset_IEntry->imm = index;//index 以数组下标作为索引
                  (*iEntry)->type = 1;
+                 (*iEntry)->isGlobal = _val->isGlobal;
              }else{
                  intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],index_entry);
                  (*iEntry)->startAddress =_val->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
                  (*iEntry)->offset_IEntry = index_entry;//包装好了地址
                  (*iEntry)->offset_IEntry->canGetValue = false;//需要lw sw
                  (*iEntry)->type = 1;
+                 (*iEntry)->isGlobal = _val->isGlobal;
              }
          }else if(op == 0){
              *iEntry =  _val;
@@ -963,6 +969,7 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
         (*iEntry)->offset_IEntry = new IEntry;
         (*iEntry)->offset_IEntry->canGetValue = true;
         (*iEntry)->offset_IEntry->imm = 0;//index 以数组下标作为索引
+        (*iEntry)->isGlobal = _val->isGlobal;
     }
 
 
@@ -1741,7 +1748,7 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
         auto *exp_iEntry = new IEntry;
         Exp(exp_iEntry, value, isInOtherFunc);//下放错误
         exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
-        exp_iEntry->startAddress = iEntry->startAddress + 4*nums;
+        //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;
         //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;//TODo:设置MIPS中的地址  为MIPS服务   由于我会在初始数组时sw
         iEntry->values_Id->push_back(exp_iEntry->Id);
         nums++;
