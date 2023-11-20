@@ -1732,6 +1732,7 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
 void Parser::Cond() {
     //TODO:FOR循环的逻辑补充
     IEntry *iEntry;
+    iEntry = new IEntry;
     LOrExp(iEntry,isInOtherFunc);
     Print_Grammar_Output("<Cond>");
 }
@@ -1740,9 +1741,11 @@ void Parser::ForStmt() {
     //TODO:ForStmt ICode  ASSIGN
     IEntry *lVal,*exp;
     int v1,v2;
+    lVal = new IEntry;
     LVal(&lVal,v1,isInOtherFunc);
     PRINT_WORD;//PRINT =
     GET_A_WORD;
+    exp = new IEntry;
     Exp(exp,v2,isInOtherFunc);
     if (exp->canGetValue){
         lVal->imm = v2;
@@ -1780,12 +1783,14 @@ void Parser::UnaryOp(int &op) {
 void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
     IEntry *_addExp1,*_addExp2;
     int _addValue1,_addValue2;
+    _addExp1 = new IEntry;
     AddExp(_addExp1,_addValue1,isInOtherFunc);
     if(WORD_TYPE == LSS || WORD_TYPE == GRE || WORD_TYPE == LEQ || WORD_TYPE == GEQ){
         while(WORD_TYPE == LSS || WORD_TYPE == GRE || WORD_TYPE == LEQ || WORD_TYPE == GEQ){
             Print_Grammar_Output("<RelExp>");
             PRINT_WORD;
             GET_A_WORD;
+            _addExp2 = new IEntry;
             AddExp(_addExp2,_addValue2,isInOtherFunc);
             //TODO:比较的逻辑 建立中间代码
         }
@@ -1795,6 +1800,7 @@ void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
 
 void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
     IEntry *_relExp1,*_relExp2;
+    _relExp1 = new IEntry;
 //    int _relValue1,_relValue2;
     RelExp(_relExp1,isInOtherFunc);
     if(WORD_TYPE == EQL || WORD_TYPE ==NEQ){
@@ -1802,6 +1808,7 @@ void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
             Print_Grammar_Output("<EqExp>");
             PRINT_WORD;
             GET_A_WORD;
+            _relExp2 = new IEntry;
             RelExp(_relExp2,isInOtherFunc);
 //TODO:逻辑
         }
@@ -1813,12 +1820,14 @@ void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
 
 void Parser::LAndExp(IEntry * iEntry,bool InOtherFunc) {
     IEntry *_eqExp1,*_eqExp2;
+    _eqExp1 = new IEntry;
     EqExp(_eqExp1,InOtherFunc);
     if(WORD_TYPE == AND){
         while(WORD_TYPE == AND){
             Print_Grammar_Output("<LAndExp>");
             PRINT_WORD;
             GET_A_WORD;
+            _eqExp2 = new IEntry;
             EqExp(_eqExp2,InOtherFunc);
             //TODO:逻辑
         }
@@ -1830,12 +1839,14 @@ void Parser::LAndExp(IEntry * iEntry,bool InOtherFunc) {
 
 void Parser::LOrExp(IEntry * iEntry,bool InOtherFunc) {
     IEntry *_lAndExp1,*_lAndExp2;
+    _lAndExp1  =new IEntry;
     LAndExp(_lAndExp1,InOtherFunc);
     if(WORD_TYPE == OR){
         while(WORD_TYPE == OR){
             Print_Grammar_Output("<LOrExp>");
             PRINT_WORD;
             GET_A_WORD;
+            _lAndExp2 = new IEntry;
             LAndExp(_lAndExp2,InOtherFunc);
             //TODO :逻辑
         }

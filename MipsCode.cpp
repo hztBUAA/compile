@@ -269,13 +269,13 @@ IEntry * p_val = p;
                     }else if (src2->canGetValue){
                         cout << "li " << "$t0" << ", " << src2->imm << endl;
                         cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                        cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "div " <<  "$t0" << ", " << "$t1" << endl;
                         cout << "mflo " << "$t2" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
                     }else{
                         cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
                         cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
-                        cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "div "<< "$t0" << ", " << "$t1" << endl;
                         cout << "mflo " << "$t2" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
                     }
@@ -660,13 +660,13 @@ addiu $sp, $sp, 30000
                         } else if (src2->canGetValue) {
                             cout << "li " << "$t0" << ", " << src2->imm << endl;
                             cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                            cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                            cout << "div " << "$t0" << ", " << "$t1" << endl;
                             cout << "mflo " << "$t2" << endl;
                             cout << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         } else {
                             cout << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
                             cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                            cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                            cout << "div "  << "$t0" << ", " << "$t1" << endl;
                             cout << "mflo " << "$t2" << endl;
                             cout << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         }
