@@ -342,7 +342,6 @@ IEntry * p_val = p;
                         cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                     }
                 }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
-                    src2 = IEntries.at(src2->values_Id->at(0));
                     IEntry* offset = src2->offset_IEntry;
                     if (offset->canGetValue){ //引用数组的索引 已知
                         index += offset->imm;
@@ -736,7 +735,6 @@ addiu $sp, $sp, 30000
                             cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                         }
                     }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
-                        src2 = IEntries.at(src2->values_Id->at(0));
                         IEntry* offset = src2->offset_IEntry;
                         if (offset->canGetValue){ //引用数组的索引 已知
                             index += offset->imm;

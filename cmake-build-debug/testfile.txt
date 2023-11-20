@@ -1,13 +1,64 @@
+int a[3][3] = {{1,2,3},{4,5,6},{7,8,9}};
+const int t[3][2] ={{10,11},{12,13},{14,15}} ;
+int ssss(){
+    return 1;
+}
+int s(int g[]){
+    return g[0]+1;
+}
+int ss(int g[][2]){
+    return g[0][1]+1;
+}
+void test(int a[]){
+printf("before !!!!!!!in test:a[0][0] = %d\n",a[0][0]);
+    a[0] = 100;
+    printf("after !!!!!!!in test:a[0][0] = %d\n",a[0][0]);
+}
+void f3(int a[][3]){
+printf("before !!!!!!in f2:a[0][0] = %d\n",a[0][0]);
+int y;
+y = getint();
+printf("in f3: a[0][0] = %d\n",a[0][0]);
+    a[0][0] = 100;
+    test(a[y]);
+    printf("after !!!!!!!in f2:a[0][0] = %d\n",a[0][0]);
+}
+void f2(int a[][3]){
+printf("before !!!!!!in f2:a[0][0] = %d\n",a[0][0]);
+    f3(a);
+    test(a[0]);
+        printf("after !!!!!!!in f2:a[0][0] = %d\n",a[0][0]);
+}
+void f1(int a[][3]){
+printf("before !!!!!!in f1:a[0][0] = %d\n",a[0][0]);
+    f2(a);
+    printf("after !!!!!!!in f1:a[0][0] = %d\n",a[0][0]);
 
+}
+
+void f4(int n){
+    printf("in f4:t[0][0] = %d\n",t[0][0]);
+    printf("in f4: n = %d\n",n);
+}
 int main(){
 int t;
 t = getint();
+printf("in main:t = %d\n",t);
 int ddd =t;
+printf("in main:ddd = %d\n",ddd);
 int c[3] = {t,t*t,ddd*t+1};
-printf("c :\n%d\n%d\n%d\n",c[0],c[1],c[2]);
+printf("in main:c[0] = %d,c[1] = %d,c[2] = %d\n",c[0],c[1],c[2]);
 c[0] = c[1];
-printf("c :\n%d\n%d\n%d\n",c[0],c[1],c[2]);
+printf("in main:c[0] = %d,c[1] = %d,c[2] = %d\n",c[0],c[1],c[2]);
 int f = 9;
+printf("in main:f = %d\n",f);
 
+f1(a);
+
+int h,hh;
+h = s(a);
+printf("in main: h = %d\n",h);
+hh = ss(a[1]);
+printf("in main: hh = %d\n",hh);
     return 0;
 }

@@ -883,30 +883,36 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
         //超出维数的引用   不出现
     }else if(Exp_type == 0){
         //
+        IEntry *_val;
+        if (IEntries.at(find->id)->type == 0){
+            _val = IEntries.at(find->id);
+        }else{
+            _val = IEntries.at(IEntries.at(find->id)->values_Id->at(0));
+        }
         if (op == 2){
             if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
                 index = array_exps[1]->imm*dim1_length + array_exps[2]->imm;
-                intermediateCode.addICode(GetArrayElement,index,IEntries.at(find->id),*iEntry);
+                intermediateCode.addICode(GetArrayElement,index,_val,*iEntry);
             }else{
                 if (array_exps[1]->canGetValue){
                     int t = array_exps[1]->imm*dim1_length;
                     intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[2],index_entry);
-                    intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),*iEntry);//此时iEntry在getArrayElement中会储存对应的address 方便之后的lw
+                    intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);//此时iEntry在getArrayElement中会储存对应的address 方便之后的lw
                 }
                 else if(array_exps[2]->canGetValue){
                     auto *t = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
                     intermediateCode.addICode(IntermediateCodeType::Add,array_exps[2],t,index_entry);
-                    intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),*iEntry);
+                    intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);
                 }else{
                     auto *t = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
                     intermediateCode.addICode(IntermediateCodeType::Add,array_exps[2],t,index_entry);
-                    intermediateCode.addICode(GetArrayElement,index_entry,IEntries.at(find->id),*iEntry);
+                    intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);
                 }
             }//FIXME:数组定义时的IEntry （src2）   偏移index（不乘4）index_entry-》能get就get 不能就lw address
         }else if(op == 1){//FIXME:可能you缺漏
-            intermediateCode.addICode(GetArrayElement,array_exps[1],IEntries.at(find->id),*iEntry);
+            intermediateCode.addICode(GetArrayElement,array_exps[1],_val,*iEntry);
         }else if(op == 0){//TODO:统一都在values_Id
             *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(0));
         }
