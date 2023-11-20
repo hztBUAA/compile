@@ -32,6 +32,7 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
         }else{
             cout << "lw " << "$t0, " << src1->startAddress<<"($zero)"<<endl;
         }
+
             cout << "sw " << "$t0, " << dst->startAddress<<"($zero)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的
             dst->canGetValue =  false;//后台更新
     }else{
@@ -320,12 +321,18 @@ IEntry * p_val = p;
             case GetInt:
                 cout << "\nli $v0, 5\n";
                 cout<<"syscall\n";
-                cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)"<< endl;
+                if (dst->type!=2){
+                    cout << "sw " << "$v0" << ", " << dst->startAddress<<"($zero)\n"<< endl;
+                }else{
+                    cout << "lw "<<"$t0, "<< dst->startAddress<<"($zero)\n";
+                    cout << "sw " << "$v0" << ", " << "0($t0)\n"<< endl;
+                }
                 dst->canGetValue = false;
                 break;
+
                 //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
             case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
-                cout << "#GetArray Element\n";
+                cout << "#GetArray Element  让dst存储目标值的地址即可！！！！\n";
                 int index = 0;
                 int isNormalArray = src2->type;
                 if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
@@ -338,8 +345,6 @@ IEntry * p_val = p;
                         }else{
                             cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
                         }
-
-                        cout << "lw " << "$t0" << ", 0($t0)" << endl;
                         cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                     }else{
                         if (src2->isGlobal){
@@ -350,7 +355,6 @@ IEntry * p_val = p;
                         cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                         cout << "sll " << "$t1" << ", " << "$t1"<< ", 2" << endl;
                         cout << "addu " << "$t2" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
-                        cout << "lw " << "$t3" << ", 0($t2)" << endl;
                         cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                     }
                 }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
@@ -360,14 +364,13 @@ IEntry * p_val = p;
                         if (src1->canGetValue){
                             index += src1->imm;
                             if (src2->isGlobal){
-                                cout << "la " << "$t0" << ", " << src2->original_Name<< "($zero)"<<endl;
+                                cout << "la " << "$t0" << ", " << src2->original_Name<<endl;
                                 cout << "li " << "$t1" << ", " << index*4 << endl;
                                 cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t1"<< endl;
                             }else{
-                                cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
+                                cout << "li " << "$t0" << ", " << src2->startAddress + index *4<<endl;
                             }
                             //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
-
                             cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                         }else{ //额外索引值是getint 函数调用的引用时
                             if (src2->isGlobal){
@@ -379,7 +382,6 @@ IEntry * p_val = p;
                             cout << "lw " << "$t2" << ", " << src1->startAddress << "($zero)" << endl;
                             cout << "addu " << "$t3" << ", "  << "$t0" << ", " << "$t1"<< endl;
                             cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
-                            cout << "lw " << "$t4" << ", 0($t3)" << endl;
                             cout << "sw " << "$t4, " <<  dst->startAddress << "($zero)" << endl;
                         }
                     }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
@@ -398,7 +400,6 @@ IEntry * p_val = p;
                             cout << "li " << "$t3" << ", " << src2->startAddress + index*4 << endl;
                         }
                         cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
-                        cout << "lw " << "$t3" << ",  0($t3)" << endl;
                         cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;
                     }
                 }
@@ -739,13 +740,18 @@ addiu $sp, $sp, 30000
                     //FIXME:总是容易陷入误区 得到v0的值已经是运行时  编译的极限块也做不到预知~
                 case GetInt:
                     cout << "\nli $v0, 5\n";
-                    cout << "syscall\n";
-                    cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)" << endl;
+                    cout<<"syscall\n";
+                    if (dst->type!=2){
+                        cout << "sw " << "$v0" << ", " << dst->startAddress<<"($zero)\n"<< endl;
+                    }else{
+                        cout << "lw "<<"$t0, "<< dst->startAddress<<"($zero)\n";
+                        cout << "sw " << "$v0" << ", " << "0($t0)\n"<< endl;
+                    }
                     dst->canGetValue = false;
                     break;
                     //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
                 case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
-                    cout << "#GetArray Element\n";
+                    cout << "#GetArray Element  让dst存储目标值的地址即可！！！！\n";
                     int index = 0;
                     int isNormalArray = src2->type;
                     if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
@@ -758,8 +764,6 @@ addiu $sp, $sp, 30000
                             }else{
                                 cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
                             }
-
-                            cout << "lw " << "$t0" << ", 0($t0)" << endl;
                             cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                         }else{
                             if (src2->isGlobal){
@@ -770,7 +774,6 @@ addiu $sp, $sp, 30000
                             cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                             cout << "sll " << "$t1" << ", " << "$t1"<< ", 2" << endl;
                             cout << "addu " << "$t2" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
-                            cout << "lw " << "$t3" << ", 0($t2)" << endl;
                             cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                         }
                     }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
@@ -780,14 +783,13 @@ addiu $sp, $sp, 30000
                             if (src1->canGetValue){
                                 index += src1->imm;
                                 if (src2->isGlobal){
-                                    cout << "la " << "$t0" << ", " << src2->original_Name<< "($zero)"<<endl;
+                                    cout << "la " << "$t0" << ", " << src2->original_Name<<endl;
                                     cout << "li " << "$t1" << ", " << index*4 << endl;
                                     cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t1"<< endl;
                                 }else{
-                                    cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
+                                    cout << "li " << "$t0" << ", " << src2->startAddress + index *4<<endl;
                                 }
                                 //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
-
                                 cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                             }else{ //额外索引值是getint 函数调用的引用时
                                 if (src2->isGlobal){
@@ -799,7 +801,6 @@ addiu $sp, $sp, 30000
                                 cout << "lw " << "$t2" << ", " << src1->startAddress << "($zero)" << endl;
                                 cout << "addu " << "$t3" << ", "  << "$t0" << ", " << "$t1"<< endl;
                                 cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
-                                cout << "lw " << "$t4" << ", 0($t3)" << endl;
                                 cout << "sw " << "$t4, " <<  dst->startAddress << "($zero)" << endl;
                             }
                         }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
@@ -818,7 +819,6 @@ addiu $sp, $sp, 30000
                                 cout << "li " << "$t3" << ", " << src2->startAddress + index*4 << endl;
                             }
                             cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
-                            cout << "lw " << "$t3" << ",  0($t3)" << endl;
                             cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;
                         }
                     }
@@ -985,6 +985,8 @@ addiu $sp, $sp, 30000
                         cnt++;
                     }
                     break;
+                case Real_Write:
+                    real_write(src1,src2,dst);
                 default:
                     break;
 
@@ -993,6 +995,33 @@ addiu $sp, $sp, 30000
     }
 
 
+}
+
+void MipsCode::real_write(IEntry *src1, IEntry *src2, IEntry *dst) {
+    cout << "#real write" << endl;
+    if (src1->type == 0){
+        if (src1->canGetValue){
+            cout << "li " << "$t0, " << src1->imm<<endl;
+        }else{
+            cout << "lw " << "$t0, " << src1->startAddress<<"($zero)"<<endl;
+        }
+        cout << "lw " << "$t1, " << dst->startAddress<<"($zero)"<<endl;
+        cout << "sw " << "$t0, "<<"0($t1)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的
+        dst->canGetValue =  false;//后台更新
+    }else{
+        //赋值的地址参数拷贝！！！
+        cout << "#地址拷贝\n";
+        dst->canGetValue = false;
+        dst->isGlobal = src1->isGlobal;
+        dst->values_Id = src1->values_Id;
+        dst->values = src1->values;//none sense
+        dst->type = 1;
+        dst->total_length = src1->total_length;
+        //dst->dim1_length = src1->dim1_length;//以FParam来标准 不需要传递
+        dst->offset_IEntry = src1->offset_IEntry;
+        dst->startAddress = src1->startAddress;//关于数组地址的属性都要拷贝
+        //FIXME:其他属性就不用拷贝的？   理清楚？ isGlobal保持自己 has_return 不可能
+    }
 }
 
 

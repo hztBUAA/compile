@@ -784,13 +784,8 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
             } else {
                 auto*exp = new IEntry;
                 Exp(exp, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
-                if (exp->canGetValue){
-                    lVal->imm = exp->imm;//值传递  修改值就行
-                    lVal->canGetValue =true;
-                }else{
-                    intermediateCode.addICode(Assign,exp, nullptr,lVal);//一般的传递
-                    lVal->canGetValue = exp->canGetValue;
-                }
+                intermediateCode.addICode(Real_Write,exp, nullptr,lVal);//一般的传递
+                lVal->canGetValue = false;
             }
             //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
             isLValInStmt = true;
@@ -895,27 +890,31 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
             if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
                 index = array_exps[1]->imm*dim1_length + array_exps[2]->imm;
                 intermediateCode.addICode(GetArrayElement,index,_val,*iEntry);
+                (*iEntry)->type = 2;
             }else{
                 if (array_exps[1]->canGetValue){
                     int t = array_exps[1]->imm*dim1_length;
                     intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[2],index_entry);
                     intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);//此时iEntry在getArrayElement中会储存对应的address 方便之后的lw
-
+                    (*iEntry)->type = 2;
                 }
                 else if(array_exps[2]->canGetValue){
                     auto *t = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
                     intermediateCode.addICode(IntermediateCodeType::Add,array_exps[2],t,index_entry);
                     intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);
+                    (*iEntry)->type = 2;
                 }else{
                     auto *t = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
                     intermediateCode.addICode(IntermediateCodeType::Add,array_exps[2],t,index_entry);
                     intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);
+                    (*iEntry)->type = 2;
                 }
             }//FIXME:数组定义时的IEntry （src2）   偏移index（不乘4）index_entry-》能get就get 不能就lw address
         }else if(op == 1){//FIXME:可能you缺漏
             intermediateCode.addICode(GetArrayElement,array_exps[1],_val,*iEntry);
+            (*iEntry)->type = 2;
         }else if(op == 0){//TODO:统一都在values_Id
             *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(0));
         }
