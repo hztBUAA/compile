@@ -113,6 +113,7 @@ void IntermediateCode::addICode(IntermediateCodeType type, IEntry *src1, IEntry 
     iCode->src1 = src1;
     iCode->src2 = src2;
     iCode->dst = dst;
+    dst->canGetValue = false;
     if (isInOtherFunc) {
         if (otherFuncICodes.find(funcLabel) == otherFuncICodes.end()) {
             otherFuncICodes.insert(pair<string, vector<ICode *>>(funcLabel, vector<ICode *>()));
@@ -133,6 +134,7 @@ void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src
     iCode->src1 = s1;
     iCode->src2 = src2;
     iCode->dst = dst;
+    dst->canGetValue = false;
     if (isInOtherFunc){
         if (otherFuncICodes.find(funcLabel) == otherFuncICodes.end()){
             otherFuncICodes.insert(pair<string,vector<ICode*>>(funcLabel,vector<ICode*>()));
