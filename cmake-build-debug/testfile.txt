@@ -1,5 +1,5 @@
 int f(){
-    const a[5]=  {1,2,3,4,5};
+    const int a[5]=  {1,2,3,4,5};
     printf("in f: a[] = %d\n%d\n%d\n%d\n%d\n",a[0],a[1],a[2],a[3],a[4]);
     return a[2];
 }
@@ -12,4 +12,5 @@ int main(){
     int ans;
     ans = 6/2/(4/t) ;
     printf("%d\n",ans);
+    return 0;
 }

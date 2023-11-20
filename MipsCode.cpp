@@ -68,7 +68,7 @@ void MipsCode::translate() const {
     cout << ".data 0x10010000\n";
 //    cout << ".data 0x1000\n";
 
-//    cout << "temp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
+    cout << "temp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
     /**字符串区
 # string tokens:
 str_1:  .asciiz   "hello!"
@@ -325,10 +325,12 @@ IEntry * p_val = p;
                 int index = 0;
                 int isNormalArray = src2->type;
                 if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
-                    if (src1->canGetValue){//array就是数组首地址 index索引知道是第几个元素
+                    if (src1->canGetValue){
                         index += src1->imm;
-                        dst->startAddress = IEntries.at(src2->values_Id->at(index))->startAddress;
-                    }else{//array就是数组首地址 index索引还不知道是第几个元素 即索引也是取决于getint  需要lw   拿不到直接值  把*dst_ptr 拷贝地址  之后都会这样使用
+                        cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
+                        cout << "lw " << "$t0" << ", 0($t0)" << endl;
+                        cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                    }else{
                         cout << "li " << "$t0" << ", " << src2->startAddress << endl;
                         cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                         cout << "sll " << "$t1" << ", " << "$t1"<< ", 2" << endl;
@@ -716,10 +718,12 @@ addiu $sp, $sp, 30000
                     int index = 0;
                     int isNormalArray = src2->type;
                     if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
-                        if (src1->canGetValue){//array就是数组首地址 index索引知道是第几个元素
+                        if (src1->canGetValue){
                             index += src1->imm;
-                            dst->startAddress = IEntries.at(src2->values_Id->at(index))->startAddress;
-                        }else{//array就是数组首地址 index索引还不知道是第几个元素 即索引也是取决于getint  需要lw   拿不到直接值  把*dst_ptr 拷贝地址  之后都会这样使用
+                            cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
+                            cout << "lw " << "$t0" << ", 0($t0)" << endl;
+                            cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                        }else{
                             cout << "li " << "$t0" << ", " << src2->startAddress << endl;
                             cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                             cout << "sll " << "$t1" << ", " << "$t1"<< ", 2" << endl;
@@ -909,10 +913,21 @@ addiu $sp, $sp, 30000
                     break;
                 case ARRAY_CONST_Def_Has_Value:
                     cout << "#array_const@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "def   ";
-                    for (auto init_value: *(src1->values)) {
-                        cout << init_value << " ";
+                    for (auto init_id:*(src1->values_Id)) {
+                        cout<<IEntries.at(init_id)->imm<<" ";
                     }
                     cout << endl;
+                    cnt = 0;
+                    for (auto id_init_value: *(src1->values_Id)) {
+                        if (IEntries.at(id_init_value)->canGetValue) { //认为数组内存是连续存储？
+                            cout << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
+                        } else {
+                            cout << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)"
+                                 << endl;
+                        }
+                        cout << "sw " << "$t0, " <<  src1->startAddress+cnt*4 << "($zero)" << endl;
+                        cnt++;
+                    }
                     break;
                 default:
                     break;
