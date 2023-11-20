@@ -1,8 +1,27 @@
+int f1(int a[][2]){
+    printf("before in f1:a[0][0] = %d\n",a[0][0]);
+    int t;
+    t = f2(a[0]);
+    printf("in f1: t = %d\n",t);
+    printf("after in f1:a[0][0] = %d\n",a[0][0]);
+    return a[0][0];
+}
+int f2(int a[]){
+      printf("before in f2:a[0] = %d\n",a[0]);
+        int t;
+        t = a[0];
+        printf("in f2: t = %d\n",t);
+        t = getint();
+        a[0] = (a[0]+1) * a[0]*t;
+        printf("after in f2:a[0] = %d\n",a[0]);
+        return a[0];
+}
 
 int main(){
-   int t;
-   t = getint();
-   printf("%d\n",t);
-   t = -t;
-   printf("%d\n",t);
+printf("in main:\n");
+int a[2][2] = {{1,2},{3,4}};
+int p;
+   p = f1(a);
+   printf("in main:after f1,p = %d\n",p);
+   return 0;
 }
