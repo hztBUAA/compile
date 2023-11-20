@@ -330,6 +330,7 @@ IEntry * p_val = p;
                 if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
                     if (src1->canGetValue){
                         index += src1->imm;
+
                         cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
                         cout << "lw " << "$t0" << ", 0($t0)" << endl;
                         cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;

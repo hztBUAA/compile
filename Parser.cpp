@@ -375,7 +375,6 @@ void Parser::ConstDef(vector<Entry*>& entries) {
         if(ISGLOBAL){
             iEntry->isGlobal = true;
         }
-
         if (op == 0){
             intermediateCode.addDef(ISGLOBAL,Const_Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
         }else{
@@ -1742,7 +1741,7 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
         auto *exp_iEntry = new IEntry;
         Exp(exp_iEntry, value, isInOtherFunc);//下放错误
         exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
-        //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;
+        exp_iEntry->startAddress = iEntry->startAddress + 4*nums;
         //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;//TODo:设置MIPS中的地址  为MIPS服务   由于我会在初始数组时sw
         iEntry->values_Id->push_back(exp_iEntry->Id);
         nums++;
