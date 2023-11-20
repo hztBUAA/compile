@@ -255,6 +255,7 @@ IEntry * p_val = p;
                 break;
             //除法：HI存放余数，LO存放除法结果
             case Div:{
+                cout << "#执行div：\n";
                 if (src1->canGetValue && src2->canGetValue){
                     dst->canGetValue = true;
                     dst->imm = src1->imm / src2->imm;
@@ -266,8 +267,8 @@ IEntry * p_val = p;
                         cout << "mflo " << "$t2" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
                     }else if (src2->canGetValue){
-                        cout << "li " << "$t0" << ", " << src2->imm << endl;
-                        cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        cout << "li " << "$t1" << ", " << src2->imm << endl;
+                        cout << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
                         cout << "div " <<  "$t0" << ", " << "$t1" << endl;
                         cout << "mflo " << "$t2" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
@@ -294,15 +295,15 @@ IEntry * p_val = p;
                         cout << "mfhi " << "$t2" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
                     }else if (src2->canGetValue){
-                        cout << "li " << "$t0" << ", " << src2->imm << endl;
-                        cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                        cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "li " << "$t1" << ", " << src2->imm << endl;
+                        cout << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
+                        cout << "div "  << "$t0" << ", " << "$t1" << endl;
                         cout << "mfhi " << "$t2" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress  << "($zero)"<< endl;
                     }else{
                         cout << "lw " << "$t0" << ", " << src1->startAddress<< "($zero)" << endl;
                         cout << "lw " << "$t1" << ", " << src2->startAddress << "($zero)"<< endl;
-                        cout << "div " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        cout << "div " << "$t0" << ", " << "$t1" << endl;
                         cout << "mfhi " << "$t2" << endl;
                         cout << "sw " << "$t2" << ", " << dst->startAddress<< "($zero)" << endl;
                     }
@@ -648,6 +649,7 @@ addiu $sp, $sp, 30000
                     break;
                     //除法：HI存放余数，LO存放除法结果
                 case Div: {
+                    cout << "#执行div：\n";
                     if (src1->canGetValue && src2->canGetValue) {
                         dst->canGetValue = true;
                         dst->imm = src1->imm / src2->imm;
@@ -661,7 +663,7 @@ addiu $sp, $sp, 30000
                         } else if (src2->canGetValue) {
                             cout << "li " << "$t0" << ", " << src2->imm << endl;
                             cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                            cout << "div " << "$t0" << ", " << "$t1" << endl;
+                            cout << "div " << "$t1" << ", " << "$t0" << endl;
                             cout << "mflo " << "$t2" << endl;
                             cout << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         } else {
@@ -687,8 +689,8 @@ addiu $sp, $sp, 30000
                             cout << "mfhi " << "$t2" << endl;
                             cout << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         } else if (src2->canGetValue) {
-                            cout << "li " << "$t0" << ", " << src2->imm << endl;
-                            cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                            cout << "li " << "$t1" << ", " << src2->imm << endl;
+                            cout << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
                             cout << "div "  << "$t0" << ", " << "$t1" << endl;
                             cout << "mfhi " << "$t2" << endl;
                             cout << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
