@@ -1,22 +1,8 @@
-int f(){
-    const int a[5]=  {1,2,3,4,5};
-    const int aa[3][3] = {{7,8,9},{10,11,12}};
-    printf("in f: a[] = \n%d\n%d\n%d\n%d\n%d\n",a[0],a[1],a[2],a[3],a[4]);
-    printf("in f: aa[][] = \n%d\n%d\n%d\n%d\n%d\n%d",aa[0][0],aa[0][1],aa[0][2],aa[1][0],aa[1][1],aa[1][2]);
-    return a[2]+aa[0][0];
-}
+
 int main(){
-    int ff;
-    ff = f();
-    printf("in main: ff = %d\n",ff);
-    int t ;
-    t = getint();
-    int ans;
-    ans = (t+7)/7;
-    printf("%d\n",ans);
-    ans = t*t;
-    printf("%d\n",ans);
-    ans = t*t*3/2/((t+7)/t) ;
-    printf("%d\n",ans);
-    return 0;
+   int t;
+   t = getint();
+   printf("%d\n",t);
+   t = -t;
+   printf("%d\n",t);
 }
