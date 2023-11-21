@@ -27,7 +27,6 @@ enum IntermediateCodeType{
     Const_Def_Has_Value,
     ARRAY_Def_No_Value,
     VAR_Def_No_Value,
-
     Printf,
     Add,
     Sub,
@@ -39,7 +38,7 @@ enum IntermediateCodeType{
     GetArrayElement,
     FuncCall,//调用时要进行参数压栈和临时内存上堆
     FuncDef,//定义函数时 形式参数需要当成local定义   进入符号表生成Entry的同时生成IEntry 并记录两者的映射
-Return,
+    Return,
 };
 
 

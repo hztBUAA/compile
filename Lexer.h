@@ -73,10 +73,6 @@ class Lexer {
 private:
     bool count_flag;
     bool enableOutput;
-
-
-
-
     map<string, Type> wordCategory;
     //私有化-构造函数
     Lexer(ifstream & sourceFile,ofstream & outputFile);

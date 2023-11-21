@@ -28,11 +28,15 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
     cout << "#assign" << endl;
     if (src1->type == 0){
         if (src1->canGetValue){
-            cout << "li " << "$t0, " << src1->imm<<endl;
+            cout << "li " << "$t1, " << src1->imm<<endl;
         }else{
-            cout << "lw " << "$t0, " << src1->startAddress<<"($zero)"<<endl;
+            cout << "lw " << "$t1, " << src1->startAddress<<"($zero)"<<endl;
         }
-            cout << "sw " << "$t0, " << dst->startAddress<<"($zero)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的
+        if (dst->type == 1){
+            cout << "sw " << "$t1, " <<"0($s7)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的  t0  地址  为写语句而生
+        }else{
+            cout << "sw " << "$t1, " << dst->startAddress<<"($zero)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的
+        }
             dst->canGetValue =  false;//后台更新
     }else{
         //赋值的地址参数拷贝！！！
@@ -152,6 +156,7 @@ str_5:  .asciiz   "ha"
         switch (type) {
             case Printf:
                 cnt_param = 0;
+                cout << "#printf语句:" << src2->values_Id->size()<<"个exp参数\n";
                 for (auto id: *src1->strings_iEntry_id) {
                     /**
  la $a0, str_1
@@ -318,9 +323,14 @@ IEntry * p_val = p;
                 break;
                 //FIXME:总是容易陷入误区 得到v0的值已经是运行时  编译的极限块也做不到预知~
             case GetInt:
+                cout<< "#getint:\n";
                 cout << "\nli $v0, 5\n";
-                cout<<"syscall\n";
-                cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)"<< endl;
+                cout << "syscall\n";
+                if (dst->type == 1){
+                    cout << "sw " << "$v0" << ", "<< "0($s7)" << endl;
+                }else{
+                    cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)" << endl;//基本不会再被用到了？
+                }
                 dst->canGetValue = false;
                 break;
                 //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
@@ -328,7 +338,7 @@ IEntry * p_val = p;
                 cout << "#GetArray Element\n";
                 int index = 0;
                 int isNormalArray = src2->type;
-                if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
+                if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引  s7存放数组元素地址
                     if (src1->canGetValue){
                         index += src1->imm;
                         if (src2->isGlobal){
@@ -338,9 +348,14 @@ IEntry * p_val = p;
                         }else{
                             cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
                         }
-
-                        cout << "lw " << "$t0" << ", 0($t0)" << endl;
-                        cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                        //dst——type  1    0
+                        if (dst->type ==0){
+                            cout << "lw " << "$t0" << ", 0($t0)" << endl;
+                            cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                        }else{
+                            //t0存地址
+                            cout << "addu $s7, $zero,$t0\n";
+                        }
                     }else{
                         if (src2->isGlobal){
                             cout << "la " << "$t0" << ", " << src2->original_Name << endl;
@@ -349,9 +364,14 @@ IEntry * p_val = p;
                         }
                         cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                         cout << "sll " << "$t1" << ", " << "$t1"<< ", 2" << endl;
-                        cout << "addu " << "$t2" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
-                        cout << "lw " << "$t3" << ", 0($t2)" << endl;
-                        cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
+                        cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
+                        if (dst->type ==0){
+                            cout << "lw " << "$t0" << ", 0($t0)" << endl;
+                            cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
+                        }else{
+                            //t0地址
+                            cout << "addu $s7, $zero,$t0\n";
+                        }
                     }
                 }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
                     IEntry* offset = src2->offset_IEntry;
@@ -360,30 +380,47 @@ IEntry * p_val = p;
                         if (src1->canGetValue){
                             index += src1->imm;
                             if (src2->isGlobal){
-                                cout << "la " << "$t0" << ", " << src2->original_Name<< "($zero)"<<endl;
+                                cout << "la " << "$t0" << ", " << src2->original_Name<<endl;
                                 cout << "li " << "$t1" << ", " << index*4 << endl;
                                 cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t1"<< endl;
+                                if (dst->type ==0){
+                                    cout << "lw " << "$t0" << ", 0($t0)" << endl;
+                                    cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
+                                }else{
+                                    //t0地址
+                                    cout << "addu $s7, $zero,$t0\n";
+                                }
                             }else{
-                                cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
+                                if (dst->type ==0){
+                                    cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
+                                    cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                                }else{
+                                    //t0地址
+                                    cout << "addu $s7, $zero,$t0\n";
+                                }
                             }
-                            //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
-
-                            cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                         }else{ //额外索引值是getint 函数调用的引用时
                             if (src2->isGlobal){
                                 cout << "la " << "$t0" << ", " << src2->original_Name << endl;
+                                cout << "li " << "$t1" << ", " << index * 4 << endl;//此时index只有offset->imm  再加上src1的值
+                                cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t1"<< endl;
+                                cout << "lw " << "$t2" << ", " << src1->startAddress << "($zero)" << endl;
+                                cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t2"<< endl; //value's address in $t3
                             }else{
                                 cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
+                                cout << "lw " << "$t2" << ", " << src1->startAddress << "($zero)" << endl;
+                                cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t2"<< endl; //value's address in $t3
                             }
-                            cout << "li " << "$t1" << ", " << index * 4 << endl;//此时index只有offset->imm  再加上src1的值
-                            cout << "lw " << "$t2" << ", " << src1->startAddress << "($zero)" << endl;
-                            cout << "addu " << "$t3" << ", "  << "$t0" << ", " << "$t1"<< endl;
-                            cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
-                            cout << "lw " << "$t4" << ", 0($t3)" << endl;
-                            cout << "sw " << "$t4, " <<  dst->startAddress << "($zero)" << endl;
+                            if (dst->type ==0){
+                                cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
+                                cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                            }else{
+                                //t0地址
+                                cout << "addu $s7, $zero,$t0\n";
+                            }
                         }
                     }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
-                        cout << "lw " << "$t0" << ", " << src2->offset_IEntry->startAddress<<"($zero)" << endl;//t in $t0
+                        cout << "lw " << "$t0" << ", " << offset->startAddress<<"($zero)" << endl;//t in $t0
                         cout << "sll " << "$t0"<< ", "<< "$t0"<< " 2\n";//$t0
                         if (src1->canGetValue){
                             cout << "li " << "$t1" << ", " << src1->imm*4  << endl;// in $t1
@@ -395,11 +432,16 @@ IEntry * p_val = p;
                         if (src2->isGlobal){
                             cout << "la " << "$t3" << ", " << src2->original_Name << endl;
                         }else{
-                            cout << "li " << "$t3" << ", " << src2->startAddress + index*4 << endl;
+                            cout << "li " << "$t3" << ", " << src2->startAddress<< endl;
                         }
-                        cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
-                        cout << "lw " << "$t3" << ",  0($t3)" << endl;
-                        cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;
+                        cout << "addu " << "$t0" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
+                        if (dst->type ==0){
+                            cout << "lw " << "$t0" << ", " <<  "0($t0)"<<endl;
+                            cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                        }else{
+                            //t0地址
+                            cout << "addu $s7, $zero,$t0\n";
+                        }
                     }
                 }
                 break;
@@ -572,6 +614,7 @@ addiu $sp, $sp, 30000
 
             switch (type) {
                 case Printf:
+                    cout << "#printf语句:" << src2->values_Id->size()<<"个exp参数\n";
                     cnt_param = 0;
                     for (auto id: *src1->strings_iEntry_id) {
                         /**
@@ -738,9 +781,14 @@ addiu $sp, $sp, 30000
                     break;
                     //FIXME:总是容易陷入误区 得到v0的值已经是运行时  编译的极限块也做不到预知~
                 case GetInt:
+                    cout<< "#getint:\n";
                     cout << "\nli $v0, 5\n";
                     cout << "syscall\n";
-                    cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)" << endl;
+                    if (dst->type == 1){
+                        cout << "sw " << "$v0" << ", "<< "0($s7)" << endl;
+                    }else{
+                        cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)" << endl;//基本不会再被用到了？
+                    }
                     dst->canGetValue = false;
                     break;
                     //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
@@ -748,7 +796,7 @@ addiu $sp, $sp, 30000
                     cout << "#GetArray Element\n";
                     int index = 0;
                     int isNormalArray = src2->type;
-                    if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引
+                    if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引  s7存放数组元素地址
                         if (src1->canGetValue){
                             index += src1->imm;
                             if (src2->isGlobal){
@@ -758,9 +806,14 @@ addiu $sp, $sp, 30000
                             }else{
                                 cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
                             }
-
-                            cout << "lw " << "$t0" << ", 0($t0)" << endl;
-                            cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                            //dst——type  1    0
+                            if (dst->type ==0){
+                                cout << "lw " << "$t0" << ", 0($t0)" << endl;
+                                cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                            }else{
+                                //s7存地址
+                                cout << "addu $s7, $zero,$t0\n";
+                            }
                         }else{
                             if (src2->isGlobal){
                                 cout << "la " << "$t0" << ", " << src2->original_Name << endl;
@@ -769,9 +822,14 @@ addiu $sp, $sp, 30000
                             }
                             cout << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                             cout << "sll " << "$t1" << ", " << "$t1"<< ", 2" << endl;
-                            cout << "addu " << "$t2" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
-                            cout << "lw " << "$t3" << ", 0($t2)" << endl;
-                            cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
+                            cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t1"<< endl; //value's address in $t2
+                            if (dst->type ==0){
+                                cout << "lw " << "$t0" << ", 0($t0)" << endl;
+                                cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
+                            }else{
+                                //t0地址
+                                cout << "addu $s7, $zero,$t0\n";
+                            }
                         }
                     }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
                         IEntry* offset = src2->offset_IEntry;
@@ -780,30 +838,47 @@ addiu $sp, $sp, 30000
                             if (src1->canGetValue){
                                 index += src1->imm;
                                 if (src2->isGlobal){
-                                    cout << "la " << "$t0" << ", " << src2->original_Name<< "($zero)"<<endl;
+                                    cout << "la " << "$t0" << ", " << src2->original_Name<<endl;
                                     cout << "li " << "$t1" << ", " << index*4 << endl;
                                     cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t1"<< endl;
+                                    if (dst->type ==0){
+                                        cout << "lw " << "$t0" << ", 0($t0)" << endl;
+                                        cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
+                                    }else{
+                                        //t0地址
+                                        cout << "addu $s7, $zero,$t0\n";
+                                    }
                                 }else{
-                                    cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
+                                    if (dst->type ==0){
+                                        cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
+                                        cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                                    }else{
+                                        //t0地址
+                                        cout << "addu $s7, $zero,$t0\n";
+                                    }
                                 }
-                                //编译时 index可以得到准确值 但是那个元素需要getint运行时获得  getint执行时会le sw 与之对应
-
-                                cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                             }else{ //额外索引值是getint 函数调用的引用时
                                 if (src2->isGlobal){
                                     cout << "la " << "$t0" << ", " << src2->original_Name << endl;
+                                    cout << "li " << "$t1" << ", " << index * 4 << endl;//此时index只有offset->imm  再加上src1的值
+                                    cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t1"<< endl;
+                                    cout << "lw " << "$t2" << ", " << src1->startAddress << "($zero)" << endl;
+                                    cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t2"<< endl; //value's address in $t3
                                 }else{
                                     cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
+                                    cout << "lw " << "$t2" << ", " << src1->startAddress << "($zero)" << endl;
+                                    cout << "addu " << "$t0" << ", "  << "$t0" << ", " << "$t2"<< endl; //value's address in $t3
                                 }
-                                cout << "li " << "$t1" << ", " << index * 4 << endl;//此时index只有offset->imm  再加上src1的值
-                                cout << "lw " << "$t2" << ", " << src1->startAddress << "($zero)" << endl;
-                                cout << "addu " << "$t3" << ", "  << "$t0" << ", " << "$t1"<< endl;
-                                cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
-                                cout << "lw " << "$t4" << ", 0($t3)" << endl;
-                                cout << "sw " << "$t4, " <<  dst->startAddress << "($zero)" << endl;
+                                if (dst->type ==0){
+                                    cout << "lw " << "$t0" << ", " << src2->startAddress + index *4<< "($zero)"<<endl;
+                                    cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                                }else{
+                                    //t0地址
+                                    cout << "addu $s7, $zero,$t0\n";
+                                }
                             }
                         }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
-                            cout << "lw " << "$t0" << ", " << src2->offset_IEntry->startAddress<<"($zero)" << endl;//t in $t0
+                            cout << "lw " << "$t0" << ", " << offset->startAddress<<"($zero)" << endl;//t in $t0
                             cout << "sll " << "$t0"<< ", "<< "$t0"<< " 2\n";//$t0
                             if (src1->canGetValue){
                                 cout << "li " << "$t1" << ", " << src1->imm*4  << endl;// in $t1
@@ -815,11 +890,16 @@ addiu $sp, $sp, 30000
                             if (src2->isGlobal){
                                 cout << "la " << "$t3" << ", " << src2->original_Name << endl;
                             }else{
-                                cout << "li " << "$t3" << ", " << src2->startAddress + index*4 << endl;
+                                cout << "li " << "$t3" << ", " << src2->startAddress<< endl;
                             }
-                            cout << "addu " << "$t3" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
-                            cout << "lw " << "$t3" << ",  0($t3)" << endl;
-                            cout << "sw " << "$t3, " << dst->startAddress << "($zero)" << endl;
+                            cout << "addu " << "$t0" << ", "  << "$t3" << ", " << "$t2"<< endl; //value's address in $t3
+                            if (dst->type ==0){
+                                cout << "lw " << "$t0" << ", " <<  "0($t0)"<<endl;
+                                cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                            }else{
+                                //t0地址
+                                cout << "addu $s7, $zero,$t0\n";
+                            }
                         }
                     }
                     break;
