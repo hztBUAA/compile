@@ -52,7 +52,17 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
 
 }
 
+void MipsCode::testRe(){
+    // 创建一个ofstream对象
+    std::ofstream outputFile("mips.txt");
 
+// 保存cout的原始缓冲区指针
+    std::streambuf* coutBuffer = std::cout.rdbuf();
+
+// 将cout的流重定向到outputFile
+    std::cout.rdbuf(outputFile.rdbuf());
+    cout << "test\n";
+}
 void MipsCode::translate() const {
 // 创建一个ofstream对象
     std::ofstream outputFile("mips.txt");
