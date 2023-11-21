@@ -991,7 +991,8 @@ addiu $sp, $sp, 30000
             }
         }
     }
-
+// 重定向结束后，可以将cout的流恢复到原始状态
+    std::cout.rdbuf(coutBuffer);
 
 }
 
