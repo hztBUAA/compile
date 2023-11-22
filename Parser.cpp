@@ -213,8 +213,13 @@ void Parser::VarDef(vector<Entry*> &entries) {
         InitVal(iEntry,nums);
     }else{
         iEntry->values_Id = new vector<int>;
+        IEntry*p;
         for (int i = 0; i <total_length;i++){
-            iEntry->values_Id->push_back((new IEntry)->Id);
+            iEntry->values_Id->push_back((p = new IEntry)->Id);
+            //exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
+            p->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
+            p->canGetValue = true;
+            p->imm = 0;
         }
     }
     if(!error){
@@ -784,13 +789,8 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
             } else {
                 auto*exp = new IEntry;
                 Exp(exp, value, InOtherFunc);//FIXME:直接将LVal的IEntry赋值到Exp中 表示Exp的最终结果就是LVal的内存所在区域的值！  如果不是直接求出值  那么
-                if (exp->canGetValue){
-                    lVal->imm = exp->imm;//值传递  修改值就行
-                    lVal->canGetValue =true;
-                }else{
-                    intermediateCode.addICode(Assign,exp, nullptr,lVal);//一般的传递
-                    lVal->canGetValue = exp->canGetValue;
-                }
+                intermediateCode.addICode(Assign,exp, nullptr,lVal);//一般的传递
+                lVal->canGetValue = false;
             }
             //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
             isLValInStmt = true;
@@ -806,6 +806,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
             iEntry->dim1_length = lVal->dim1_length;
             iEntry->total_length = lVal->total_length;
             iEntry->has_return = lVal->has_return;
+            iEntry->isGlobal = lVal->isGlobal;
         }
         //不是赋值语句   需要将LVal找到的IEntry 传回上面 我现在不想用二级指针
     }
@@ -894,6 +895,8 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
         if (op == 2){
             if (WORD_TYPE == Type::ASSIGN){
                 (*iEntry)->type =2;
+            }else{
+                (*iEntry)->type =0;
             }
             if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
                 index = array_exps[1]->imm*dim1_length + array_exps[2]->imm;
@@ -919,6 +922,8 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
         }else if(op == 1){//FIXME:可能you缺漏
             if (WORD_TYPE == Type::ASSIGN){
                 (*iEntry)->type =2;
+            }else{
+                (*iEntry)->type =0;
             }
             intermediateCode.addICode(GetArrayElement,array_exps[1],_val,*iEntry);
         }else if(op == 0){//TODO:统一都在values_Id
@@ -937,26 +942,27 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
             _val = IEntries.at(IEntries.at(find->id)->values_Id->at(0));
         }
          if(op == 1){
-             if (array_exps[1]->canGetValue){//TODO 重新生成一个带地址offset的克隆版
+             if (array_exps[1]->canGetValue){//TODO 重新生成一个带地址offset的克隆版    TODo:似乎没有去考虑全局数组
                  index = dim1_length *array_exps[1]->imm;
-                 (*iEntry)->startAddress =_val->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
+                 (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
                  (*iEntry)->values_Id = _val->values_Id;
                  (*iEntry)->values = _val->values;
                  (*iEntry)->offset_IEntry = new IEntry;
                  (*iEntry)->offset_IEntry->canGetValue = true;
                  (*iEntry)->offset_IEntry->imm = index;//index 以数组下标作为索引
                  (*iEntry)->type = 1;
-                 (*iEntry)->isGlobal = _val->isGlobal;
+                 (*iEntry)->isGlobal = IEntries.at(find->id)->isGlobal;
              }else{
                  intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],index_entry);
-                 (*iEntry)->startAddress =_val->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
+                 (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
                  (*iEntry)->offset_IEntry = index_entry;//包装好了地址
                  (*iEntry)->offset_IEntry->canGetValue = false;//需要lw sw
                  (*iEntry)->type = 1;
-                 (*iEntry)->isGlobal = _val->isGlobal;
+                 (*iEntry)->isGlobal = IEntries.at(find->id)->isGlobal;
              }
          }else if(op == 0){
              *iEntry =  _val;
+             (*iEntry)->isGlobal = IEntries.at(find->id)->isGlobal;
          }
     }else{ // 二级地址要小心 TODO: 形参的ConstExp是有用的  const不能作为数组参数！！！ 所以只用伪造valuesID
         //2维地址  伪造iEntry数组 认为是type = 1!!!!  取元素才不会取到你、空
@@ -968,13 +974,13 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
         }
         int new_dim1_length = array_exps[2]->imm;
         (*iEntry)->type = 1;
-        (*iEntry)->startAddress = _val->startAddress;
+        (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;
         (*iEntry)->dim1_length = new_dim1_length;
         (*iEntry)->values_Id = _val->values_Id;
         (*iEntry)->offset_IEntry = new IEntry;
         (*iEntry)->offset_IEntry->canGetValue = true;
         (*iEntry)->offset_IEntry->imm = 0;//index 以数组下标作为索引
-        (*iEntry)->isGlobal = _val->isGlobal;
+        (*iEntry)->isGlobal = IEntries.at(find->id)->isGlobal;
     }
 
 
@@ -1323,7 +1329,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
         if (op == 0){
             kind = VAR;
             rParam = new IEntry;
-            rParam->type = 1;
+            rParam->type = 0;
             rParam->values_Id = new vector<int>;
             rParam->original_Name = ident;
             rParam->values_Id->push_back((new IEntry)->Id);//new IEntry存放值

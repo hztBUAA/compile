@@ -34,7 +34,7 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
         }
         if (dst->type == 2){
             output << "lw " << "$t2, " << dst->startAddress << "($zero)" << endl;
-            output << "sw " << "$t1, " << "0($t2)" << endl; //dst是值   需要从变量的IEntry的values_Id中取得的  t0  地址  为写语句而生
+            output << "sw " << "$t1, " << "0($t2)" << endl; //  需要从变量的IEntry的values_Id中取得的  t0  地址  为写语句而生
         }else{
             output << "sw " << "$t1, " << dst->startAddress << "($zero)" << endl; //dst是值   需要从变量的IEntry的values_Id中取得的
         }
@@ -361,14 +361,14 @@ IEntry * p_val = p;
                         }else{
                             output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
                         }
-                        //dst——type  2    0
+                        //dst——type  1    0
                         if (dst->type ==0){
                             output << "lw " << "$t0" << ", 0($t0)" << endl;
                             output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                         }else{
-                            //t0存地址
+                            //采用地址传递  内容是地址
                             output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
-                            dst->type = 0;
+//                                dst->type = 0;
                         }
                     }else{
                         if (src2->isGlobal){
@@ -385,6 +385,7 @@ IEntry * p_val = p;
                         }else{
                             //t0地址
                             output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+//                                dst->type = 0;
                         }
                     }
                 }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
@@ -409,8 +410,10 @@ IEntry * p_val = p;
                                     output << "lw " << "$t0" << ", " << src2->startAddress + index * 4 << "($zero)" << endl;
                                     output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                                 }else{
+                                    output << "li " << "$t0" << ", " << src2->startAddress + index * 4  << endl;
                                     //t0地址
                                     output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+//                                        dst->type = 0;
                                 }
                             }
                         }else{ //额外索引值是getint 函数调用的引用时
@@ -431,6 +434,7 @@ IEntry * p_val = p;
                             }else{
                                 //t0地址
                                 output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+//                                    dst->type = 0;
                             }
                         }
                     }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
@@ -455,6 +459,7 @@ IEntry * p_val = p;
                         }else{
                             //t0地址
                             output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+//                                dst->type = 0;
                         }
                     }
                 }
@@ -828,7 +833,7 @@ addiu $sp, $sp, 30000
                             }else{
                                 //采用地址传递  内容是地址
                                 output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
-                                dst->type = 0;
+//                                dst->type = 0;
                             }
                         }else{
                             if (src2->isGlobal){
@@ -845,10 +850,12 @@ addiu $sp, $sp, 30000
                             }else{
                                 //t0地址
                                 output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
-                                dst->type = 0;
+//                                dst->type = 0;
                             }
                         }
                     }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
+                        // 需要额外使用  因为全局数组的地址需要la  而且函数部分在翻译时并不知道传进来的是全局数组还是自定义的   地址需要通过lw来传递
+                        //统一接口  传进来的  函数内的参数地址 需要把地址存进内存中  类似于assign的   即src2需要lw得到地址
                         IEntry* offset = src2->offset_IEntry;
                         if (offset->canGetValue){ //引用数组的索引 已知
                             index += offset->imm;
@@ -870,9 +877,10 @@ addiu $sp, $sp, 30000
                                         output << "lw " << "$t0" << ", " << src2->startAddress + index * 4 << "($zero)" << endl;
                                         output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                                     }else{
+                                        output << "li " << "$t0" << ", " << src2->startAddress + index * 4  << endl;
                                         //t0地址
                                         output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
-                                        dst->type = 0;
+//                                        dst->type = 0;
                                     }
                                 }
                             }else{ //额外索引值是getint 函数调用的引用时
@@ -893,7 +901,7 @@ addiu $sp, $sp, 30000
                                 }else{
                                     //t0地址
                                     output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
-                                    dst->type = 0;
+//                                    dst->type = 0;
                                 }
                             }
                         }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
@@ -918,7 +926,7 @@ addiu $sp, $sp, 30000
                             }else{
                                 //t0地址
                                 output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
-                                dst->type = 0;
+//                                dst->type = 0;
                             }
                         }
                     }
