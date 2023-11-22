@@ -354,7 +354,7 @@ IEntry * p_val = p;
             case GetAddress:{
                 output<< "#GetTheAddress  sw in dst 's address\n";
                 if (src2->type == 1){
-                     output<< "lw $t0,"<<src2->startAddress<<endl;
+                     output<< "lw $t0,"<<IEntries.at(src2->values_Id->at(0))->startAddress<<"($zero)"<<endl;
                 }else{
                     if (src2->isGlobal){
                         output<< "la $t0,"<<src2->original_Name<<endl;
@@ -370,7 +370,7 @@ IEntry * p_val = p;
                          output<< "addu $t0,$t0,$t1"<<endl;
                     }
                 }
-                 output<< "sw $t0,"<<dst->startAddress<<endl;
+                 output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
                 break;
             }
             case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
@@ -425,8 +425,12 @@ IEntry * p_val = p;
                             output<< "addu $t0,$t0,$t1"<<endl;
                         }
                     }
-                    output<< "lw $t0,0($t0)"<<endl;
-                    output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                    if(dst->type == 0){
+                        output<< "lw $t0,0($t0)"<<endl;
+                        output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                    }else{
+                        output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                    }
                 }
                 break;
             }
@@ -779,7 +783,7 @@ addiu $sp, $sp, 30000
                 case GetAddress:{
                     output<< "#GetTheAddress  sw in dst 's address\n";
                     if (src2->type == 1){
-                        output<< "lw $t0,"<<src2->startAddress<<endl;
+                        output<< "lw $t0,"<<IEntries.at(src2->values_Id->at(0))->startAddress<<"($zero)"<<endl;
                     }else{
                         if (src2->isGlobal){
                             output<< "la $t0,"<<src2->original_Name<<endl;
@@ -795,7 +799,7 @@ addiu $sp, $sp, 30000
                             output<< "addu $t0,$t0,$t1"<<endl;
                         }
                     }
-                    output<< "sw $t0,"<<dst->startAddress<<endl;
+                    output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
                     break;
                 }
                     //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
@@ -851,8 +855,12 @@ addiu $sp, $sp, 30000
                                 output<< "addu $t0,$t0,$t1"<<endl;
                             }
                         }
-                        output<< "lw $t0,0($t0)"<<endl;
-                        output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                        if(dst->type == 0){
+                            output<< "lw $t0,0($t0)"<<endl;
+                            output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                        }else{
+                            output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                        }
                     }
                     break;
                 }
