@@ -69,7 +69,7 @@ char ErrorHandler::transformType2Char(ErrorType errorType) {
 void ErrorHandler::Print_Errors() {
 for(auto  error:*errors){
         if(enable){
-//        cout << error.first << " "<<transformType2Char(error.second)<<endl;
+//        ouputFile << error.first << " "<<transformType2Char(error.second)<<endl;
             errorFile << error.first << " "<<transformType2Char(error.second)<<endl;
     }
 }

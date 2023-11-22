@@ -19,7 +19,7 @@ extern int  tempMemoryAddressTop;
 void Parser::Print_Grammar_Output(const string& s) {
     if (enablePrint){
 
-        //cout << s << endl;
+        //ouputFile << s << endl;
         lexer.outputFile << s << endl;
     }
 }
@@ -597,7 +597,7 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         }
         if (not_define_error){
             errorHandler.Insert_Error(NOT_DEFINE);
-//        cout << "1   "+to_string(errorHandler.error_line);
+//        ouputFile << "1   "+to_string(errorHandler.error_line);
         }
         //lexer.ch = PEEK_A_LETTER;   为了去除所有的空白字符  用peek无法做到
         //之所以不用GET_A_WORD   是因为  这样会丢失ident    造成约束不一致
