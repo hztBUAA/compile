@@ -81,6 +81,7 @@ public:
      * 一些被traslate调用的工具代码 如：lw、sw、add、sub、mul、div、beq、bne、bge、bgt、ble、blt、j、jal、jr、li、la、move、mflo、mfhi、syscall
      */
 
+    void testRe();
 };
 
 

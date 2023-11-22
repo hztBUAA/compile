@@ -20,7 +20,8 @@ int main() {
     parser.CompUnit();
     //errorHandler.Print_Errors();
 //    intermediateCode.debug_print();
-    mipsCode.translate();
+//    mipsCode.translate();
+mipsCode.testRe();
     //my_lexer.analyze();
     return 0;
 }

@@ -788,7 +788,6 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                     lVal->imm = exp->imm;//值传递  修改值就行
                     lVal->canGetValue =true;
                 }else{
-
                     intermediateCode.addICode(Assign,exp, nullptr,lVal);//一般的传递
                     lVal->canGetValue = exp->canGetValue;
                 }
@@ -894,9 +893,8 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
         }
         if (op == 2){
             if (WORD_TYPE == Type::ASSIGN){
-                (*iEntry)->type =1;
+                (*iEntry)->type =2;
             }
-
             if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
                 index = array_exps[1]->imm*dim1_length + array_exps[2]->imm;
                 intermediateCode.addICode(GetArrayElement,index,_val,*iEntry);
@@ -920,7 +918,7 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
             }//FIXME:数组定义时的IEntry （src2）   偏移index（不乘4）index_entry-》能get就get 不能就lw address
         }else if(op == 1){//FIXME:可能you缺漏
             if (WORD_TYPE == Type::ASSIGN){
-                (*iEntry)->type =1;
+                (*iEntry)->type =2;
             }
             intermediateCode.addICode(GetArrayElement,array_exps[1],_val,*iEntry);
         }else if(op == 0){//TODO:统一都在values_Id

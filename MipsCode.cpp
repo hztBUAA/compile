@@ -32,8 +32,9 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
         }else{
             cout << "lw " << "$t1, " << src1->startAddress<<"($zero)"<<endl;
         }
-        if (dst->type == 1){
-            cout << "sw " << "$t1, " <<"0($s7)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的  t0  地址  为写语句而生
+        if (dst->type == 2){
+            cout << "lw " << "$t2, " <<dst->startAddress<<"($zero)"<<endl;
+            cout << "sw " << "$t1, " <<"0($t2)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的  t0  地址  为写语句而生
         }else{
             cout << "sw " << "$t1, " << dst->startAddress<<"($zero)"<<endl; //dst是值   需要从变量的IEntry的values_Id中取得的
         }
@@ -55,7 +56,19 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
 
 }
 
+void MipsCode::testRe(){
+    // 创建一个ofstream对象
+    std::ofstream outputFile("mips.txt");
 
+// 保存cout的原始缓冲区指针
+//    std::streambuf* coutBuffer = std::cout.rdbuf();
+
+// 将cout的流重定向到outputFile
+//    std::cout.rdbuf(outputFile.rdbuf());
+    outputFile << ".text\n";
+    // 重定向结束后，可以将cout的流恢复到原始状态
+//    std::cout.rdbuf(coutBuffer);
+}
 void MipsCode::translate() const {
 // 创建一个ofstream对象
     std::ofstream outputFile("mips.txt");
@@ -326,8 +339,9 @@ IEntry * p_val = p;
                 cout<< "#getint:\n";
                 cout << "\nli $v0, 5\n";
                 cout << "syscall\n";
-                if (dst->type == 1){
-                    cout << "sw " << "$v0" << ", "<< "0($s7)" << endl;
+                if (dst->type == 2){
+                    cout << "lw " << "$t0" << ", "<< dst->startAddress<<"($zero)" << endl;
+                    cout << "sw " << "$v0" << ", "<< "0($t0)" << endl;
                 }else{
                     cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)" << endl;//基本不会再被用到了？
                 }
@@ -348,13 +362,14 @@ IEntry * p_val = p;
                         }else{
                             cout << "li " << "$t0" << ", " << src2->startAddress + index*4 << endl;
                         }
-                        //dst——type  1    0
+                        //dst——type  2    0
                         if (dst->type ==0){
                             cout << "lw " << "$t0" << ", 0($t0)" << endl;
                             cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                         }else{
                             //t0存地址
-                            cout << "addu $s7, $zero,$t0\n";
+                            cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                            dst->type = 0;
                         }
                     }else{
                         if (src2->isGlobal){
@@ -370,7 +385,7 @@ IEntry * p_val = p;
                             cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                         }else{
                             //t0地址
-                            cout << "addu $s7, $zero,$t0\n";
+                            cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                         }
                     }
                 }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
@@ -388,7 +403,7 @@ IEntry * p_val = p;
                                     cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                                 }else{
                                     //t0地址
-                                    cout << "addu $s7, $zero,$t0\n";
+                                    cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                                 }
                             }else{
                                 if (dst->type ==0){
@@ -396,7 +411,7 @@ IEntry * p_val = p;
                                     cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                                 }else{
                                     //t0地址
-                                    cout << "addu $s7, $zero,$t0\n";
+                                    cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                                 }
                             }
                         }else{ //额外索引值是getint 函数调用的引用时
@@ -416,7 +431,7 @@ IEntry * p_val = p;
                                 cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                             }else{
                                 //t0地址
-                                cout << "addu $s7, $zero,$t0\n";
+                                cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                             }
                         }
                     }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
@@ -440,7 +455,7 @@ IEntry * p_val = p;
                             cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                         }else{
                             //t0地址
-                            cout << "addu $s7, $zero,$t0\n";
+                            cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                         }
                     }
                 }
@@ -782,10 +797,11 @@ addiu $sp, $sp, 30000
                     //FIXME:总是容易陷入误区 得到v0的值已经是运行时  编译的极限块也做不到预知~
                 case GetInt:
                     cout<< "#getint:\n";
-                    cout << "\nli $v0, 5\n";
+                    cout << "li $v0, 5\n";
                     cout << "syscall\n";
-                    if (dst->type == 1){
-                        cout << "sw " << "$v0" << ", "<< "0($s7)" << endl;
+                    if (dst->type == 2){
+                        cout << "lw " << "$t0" << ", "<< dst->startAddress<<"($zero)" << endl;
+                        cout << "sw " << "$v0" << ", "<< "0($t0)" << endl;
                     }else{
                         cout << "sw " << "$v0" << ", " << dst->startAddress << "($zero)" << endl;//基本不会再被用到了？
                     }
@@ -811,8 +827,9 @@ addiu $sp, $sp, 30000
                                 cout << "lw " << "$t0" << ", 0($t0)" << endl;
                                 cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                             }else{
-                                //s7存地址
-                                cout << "addu $s7, $zero,$t0\n";
+                                //采用地址传递  内容是地址
+                                cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                                dst->type = 0;
                             }
                         }else{
                             if (src2->isGlobal){
@@ -828,7 +845,8 @@ addiu $sp, $sp, 30000
                                 cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                             }else{
                                 //t0地址
-                                cout << "addu $s7, $zero,$t0\n";
+                                cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                                dst->type = 0;
                             }
                         }
                     }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
@@ -846,7 +864,7 @@ addiu $sp, $sp, 30000
                                         cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
                                     }else{
                                         //t0地址
-                                        cout << "addu $s7, $zero,$t0\n";
+                                        cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
                                     }
                                 }else{
                                     if (dst->type ==0){
@@ -854,7 +872,8 @@ addiu $sp, $sp, 30000
                                         cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                                     }else{
                                         //t0地址
-                                        cout << "addu $s7, $zero,$t0\n";
+                                        cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                                        dst->type = 0;
                                     }
                                 }
                             }else{ //额外索引值是getint 函数调用的引用时
@@ -874,7 +893,8 @@ addiu $sp, $sp, 30000
                                     cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                                 }else{
                                     //t0地址
-                                    cout << "addu $s7, $zero,$t0\n";
+                                    cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                                    dst->type = 0;
                                 }
                             }
                         }else{ //有时引用数组的索引都是getint  arr[t] ||||||   sll rd rt sham: rt » sham => rd, shift left logical 向左移位
@@ -898,7 +918,8 @@ addiu $sp, $sp, 30000
                                 cout << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                             }else{
                                 //t0地址
-                                cout << "addu $s7, $zero,$t0\n";
+                                cout << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                                dst->type = 0;
                             }
                         }
                     }

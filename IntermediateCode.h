@@ -27,6 +27,7 @@ enum IntermediateCodeType{
     Const_Def_Has_Value,
     ARRAY_Def_No_Value,
     VAR_Def_No_Value,
+    GetLValAddress,
     Printf,
     Add,
     Sub,
