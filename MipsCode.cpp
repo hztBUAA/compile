@@ -364,9 +364,10 @@ IEntry * p_val = p;
                 }
                 if (src1){
                     if (src1->canGetValue){
-                         output<< "addu $t0,$t0,"<<src1->imm<<endl;
+                         output<< "addu $t0,$t0,"<<src1->imm*4<<endl;
                     }else{
                          output<< "lw, $t1,"<<src1->startAddress<<"($zero)"<<endl;
+                         output << "sll $t1,$t1,2"<<endl;
                          output<< "addu $t0,$t0,$t1"<<endl;
                     }
                 }
@@ -793,9 +794,10 @@ addiu $sp, $sp, 30000
                     }
                     if (src1){
                         if (src1->canGetValue){
-                            output<< "addu $t0,$t0,"<<src1->imm<<endl;
+                            output<< "addu $t0,$t0,"<<src1->imm*4<<endl;
                         }else{
                             output<< "lw, $t1,"<<src1->startAddress<<"($zero)"<<endl;
+                            output << "sll $t1,$t1,2"<<endl;
                             output<< "addu $t0,$t0,$t1"<<endl;
                         }
                     }

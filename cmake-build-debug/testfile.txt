@@ -15,14 +15,14 @@ void test(int a[]){
     printf("after !!!!!!!in test:a[0] = %d\n",a[0]);
 }
 void f3(int a[][3]){
-    printf("before !!!!!!in f2:a[0][0] = %d\n",a[0][0]);
+    printf("before !!!!!!in f3:a[0][0] = %d\n",a[0][0]);
     int y;
     printf("input y:less than 3\n");
     y = getint();
     printf("in f3: a[0][0] = %d\n",a[0][0]);
     a[0][0] = 100;
     printf("in f3: a[0][0] = %d\n",a[0][0]);
-    test(a[2]);
+    test(a[y]);
     printf("after !!!!!!!in f2:a[0][0] = %d\n",a[0][0]);
 }
 void f2(int a[][3]){
