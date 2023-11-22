@@ -932,55 +932,22 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中
         //一维地址
         /**
+         * 只可能是传给别人做地址
          * 重新生成一个IEntry   用来表示内存位置
          * TODO:先不考虑烦人的array找不到对应的值的情况---需要进一步生成index的中间代码
          */
-        IEntry *_val;
-        if (IEntries.at(find->id)->type == 0){
-            _val = IEntries.at(find->id);
+        (*iEntry)->type =1;
+        if (op == 0){
+            //没有其他需要加的offset
+            intermediateCode.addICode(GetAddress, nullptr,IEntries.at(find->id),*iEntry);
         }else{
-            _val = IEntries.at(IEntries.at(find->id)->values_Id->at(0));
-        }
-         if(op == 1){
-             if (array_exps[1]->canGetValue){//TODO 重新生成一个带地址offset的克隆版    TODo:似乎没有去考虑全局数组
-                 index = dim1_length *array_exps[1]->imm;
-                 (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
-                 (*iEntry)->values_Id = _val->values_Id;
-                 (*iEntry)->values = _val->values;
-                 (*iEntry)->offset_IEntry = new IEntry;
-                 (*iEntry)->offset_IEntry->canGetValue = true;
-                 (*iEntry)->offset_IEntry->imm = index;//index 以数组下标作为索引
-                 (*iEntry)->type = 1;
-                 (*iEntry)->isGlobal = IEntries.at(find->id)->isGlobal;
-             }else{
-                 intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],index_entry);
-                 (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;//这样传的就是地址  只不是体现在我的程序中IEntry是新的  这只是为了不要弄脏起初定义数组时的数据格子 指的都是同一个
-                 (*iEntry)->offset_IEntry = index_entry;//包装好了地址
-                 (*iEntry)->offset_IEntry->canGetValue = false;//需要lw sw
-                 (*iEntry)->type = 1;
-                 (*iEntry)->isGlobal = IEntries.at(find->id)->isGlobal;
-             }
-         }else if(op == 0){
-             *iEntry =  _val;
-             (*iEntry)->isGlobal = IEntries.at(find->id)->isGlobal;
-         }
+            //有一个数字需要加
+            intermediateCode.addICode(GetAddress, array_exps[1],IEntries.at(find->id),*iEntry);
+        };
     }else{ // 二级地址要小心 TODO: 形参的ConstExp是有用的  const不能作为数组参数！！！ 所以只用伪造valuesID
         //2维地址  伪造iEntry数组 认为是type = 1!!!!  取元素才不会取到你、空
-        IEntry *_val;
-        if (IEntries.at(find->id)->type == 0){
-            _val = IEntries.at(find->id);
-        }else{
-            _val = IEntries.at(IEntries.at(find->id)->values_Id->at(0));
-        }
-        int new_dim1_length = array_exps[2]->imm;
-        (*iEntry)->type = 1;
-        (*iEntry)->startAddress =IEntries.at(find->id)->startAddress;
-        (*iEntry)->dim1_length = new_dim1_length;
-        (*iEntry)->values_Id = _val->values_Id;
-        (*iEntry)->offset_IEntry = new IEntry;
-        (*iEntry)->offset_IEntry->canGetValue = true;
-        (*iEntry)->offset_IEntry->imm = 0;//index 以数组下标作为索引
-        (*iEntry)->isGlobal = IEntries.at(find->id)->isGlobal;
+        (*iEntry)->type =1;
+        intermediateCode.addICode(GetAddress, nullptr,IEntries.at(find->id),*iEntry);
     }
 
 
@@ -1341,9 +1308,9 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             rParam->original_Name = ident;
             IEntry * v;
             rParam->values_Id->push_back((v = new IEntry)->Id);
-            v->offset_IEntry = new IEntry;//不一定需要？
+//            v->offset_IEntry = new IEntry;//不一定需要？
             v->type = 1;
-            rParam->offset_IEntry = new IEntry;
+//            rParam->offset_IEntry = new IEntry;
             //new IEntry存放地址
         }else{
             kind = ARRAY_2_VAR;
@@ -1353,9 +1320,9 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             rParam->original_Name = ident;
             IEntry * v;
             rParam->values_Id->push_back((v = new IEntry)->Id);
-            v->offset_IEntry = new IEntry;
+//            v->offset_IEntry = new IEntry;
             v->type =1;
-            rParam->offset_IEntry = new IEntry;
+//            rParam->offset_IEntry = new IEntry;
             rParam->type = 1;
         }
 
