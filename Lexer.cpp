@@ -345,14 +345,14 @@ void Lexer::printOutput() {
 
 
 
-//    outputFile<<ENUM_TO_STRING(token_type)<<" ";
+//    output<<ENUM_TO_STRING(token_type)<<" ";
 //    if (token_type == INTCON){
-//        outputFile<<token.number<<endl;
+//        output<<token.number<<endl;
 //    }else{
 //        if (token_type == STRCON){
-//            outputFile<<"\""+*token.symbol+"\""<<endl;
+//            output<<"\""+*token.symbol+"\""<<endl;
 //        }else{
-//            outputFile<<*token.symbol<<endl;//要加*号吗？
+//            output<<*token.symbol<<endl;//要加*号吗？
 //        }
 //    }
 }

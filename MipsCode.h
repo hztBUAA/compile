@@ -66,16 +66,17 @@ const std::map<Reg, std::string> reg2s = {
 
 class MipsCode {
 private:
+    ofstream &output;
     IntermediateCode &intermediateCode;
 
 public:
     //TODO: 用于存储全局变量和数组的内存地址  MIPS只用使用IEntry中的地址
-    explicit MipsCode(IntermediateCode &intermediateCode1):intermediateCode(intermediateCode1){};
+    explicit MipsCode(IntermediateCode &intermediateCode1,ofstream&output1):intermediateCode(intermediateCode1),output(output1){};
     /**
      * 根据type进行中间代码到MIPS的翻译
      */
-    static void assign(IEntry *src1,IEntry *src2,IEntry *dst) ;
-    void translate() const;
+    void assign(IEntry *src1,IEntry *src2,IEntry *dst) ;
+    void translate();
 
     /**
      * 一些被traslate调用的工具代码 如：lw、sw、add、sub、mul、div、beq、bne、bge、bgt、ble、blt、j、jal、jr、li、la、move、mflo、mfhi、syscall

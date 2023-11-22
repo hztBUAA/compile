@@ -151,23 +151,23 @@ void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src
 
 
 //void IntermediateCode::debug_print() {
-//    outputFile<<"#全局变量"<<endl;
+//    output<<"#全局变量"<<endl;
 //    for (auto def:globalDef) {
 //        //输出iCode的类型、和非空的IEntry
-//        outputFile<< iCode2str(def) << endl;
+//        output<< iCode2str(def) << endl;
 //    }
-//    outputFile<<"#主函数"<<endl;
+//    output<<"#主函数"<<endl;
 //    //print mainICodes
 //    for (auto item:mainICodes) {
 //        //输出iCode的类型、和非空的IEntry
-//        outputFile << iCode2str(item) << endl;
+//        output << iCode2str(item) << endl;
 //    }
-//    outputFile<<"#其他自定义函数"<<endl;
+//    output<<"#其他自定义函数"<<endl;
 //    //按顺序输出otherFuncICodes的每一个FuncLabel的ICodes
 //    for (const auto& func:otherFuncICodes) {
-//        outputFile<<"#自定义函数名："+func.first<<endl;
+//        output<<"#自定义函数名："+func.first<<endl;
 //        for (auto item:func.second) {
-//            outputFile << iCode2str(item) << endl;
+//            output << iCode2str(item) << endl;
 //
 //        }
 //    }
