@@ -19,9 +19,13 @@ int main() {
     Semantic semantic(my_lexer,tableManager,errorHandler);
     Parser parser(my_lexer,tableManager,errorHandler,semantic,intermediateCode);
     parser.CompUnit();
-    //errorHandler.Print_Errors();
+    if (errorHandler.cnt_errors!=0){
+        errorHandler.Print_Errors();
+    } else{
+        mipsCode.translate();
+    }
 //    intermediateCode.debug_print();
-    mipsCode.translate();
+
 //mipsCode.testRe();
     //my_lexer.analyze();
     return 0;

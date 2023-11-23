@@ -656,12 +656,14 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                 }else{//没有参数的函数调用  src1函数定义头  src2函数参数IEntry  放在valueId
                     auto * params = new IEntry;
                     params->values_Id = new vector<int>;
-                    if (func->kind == FUNC_INT){//空参数
-                        iEntry->canGetValue = false;
-                        iEntry->startAddress = IEntries.at(func->id)->return_IEntry->startAddress;//地址赋值 类似拷贝
-                        intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
-                    }else{//此时iEntry没用
-                        intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, nullptr);
+                    if (func){
+                        if (func->kind == FUNC_INT){//空参数
+                            iEntry->canGetValue = false;
+                            iEntry->startAddress = IEntries.at(func->id)->return_IEntry->startAddress;//地址赋值 类似拷贝
+                            intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
+                        }else{//此时iEntry没用
+                            intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, nullptr);
+                        }
                     }
                 }
                 PRINT_WORD;//PRINT )
@@ -698,11 +700,13 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                         //有参数的函数调用  src1函数定义头  src2函数参数IEntry  放在valueId
                         //TODO:明确传的是啥
                         //FParams->push_back(exp_iEntry->Id);//后端去拷贝assign
+                    if (func){
                         if (func->kind == FUNC_INT){
                             intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
                         }else{
                             intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, nullptr);
                         }
+                    }
                     PRINT_WORD;//PRINT )
                     GET_A_WORD;//point to next WORD
                 }
@@ -816,11 +820,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
 
 //TODO：LVal说明是引用曾经定义过的变量（源程序）   需要二级指针进行重定向
 //TODO：   值  地址    地址是需要拷贝原来数组的一切东西  只是type == 1  && offset is  valid      valueId 指向的IEntry就恒定为这个数组默认的值了   查询 如果canGet 就Get   不能  就lw sw 相对于这个IEntry的startAddress    || 写入值  置canGet为false  sw startAddress
-void Parser::
-
-
-
-LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
+void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易错的地方 ident  line已经指向下一个字符前所在的行
     if (WORD_TYPE != IDENFR){
         //Error
     }
@@ -855,7 +855,7 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
      */
     //引用LVal  搜寻之前定义时的类型，从而得出当前引用LVal时的类型   ------实际上LVal必须引用元素  即得到的一定是值---并不是  可以参数LVal是地址 一维或者二维都行
     temp = tableManager.cur;
-    Entry *find;
+    Entry *find = nullptr;
     Exp_type = -3;
     while (temp!= nullptr){
         if(temp->entries->find(ident) != temp->entries->end()){
@@ -873,16 +873,23 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
         }
         temp = temp->Father_Entry;
     }
-
-    int dim1_length = IEntries.at(find->id)->dim1_length;
-    int index = 0;
-    auto * index_entry = new IEntry;
+    int dim1_length;
+    int index;
+    IEntry * index_entry ;
+    if (!find){
+        goto End;
+    }
+     dim1_length= IEntries.at(find->id)->dim1_length;
+    index = 0;
+  index_entry = new IEntry;
     if (Exp_type == -3){
         //没找到 未定义
 //        errorHandler.Insert_Error(NOT_DEFINE);
     }else if(Exp_type < 0){
         //超出维数的引用   不出现
     }else if(Exp_type == 0){
+
+
 
                 //address for writing
         //
@@ -929,6 +936,8 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
         }else if(op == 0){//TODO:统一都在values_Id
             *iEntry = IEntries.at(IEntries.at(find->id)->values_Id->at(0));
         }
+
+
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中
         //一维地址
         /**
@@ -950,7 +959,7 @@ LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面中的容易�
         intermediateCode.addICode(GetAddress, nullptr,IEntries.at(find->id),*iEntry);
     }
 
-
+    End:;//find是我为了中间代码新加的
 
 
 
@@ -1119,7 +1128,6 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *RParams) {
             }
         }
         RParams->push_back(exp_iEntry->Id);
-        ;
     }
     if(cnt < FArguments.size() &&!already_error_func_type&&!already_error_func_count&& func != nullptr){//实际调用参数少
         errorHandler.Insert_Error(FUNC_RPARAMS_COUNT_ERROR,func_ident_line);//不会出现一行两个错误 既有
@@ -1478,14 +1486,15 @@ void Parser::Stmt() {
                         //Print_Grammar_Output("ERROR  :");
                         errorHandler.Insert_Error(SEMICOLON_MISSING);
                     }else{
-                        if(func->kind == FUNC_INT){
-                            auto * func_iEntry = IEntries.at(func->id);
-                            //func_iEntry->return_IEntry已经生成
-                            intermediateCode.addICode(IntermediateCodeType::Return,exp, nullptr, func_iEntry->return_IEntry);
-                        }else{
-                            intermediateCode.addICode(IntermediateCodeType::Return, nullptr, nullptr, nullptr);//void函数返回
+                        if (func){
+                            if(func->kind == FUNC_INT){
+                                auto * func_iEntry = IEntries.at(func->id);
+                                //func_iEntry->return_IEntry已经生成
+                                intermediateCode.addICode(IntermediateCodeType::Return,exp, nullptr, func_iEntry->return_IEntry);
+                            }else{
+                                intermediateCode.addICode(IntermediateCodeType::Return, nullptr, nullptr, nullptr);//void函数返回
+                            }
                         }
-
                         PRINT_WORD;//print ;
                         GET_A_WORD;
                     }

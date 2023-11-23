@@ -9,7 +9,7 @@ void ErrorHandler::Insert_Error(ErrorType errorType_from_GRAMMAR,int line) {
         return;
     }
     errors->insert(pair(line,errorType_from_GRAMMAR));
-
+    cnt_errors++;
     error_type = errorType_from_GRAMMAR;//输出后 表示错误
 }
 void ErrorHandler::Insert_Error(ErrorType errorType_from_GRAMMAR) {
@@ -42,7 +42,7 @@ void ErrorHandler::Insert_Error(ErrorType errorType_from_GRAMMAR) {
         return;
     }
     errors->insert(pair(error_line,errorType_from_GRAMMAR));
-
+    cnt_errors++;
     error_type = errorType_from_GRAMMAR;//输出后 表示错误
 }
 
