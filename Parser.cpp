@@ -1553,6 +1553,7 @@ void Parser::Stmt() {
                     GET_A_WORD;
                 }
             }
+forCond:
             if (WORD_TYPE == SEMICN) {
                 PRINT_WORD;//PRITN ;
                 GET_A_WORD;
@@ -1571,6 +1572,8 @@ void Parser::Stmt() {
                     GET_A_WORD;
                 }
             }
+            goto forMain;
+forOperation:
             if (WORD_TYPE == RPARENT) {
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
@@ -1585,12 +1588,16 @@ void Parser::Stmt() {
                     GET_A_WORD;
                 }
             }
+            goto forEnd;
+forMain:
             ident = "for";
             semantic.recordEntries(semantic.fillInfoEntry(ident, FOR));
             //向下一层符号表
             tableManager.downTable(ident);
             tableManager.cur->loop_count++;
             Stmt();
+            goto forOperation;
+forEnd:
             intermediateCode.addICode(Jump_Label, condFor, nullptr, nullptr);
             tableManager.cur->loop_count--;
             tableManager.upTable();
