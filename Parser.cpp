@@ -1509,6 +1509,8 @@ void Parser::Stmt() {
             break;
         case BREAKTK:
         case CONTINUETK:
+            Type t;
+            t = WORD_TYPE;
             PRINT_WORD;//PRINT CONTINUE
             GET_A_WORD;
             temp = tableManager.cur;
@@ -1522,6 +1524,15 @@ void Parser::Stmt() {
 
             if(loop_error){
                 errorHandler.Insert_Error(NOT_LOOP_USING_BC);
+            }else{
+                //legal continue or break then find the appropriate for entry => iEntry => return_IEntry
+                if (temp->kind == Kind::FOR){
+                    if (t == CONTINUETK){
+                        intermediateCode.addICode(Jump_Label,IEntries.at(temp->id)->offset_IEntry, nullptr, nullptr);
+                    }else if(t == BREAKTK){
+                        intermediateCode.addICode(Jump_Label,IEntries.at(temp->id)->return_IEntry, nullptr, nullptr);
+                    }
+                }
             }
             if (WORD_TYPE != SEMICN){
                 //ERROR
@@ -1602,6 +1613,11 @@ void Parser::Stmt() {
             semantic.recordEntries(semantic.fillInfoEntry(ident, FOR));
             //向下一层符号表
             tableManager.downTable(ident);
+            IEntry*_forIEntry;
+            _forIEntry = new IEntry;
+            _forIEntry->return_IEntry = endFor;//return_IEntry存储结束的Label
+            _forIEntry->offset_IEntry = opFor;
+            tableManager.cur->id = _forIEntry->Id;
             tableManager.cur->loop_count++;
 //            mainFor = new IEntry("For_main");
             intermediateCode.addICode(Insert_Label,mainFor, nullptr, nullptr);
@@ -1651,7 +1667,7 @@ intermediateCode.addICode(Jump_Label,label_else, nullptr, nullptr);
             intermediateCode.addICode(Beqz,cond, label_else, nullptr);//不能直接跳到end
             Stmt_if:
             intermediateCode.addICode(Insert_Label,label_if, nullptr, nullptr);
-                    Stmt();
+            Stmt();
 
             tableManager.upTable();
             tableManager.cur->entries->erase(ident);//for 结束了就不需要再留位置 给之后的for让路
