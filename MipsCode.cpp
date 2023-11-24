@@ -769,6 +769,172 @@ addiu $sp, $sp, 30000
             vector<int> *fParam_ids;
 
             switch (type) {
+                case Beqz:{
+                    output << "lw $t0," << src1->startAddress<<"($zero)" <<endl;
+                    output << "beqz $t0, "<<src2->name<<endl;
+                    break;
+                }
+                case Jump_Label:{
+                    output<< "j "<<src1->name<<endl;
+                    break;
+                }
+                case Insert_Label:{
+                    output << src1->name<< ":" <<endl;
+                    break;
+                }
+                case I_And:{
+                    if (src1->canGetValue){
+                        //src2需要lw
+//                    output << "li $t0, "<< src1->imm<<endl;
+                        output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "andi $t0 , $t0,"<<src1->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else if (src2->canGetValue){
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "andi $t0 , $t0,"<<src2->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "and $t0 , $t0, $t1"<<endl;
+                    }
+                    break;
+                }
+                case I_Or:{
+                    if (src1->canGetValue){
+                        //src2需要lw
+//                    output << "li $t0, "<< src1->imm<<endl;
+                        output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "ori $t0 , $t0,"<<src1->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else if (src2->canGetValue){
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "ori $t0 , $t0,"<<src2->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "or $t0 , $t0, $t1"<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }
+                    break;
+                }
+
+                case I_Eq:{
+                    if (src1->canGetValue){
+                        //src2需要lw
+//                    output << "li $t0, "<< src1->imm<<endl;
+                        output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "seq $t0 , $t0,"<<src1->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else if (src2->canGetValue){
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "seq $t0 , $t0,"<<src2->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "seq $t0 , $t0, $t1"<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }
+                    break;
+                }
+                case I_Grt_eq:{
+                    if (src1->canGetValue){
+                        //src2需要lw
+//                    output << "li $t0, "<< src1->imm<<endl;
+                        output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "sle $t0 , $t0,"<<src1->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else if (src2->canGetValue){
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "sge $t0 , $t0,"<<src2->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "sge $t0 , $t0, $t1"<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }
+                    break;
+                }
+                case I_Less_eq:{
+                    if (src1->canGetValue){
+                        //src2需要lw
+//                    output << "li $t0, "<< src1->imm<<endl;
+                        output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "sge $t0 , $t0,"<<src1->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else if (src2->canGetValue){
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "sle $t0 , $t0,"<<src2->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "sle $t0 , $t0, $t1"<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }
+                    break;
+                }
+
+                case I_Grt:{
+                    if (src1->canGetValue){
+                        //src2需要lw
+//                    output << "li $t0, "<< src1->imm<<endl;
+                        output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "slti $t0 , $t0,"<<src1->imm<<endl;//故意反一下符号 结果正确
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else if (src2->canGetValue){
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "sgt $t0 , $t0,"<<src2->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "sgt $t0 , $t0, $t1"<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }
+                    break;
+                }
+                case I_Less:{
+                    if (src1->canGetValue){
+                        //src2需要lw
+//                    output << "li $t0, "<< src1->imm<<endl;
+                        output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "sgt $t0 , $t0,"<<src1->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else if (src2->canGetValue){
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "slti $t0 , $t0,"<<src2->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "slt $t0 , $t0, $t1"<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }
+                    break;
+                }
+                case I_not_eq:{
+                    if (src1->canGetValue){
+                        //src2需要lw
+//                    output << "li $t0, "<< src1->imm<<endl;
+                        output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "sne $t0 , $t0,"<<src1->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else if (src2->canGetValue){
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "sne $t0 , $t0,"<<src2->imm<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                        output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                        output << "sne $t0 , $t0, $t1"<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }
+                    break;
+                }
                 case Printf:
                     output << "#printf语句:" << src2->values_Id->size() << "个exp参数\n";
                     cnt_param = 0;
