@@ -1,0 +1,21 @@
+int main(){
+    int a = 1;
+    int b,c,d;
+    b = getint();
+    c = getint();
+    d = getint();
+    if(b == 1){
+        printf("b is 1\n");
+    }
+    else{
+       printf("b is not 1\n");
+    }
+    int i  =c ;
+
+    for(i = 0; ; i = i + 1){
+        if(i == 10){
+            break;
+        }
+        printf("i is %d\n",i);
+    }
+}
