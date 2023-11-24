@@ -1589,7 +1589,7 @@ void Parser::Stmt() {
             //向上一层符号表
             break;
         case IFTK:
-            ident = "if";
+            ident = "if";//不用担心起冲突 不会重名关键字  同时多个if是栈结构
             PRINT_WORD;//PRINT IF
             GET_A_WORD;
             PRINT_WORD;//PRINT (
@@ -1745,10 +1745,8 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
     Print_Grammar_Output("<InitVal>");
 }
 
-void Parser::Cond() {
+void Parser::Cond(IEntry *iEntry) {
     //TODO:FOR循环的逻辑补充
-    IEntry *iEntry;
-    iEntry = new IEntry;
     LOrExp(iEntry,isInOtherFunc);
     Print_Grammar_Output("<Cond>");
 }
