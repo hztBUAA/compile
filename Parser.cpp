@@ -1537,6 +1537,7 @@ void Parser::Stmt() {
             endFor = new IEntry("For_end");
             mainFor = new IEntry("For_main");
             opFor = new IEntry("For_op");
+            condFor = new IEntry("For_cond");
             //condFor在后面定义了
             intermediateCode.addICode(Insert_Label, startFor, nullptr, nullptr);
             PRINT_WORD;//PRINT FOR
@@ -1557,14 +1558,16 @@ void Parser::Stmt() {
                     GET_A_WORD;
                 }
             }
+//###########################condFor############################
+            intermediateCode.addICode(Insert_Label, condFor, nullptr, nullptr);
             if (WORD_TYPE == SEMICN) {
                 PRINT_WORD;//PRITN ;
                 GET_A_WORD;
             } else {
                 cond = new IEntry;
-                condFor = new IEntry("For_cond");
+
                 //cond 每次循环要重新算一遍
-                intermediateCode.addICode(Insert_Label, condFor, nullptr, nullptr);
+
                 Cond(cond);
                 intermediateCode.addICode(Beqz, cond, endFor, nullptr);
                 if (WORD_TYPE != SEMICN) {
@@ -1576,14 +1579,14 @@ void Parser::Stmt() {
                 }
             }
             intermediateCode.addICode(Jump_Label, mainFor, nullptr, nullptr);
-
+//###########################opFor############################
+            intermediateCode.addICode(Insert_Label, opFor, nullptr, nullptr);
             if (WORD_TYPE == RPARENT) {
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
             } else {
                 //For_stmt_2  包含在循环体中
 //                opFor = new IEntry("For_op");
-                intermediateCode.addICode(Insert_Label, opFor, nullptr, nullptr);
                 ForStmt();
                 if (WORD_TYPE != RPARENT) {
                     //error  这其实不可能会有
@@ -1592,8 +1595,9 @@ void Parser::Stmt() {
                     PRINT_WORD;//PRINT )
                     GET_A_WORD;
                 }
-                intermediateCode.addICode(Jump_Label, condFor, nullptr, nullptr);//跳转到for_cond
             }
+//##############################opFor-End############################
+            intermediateCode.addICode(Jump_Label, condFor, nullptr, nullptr);//跳转到for_cond
             ident = "for";
             semantic.recordEntries(semantic.fillInfoEntry(ident, FOR));
             //向下一层符号表
@@ -1618,7 +1622,8 @@ void Parser::Stmt() {
             PRINT_WORD;//PRINT (
             GET_A_WORD;
             IEntry *cond;
-            IEntry *label_else,*label_end;
+            IEntry *label_else,*label_end,*label_if;
+            label_if = new IEntry("if");
             cond = new IEntry;
             Cond(cond); //cond 值0或者1  也可能是存储0和1 的地址 需要lw
             if (WORD_TYPE != RPARENT){
@@ -1632,17 +1637,20 @@ void Parser::Stmt() {
             //向下一层符号表
             tableManager.downTable(ident);
             label_end = new IEntry("end");
-
+            label_else = new IEntry("else");
             if (cond->canGetValue){
                 if(cond->imm == 0){
-                    goto Stmt_else;
+//                    goto Stmt_else;
+intermediateCode.addICode(Jump_Label,label_else, nullptr, nullptr);
                 }else{
                     goto Stmt_if;
+//intermediateCode.addICode(Jump_Label,label_if, nullptr, nullptr);
                 }
             }
-            label_else = new IEntry("else");
+
             intermediateCode.addICode(Beqz,cond, label_else, nullptr);//不能直接跳到end
             Stmt_if:
+            intermediateCode.addICode(Insert_Label,label_if, nullptr, nullptr);
                     Stmt();
 
             tableManager.upTable();
@@ -1655,7 +1663,7 @@ void Parser::Stmt() {
                 //向下一层符号表
                 tableManager.downTable(ident);
                 //自动跳转
-                Stmt_else:
+//                Stmt_else:
                 intermediateCode.addICode(Insert_Label,label_else, nullptr, nullptr);
                 Stmt();
                 tableManager.upTable();
