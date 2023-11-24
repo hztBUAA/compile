@@ -1882,6 +1882,22 @@ void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
             }
         }
     }
+    if (_addExp1->canGetValue){
+        iEntry->imm = _addExp1->imm;
+        iEntry->canGetValue = true;
+    }else{
+        iEntry->imm = _addExp1->imm;
+        iEntry->canGetValue = _addExp1->canGetValue;
+        iEntry->startAddress = _addExp1->startAddress;
+        iEntry->type = _addExp1->type;
+        iEntry->offset_IEntry = _addExp1->offset_IEntry;
+        iEntry->original_Name = _addExp1->original_Name;
+        iEntry->values_Id = _addExp1->values_Id;
+        iEntry->dim1_length = _addExp1->dim1_length;
+        iEntry->total_length = _addExp1->total_length;
+        iEntry->has_return =_addExp1->has_return;
+//        iEntry->isGlobal  不用在这里设置  isGlobal为了知道引用LVAL是否为全局 来决定la 还是lw  在lVal中已经赋值过了
+    }
     Print_Grammar_Output("<RelExp>");
 }
 
