@@ -68,7 +68,7 @@ public:
   void FormatString(IEntry * strings);
 //    void NormalChar();
 //    void FormalChar();
-    void ForStmt();
+    void ForStmt(vector<ICode*> *for_icodes);
     void Exp(IEntry *iEntry,int&value,bool isInOtherFunc);
     void Cond(IEntry * cond);
     void LVal(IEntry ** iEntry,int & value,bool inOtherFunc);

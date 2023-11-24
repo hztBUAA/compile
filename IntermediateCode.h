@@ -138,7 +138,7 @@ public:
     void addICode(IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry *dst);
 
     void addICode(IntermediateCodeType type, int src1, IEntry *src2, IEntry *dst);
-
+    ICode* generateICode(IntermediateCodeType type,IEntry *src1,IEntry*src2,IEntry*dst);
     void debug_print();
 };
 extern vector<IEntry *> IEntries;

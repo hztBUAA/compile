@@ -1532,6 +1532,9 @@ void Parser::Stmt() {
             }
             break;
         case FORTK: {
+            vector<ICode*> * for_icodes;
+            for_icodes= new vector<ICode*>;//调整中间代码的位置
+
             IEntry *startFor, *endFor, *condFor, *cond;
             startFor = new IEntry("For_Start");
             endFor = new IEntry("For_end");
@@ -1544,7 +1547,7 @@ void Parser::Stmt() {
                 GET_A_WORD;
             } else {
                 //For_stmt_1
-                ForStmt();
+                ForStmt(for_icodes);
                 if (WORD_TYPE != SEMICN) {
                     //ERROR
                     errorHandler.Insert_Error(SEMICOLON_MISSING);//虽然for语句强调了不会出现这个错误
@@ -1553,7 +1556,7 @@ void Parser::Stmt() {
                     GET_A_WORD;
                 }
             }
-forCond:
+//forCond:
             if (WORD_TYPE == SEMICN) {
                 PRINT_WORD;//PRITN ;
                 GET_A_WORD;
@@ -1561,9 +1564,11 @@ forCond:
                 cond = new IEntry;
                 condFor = new IEntry("For_cond");
                 //cond 每次循环要重新算一遍
-                intermediateCode.addICode(Insert_Label, condFor, nullptr, nullptr);
-                Cond(cond);
-                intermediateCode.addICode(Beqz, cond, endFor, nullptr);
+                for_icodes->push_back(intermediateCode.generateICode(Insert_Label, condFor, nullptr, nullptr));
+//                intermediateCode.addICode(Insert_Label, condFor, nullptr, nullptr);
+                Cond(cond);///这里面的关系代表式没有赋值的   可放心调换中间代码顺序  因为我的中间代码生成一定是没问题的
+               for_icodes->push_back(intermediateCode.generateICode(Beqz, cond, endFor, nullptr));
+//                intermediateCode.addICode(Beqz, cond, endFor, nullptr);
                 if (WORD_TYPE != SEMICN) {
                     //ERROR
                     errorHandler.Insert_Error(SEMICOLON_MISSING);
@@ -1572,14 +1577,14 @@ forCond:
                     GET_A_WORD;
                 }
             }
-            goto forMain;
-forOperation:
+//            goto forMain;
+//forOperation:
             if (WORD_TYPE == RPARENT) {
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
             } else {
                 //For_stmt_2  包含在循环体中
-                ForStmt();
+                ForStmt(for_icodes);
                 if (WORD_TYPE != RPARENT) {
                     //error  这其实不可能会有
                     errorHandler.Insert_Error(RPARENT_MISSING);
@@ -1588,16 +1593,19 @@ forOperation:
                     GET_A_WORD;
                 }
             }
-            goto forEnd;
-forMain:
+//            goto forEnd;
+//forMain:
             ident = "for";
             semantic.recordEntries(semantic.fillInfoEntry(ident, FOR));
             //向下一层符号表
             tableManager.downTable(ident);
             tableManager.cur->loop_count++;
+            /**
+             * 正确的执行顺序
+             */
             Stmt();
-            goto forOperation;
-forEnd:
+//            goto forOperation;
+//forEnd:
             intermediateCode.addICode(Jump_Label, condFor, nullptr, nullptr);
             tableManager.cur->loop_count--;
             tableManager.upTable();
@@ -1794,11 +1802,12 @@ void Parser::Cond(IEntry *iEntry) {
     Print_Grammar_Output("<Cond>");
 }
 
-void Parser::ForStmt() {
+void Parser::ForStmt(vector<ICode*> *for_icodes) {
     //TODO:ForStmt ICode  ASSIGN
     IEntry * for_stmt;
     for_stmt = new IEntry("for_stmt");//仅仅用来标识
-    intermediateCode.addICode(Insert_Label,for_stmt, nullptr, nullptr);
+    for_icodes->push_back(intermediateCode.generateICode(Insert_Label,for_stmt, nullptr, nullptr));
+//    intermediateCode.addICode(Insert_Label,for_stmt, nullptr, nullptr);
     IEntry *lVal,*exp;
     int v1,v2;
     lVal = new IEntry;
@@ -1810,7 +1819,8 @@ void Parser::ForStmt() {
     /**
      * 鉴于LVal找到的很多数据并没有真正找到 而是拷贝版本  所以不能直接将lVal的操作当成已经操作
      */
-    intermediateCode.addICode(Assign,exp, nullptr,lVal);
+     for_icodes->push_back(intermediateCode.generateICode(Assign,exp, nullptr,lVal));
+//    intermediateCode.addICode(Assign,exp, nullptr,lVal);
     lVal->canGetValue = false;
     Print_Grammar_Output("<ForStmt>");
 }

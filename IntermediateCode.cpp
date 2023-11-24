@@ -162,6 +162,14 @@ void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src
     }
 }
 
+ICode* IntermediateCode::generateICode(IntermediateCodeType type,IEntry *src1,IEntry*src2,IEntry*dst) {
+    auto  *c = new ICode;
+    c->src1 = src1;
+    c->src2 = src2;
+    c->dst = dst;
+    c->type = type;
+}
+
 
 //void IntermediateCode::debug_print() {
 //    output<<"#全局变量"<<endl;
