@@ -198,6 +198,7 @@ str_5:  .asciiz   "ha"
                     output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
                     output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
                     output << "and $t0 , $t0, $t1"<<endl;
+                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
                 }
                 break;
             }
@@ -797,6 +798,7 @@ addiu $sp, $sp, 30000
                         output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
                         output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
                         output << "and $t0 , $t0, $t1"<<endl;
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
                     }
                     break;
                 }

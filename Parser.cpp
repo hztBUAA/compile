@@ -1528,8 +1528,14 @@ void Parser::Stmt() {
                 //legal continue or break then find the appropriate for entry => iEntry => return_IEntry
                 if (temp->kind == Kind::FOR){
                     if (t == CONTINUETK){
+                        IEntry *continue_label;
+                        continue_label = new IEntry("continue");
+                        intermediateCode.addICode(Insert_Label,continue_label, nullptr, nullptr);
                         intermediateCode.addICode(Jump_Label,IEntries.at(temp->id)->offset_IEntry, nullptr, nullptr);
                     }else if(t == BREAKTK){
+                        IEntry *break_label;
+                        break_label = new IEntry("break");
+                        intermediateCode.addICode(Insert_Label,break_label, nullptr, nullptr);
                         intermediateCode.addICode(Jump_Label,IEntries.at(temp->id)->return_IEntry, nullptr, nullptr);
                     }
                 }
@@ -1576,9 +1582,7 @@ void Parser::Stmt() {
                 GET_A_WORD;
             } else {
                 cond = new IEntry;
-
                 //cond 每次循环要重新算一遍
-
                 Cond(cond);
                 intermediateCode.addICode(Beqz, cond, endFor, nullptr);
                 if (WORD_TYPE != SEMICN) {
@@ -1654,15 +1658,15 @@ void Parser::Stmt() {
             tableManager.downTable(ident);
             label_end = new IEntry("end");
             label_else = new IEntry("else");
-            if (cond->canGetValue){
-                if(cond->imm == 0){
-//                    goto Stmt_else;
-intermediateCode.addICode(Jump_Label,label_else, nullptr, nullptr);
-                }else{
-                    goto Stmt_if;
-//intermediateCode.addICode(Jump_Label,label_if, nullptr, nullptr);
-                }
-            }
+//            if (cond->canGetValue){
+//                if(cond->imm == 0){
+////                    goto Stmt_else;
+//intermediateCode.addICode(Jump_Label,label_else, nullptr, nullptr);
+//                }else{
+//                    goto Stmt_if;
+////intermediateCode.addICode(Jump_Label,label_if, nullptr, nullptr);
+//                }
+//            }
 
             intermediateCode.addICode(Beqz,cond, label_else, nullptr);//不能直接跳到end
             Stmt_if:
