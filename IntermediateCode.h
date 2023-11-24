@@ -53,7 +53,8 @@ enum IntermediateCodeType{
     I_Grt_eq,
     I_not_eq,
     Insert_Label,//src1->type ==5   =>  label   name:label_<src1->id>
-    Jump_Label
+    Jump_Label,
+    Beqz,
     };
 
 
@@ -75,7 +76,7 @@ private:
 
 public:
     int Id;
-    int type;//0定位元素 1维地址 2表示函数调用FuncCALL--
+    int type;//0定位元素 1维地址 2表示函数调用FuncCALL--  type ==5=> label  for jump in code2
     string name;
     int imm;//立即数或者已经算出  不能直接再被用来计算 由于另一个操作区待定
     bool canGetValue{};
@@ -105,6 +106,7 @@ public:
 
     static int generateId();
     IEntry();
+    explicit IEntry(const string& s);
     explicit IEntry(int length);
 
 };

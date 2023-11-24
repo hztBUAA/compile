@@ -14,6 +14,19 @@ int IEntry::generateId() {
     static int  id_generate = 0;
     return id_generate++;
 }
+IEntry::IEntry(const string& s){
+    this->Id = generateId();
+    this->type =5;
+//    this->startAddress = tempMemoryAddressTop;
+    this->name = "Label_"+s+"_"+ to_string(this->Id);//label输出iEntry->name
+//    this->values_Id = new vector<int>;
+//    this->values = new vector<int>;
+//    this->imm = 0;
+//    tempMemoryAddressTop += 4;
+    IEntries.push_back(this);
+//         iEntry->address
+}
+
 IEntry::IEntry(){
     this->Id = generateId();
     this->startAddress = tempMemoryAddressTop;

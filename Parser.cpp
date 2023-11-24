@@ -1553,7 +1553,9 @@ void Parser::Stmt() {
                 PRINT_WORD;//PRITN ;
                 GET_A_WORD;
             }else{
-                Cond();
+                IEntry *cond;
+                cond = new IEntry;
+                Cond(cond);
                 if (WORD_TYPE != SEMICN){
                     //ERROR
                     errorHandler.Insert_Error(SEMICOLON_MISSING);
@@ -1592,7 +1594,10 @@ void Parser::Stmt() {
             GET_A_WORD;
             PRINT_WORD;//PRINT (
             GET_A_WORD;
-            Cond();
+            IEntry *cond;
+            IEntry *label_else,*label_end;
+            cond = new IEntry;
+            Cond(cond); //cond 值0或者1  也可能是存储0和1 的地址 需要lw
             if (WORD_TYPE != RPARENT){
                 //ERROR
                 errorHandler.Insert_Error(RPARENT_MISSING);
@@ -1603,19 +1608,39 @@ void Parser::Stmt() {
             semantic.recordEntries(semantic.fillInfoEntry(ident,IF));
             //向下一层符号表
             tableManager.downTable(ident);
-            Stmt();
+            label_end = new IEntry("end");
+
+            if (cond->canGetValue){
+                if(cond->imm == 0){
+                    goto Stmt_else;
+                }else{
+                    goto Stmt_if;
+                }
+            }
+            label_else = new IEntry("else");
+            intermediateCode.addICode(Beqz,cond, label_else, nullptr);//不能直接跳到end
+            Stmt_if:
+                    Stmt();
+
             tableManager.upTable();
             tableManager.cur->entries->erase(ident);//for 结束了就不需要再留位置 给之后的for让路
             if (WORD_TYPE == ELSETK){
                 PRINT_WORD;//PRINT ELSE
                 GET_A_WORD;
+                intermediateCode.addICode(Jump_Label,label_end, nullptr, nullptr);
                 semantic.recordEntries(semantic.fillInfoEntry(ident,ELSE));
                 //向下一层符号表
                 tableManager.downTable(ident);
+                //自动跳转
+                Stmt_else:
+                intermediateCode.addICode(Insert_Label,label_else, nullptr, nullptr);
                 Stmt();
                 tableManager.upTable();
                 tableManager.cur->entries->erase(ident);//for 结束了就不需要再留位置
+            }else{
+                intermediateCode.addICode(Insert_Label,label_else, nullptr, nullptr);//没有else时 也要让if在不满足条件时跳出来
             }
+            intermediateCode.addICode(Insert_Label,label_end, nullptr, nullptr);
             break;
         case LBRACE:
             //from { start   not print

@@ -1,9 +1,12 @@
 int main() {
-   int a = -1+-+2;
-   int i;
-    i = getint();
-   printf("%d\n",a);
-   a = +-+i;
-    printf("%d\n",a);
+   int a = 1;
+   int t;
+   t = getint();
+   if(a > t){
+   printf("a>t\n");
+   }
+   else{
+   printf("a<t\n");
+   }
    return 0;
 }

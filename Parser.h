@@ -70,7 +70,7 @@ public:
 //    void FormalChar();
     void ForStmt();
     void Exp(IEntry *iEntry,int&value,bool isInOtherFunc);
-    void Cond();
+    void Cond(IEntry * cond);
     void LVal(IEntry ** iEntry,int & value,bool inOtherFunc);
     void PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc);
     void Number(IEntry *iEntry,int & value,bool InOtherFunc);
