@@ -1532,9 +1532,13 @@ void Parser::Stmt() {
             }
             break;
         case FORTK: {
-            IEntry *startFor, *endFor, *condFor, *cond;
-            startFor = new IEntry("For_Start");
+            IEntry *startFor, *endFor, *condFor, *cond,*mainFor,*opFor;
+            startFor = new IEntry("For_start");
             endFor = new IEntry("For_end");
+            mainFor = new IEntry("For_main");
+            opFor = new IEntry("For_op");
+            //condFor在后面定义了
+            intermediateCode.addICode(Insert_Label, startFor, nullptr, nullptr);
             PRINT_WORD;//PRINT FOR
             GET_A_WORD;
             PRINT_WORD;//PRINT (
@@ -1571,11 +1575,15 @@ void Parser::Stmt() {
                     GET_A_WORD;
                 }
             }
+            intermediateCode.addICode(Jump_Label, mainFor, nullptr, nullptr);
+
             if (WORD_TYPE == RPARENT) {
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
             } else {
                 //For_stmt_2  包含在循环体中
+//                opFor = new IEntry("For_op");
+                intermediateCode.addICode(Insert_Label, opFor, nullptr, nullptr);
                 ForStmt();
                 if (WORD_TYPE != RPARENT) {
                     //error  这其实不可能会有
@@ -1584,14 +1592,17 @@ void Parser::Stmt() {
                     PRINT_WORD;//PRINT )
                     GET_A_WORD;
                 }
+                intermediateCode.addICode(Jump_Label, condFor, nullptr, nullptr);//跳转到for_cond
             }
             ident = "for";
             semantic.recordEntries(semantic.fillInfoEntry(ident, FOR));
             //向下一层符号表
             tableManager.downTable(ident);
             tableManager.cur->loop_count++;
+//            mainFor = new IEntry("For_main");
+            intermediateCode.addICode(Insert_Label,mainFor, nullptr, nullptr);
             Stmt();
-            intermediateCode.addICode(Jump_Label, condFor, nullptr, nullptr);
+            intermediateCode.addICode(Jump_Label, opFor, nullptr, nullptr);//跳转到for_stmt_2
             tableManager.cur->loop_count--;
             tableManager.upTable();
             tableManager.cur->entries->erase(ident);//for 结束了就不需要再留位置 给之后的for让路
