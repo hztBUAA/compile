@@ -41,7 +41,20 @@ enum IntermediateCodeType{
     FuncCall,//调用时要进行参数压栈和临时内存上堆
     FuncDef,//定义函数时 形式参数需要当成local定义   进入符号表生成Entry的同时生成IEntry 并记录两者的映射
     Return,
-};
+
+    //------2-------
+    I_Or,
+    I_And,
+    I_Not,
+    I_Eq,
+    I_Less,
+    I_Less_eq,
+    I_Grt,
+    I_Grt_eq,
+    I_not_eq,
+    Insert_Label,//src1->type ==5   =>  label   name:label_<src1->id>
+    Jump_Label
+    };
 
 
 //为了方便运算的中间变量  可以为值（算出来的时候） 也可以
