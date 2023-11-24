@@ -1889,47 +1889,47 @@ void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
             //TODO:比较的逻辑 建立中间代码
             switch (t) {
                 case LSS:{
-                    if (_addExp1->canGetValue && _addExp2->canGetValue){
-                        _addExp1->imm = (_addExp1->imm < _addExp2->imm);
-                        _addExp1->canGetValue = true;
-                    }else{
+//                    if (_addExp1->canGetValue && _addExp2->canGetValue){
+//                        _addExp1->imm = (_addExp1->imm < _addExp2->imm);
+//                        _addExp1->canGetValue = true;
+//                    }else{
                         ans =  new IEntry;
                         intermediateCode.addICode(I_Less,_addExp1,_addExp2,ans);
                         _addExp1 = ans;
-                    }
+//                    }
                     break;
                 }
                 case GRE:{
-                    if (_addExp1->canGetValue && _addExp2->canGetValue){
-                        _addExp1->imm = (_addExp1->imm > _addExp2->imm);
-                        _addExp1->canGetValue = true;
-                    }else{
+//                    if (_addExp1->canGetValue && _addExp2->canGetValue){
+//                        _addExp1->imm = (_addExp1->imm > _addExp2->imm);
+//                        _addExp1->canGetValue = true;
+//                    }else{
                         ans =  new IEntry;
                         intermediateCode.addICode(I_Grt,_addExp1,_addExp2,ans);
                         _addExp1 = ans;
-                    }
+//                    }
                     break;
                 }
                 case LEQ:{
-                    if (_addExp1->canGetValue && _addExp2->canGetValue){
-                        _addExp1->imm = (_addExp1->imm <= _addExp2->imm);
-                        _addExp1->canGetValue = true;
-                    }else{
+//                    if (_addExp1->canGetValue && _addExp2->canGetValue){
+//                        _addExp1->imm = (_addExp1->imm <= _addExp2->imm);
+//                        _addExp1->canGetValue = true;
+//                    }else{
                         ans =  new IEntry;
                         intermediateCode.addICode(I_Less_eq,_addExp1,_addExp2,ans);
                         _addExp1 = ans;
-                    }
+//                    }
                     break;
                 }
                 case GEQ:{
-                    if (_addExp1->canGetValue && _addExp2->canGetValue){
-                        _addExp1->imm = (_addExp1->imm >= _addExp2->imm);
-                        _addExp1->canGetValue = true;
-                    }else{
+//                    if (_addExp1->canGetValue && _addExp2->canGetValue){
+//                        _addExp1->imm = (_addExp1->imm >= _addExp2->imm);
+//                        _addExp1->canGetValue = true;
+//                    }else{
                         ans =  new IEntry;
                         intermediateCode.addICode(I_Grt_eq,_addExp1,_addExp2,ans);
                         _addExp1 = ans;
-                    }
+//                    }
                     break;
                 }
                 default:
@@ -1937,22 +1937,22 @@ void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
             }
         }
     }
-    if (_addExp1->canGetValue){
-        iEntry->imm = _addExp1->imm;
-        iEntry->canGetValue = true;
-    }else{
-        iEntry->imm = _addExp1->imm;
-        iEntry->canGetValue = _addExp1->canGetValue;
+//    if (_addExp1->canGetValue){
+//        iEntry->imm = _addExp1->imm;
+//        iEntry->canGetValue = true;
+//    }else{
+//        iEntry->imm = _addExp1->imm;
+        iEntry->canGetValue = false;
         iEntry->startAddress = _addExp1->startAddress;
-        iEntry->type = _addExp1->type;
-        iEntry->offset_IEntry = _addExp1->offset_IEntry;
+//        iEntry->type = _addExp1->type;
+//        iEntry->offset_IEntry = _addExp1->offset_IEntry;
         iEntry->original_Name = _addExp1->original_Name;
-        iEntry->values_Id = _addExp1->values_Id;
-        iEntry->dim1_length = _addExp1->dim1_length;
-        iEntry->total_length = _addExp1->total_length;
-        iEntry->has_return =_addExp1->has_return;
+//        iEntry->values_Id = _addExp1->values_Id;
+//        iEntry->dim1_length = _addExp1->dim1_length;
+//        iEntry->total_length = _addExp1->total_length;
+//        iEntry->has_return =_addExp1->has_return;
 //        iEntry->isGlobal  不用在这里设置  isGlobal为了知道引用LVAL是否为全局 来决定la 还是lw  在lVal中已经赋值过了
-    }
+//    }
     Print_Grammar_Output("<RelExp>");
 }
 
@@ -1989,7 +1989,7 @@ void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
                     ans =  new IEntry;
                     intermediateCode.addICode(I_not_eq,_relExp1,_relExp2,ans);
                     _relExp1 = ans;
-                }
+//                }
             }else{
                 //not this operator
             }
@@ -1997,22 +1997,22 @@ void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
     }else{
         //error
     }
-    if (_relExp1->canGetValue){
-        iEntry->imm = _relExp1->imm;
-        iEntry->canGetValue = true;
-    }else{
-        iEntry->imm = _relExp1->imm;
-        iEntry->canGetValue = _relExp1->canGetValue;
+//    if (_relExp1->canGetValue){
+//        iEntry->imm = _relExp1->imm;
+//        iEntry->canGetValue = true;
+//    }else{
+//        iEntry->imm = _relExp1->imm;
+        iEntry->canGetValue = false;
         iEntry->startAddress = _relExp1->startAddress;
-        iEntry->type = _relExp1->type;
-        iEntry->offset_IEntry = _relExp1->offset_IEntry;
+//        iEntry->type = _relExp1->type;
+//        iEntry->offset_IEntry = _relExp1->offset_IEntry;
         iEntry->original_Name = _relExp1->original_Name;
-        iEntry->values_Id = _relExp1->values_Id;
-        iEntry->dim1_length = _relExp1->dim1_length;
-        iEntry->total_length = _relExp1->total_length;
-        iEntry->has_return =_relExp1->has_return;
+//        iEntry->values_Id = _relExp1->values_Id;
+//        iEntry->dim1_length = _relExp1->dim1_length;
+//        iEntry->total_length = _relExp1->total_length;
+//        iEntry->has_return =_relExp1->has_return;
 //        iEntry->isGlobal  不用在这里设置  isGlobal为了知道引用LVAL是否为全局 来决定la 还是lw  在lVal中已经赋值过了
-    }
+//    }
 
     Print_Grammar_Output("<EqExp>");
 }
@@ -2045,16 +2045,16 @@ void Parser::LAndExp(IEntry * iEntry,bool InOtherFunc) {
         iEntry->imm = _eqExp1->imm;
         iEntry->canGetValue = true;
     }else{
-        iEntry->imm = _eqExp1->imm;
-        iEntry->canGetValue = _eqExp1->canGetValue;
+//        iEntry->imm = _eqExp1->imm;
+        iEntry->canGetValue = false;
         iEntry->startAddress = _eqExp1->startAddress;
         iEntry->type = _eqExp1->type;
-        iEntry->offset_IEntry = _eqExp1->offset_IEntry;
+//        iEntry->offset_IEntry = _eqExp1->offset_IEntry;
         iEntry->original_Name = _eqExp1->original_Name;
-        iEntry->values_Id = _eqExp1->values_Id;
-        iEntry->dim1_length = _eqExp1->dim1_length;
-        iEntry->total_length = _eqExp1->total_length;
-        iEntry->has_return = _eqExp1->has_return;
+//        iEntry->values_Id = _eqExp1->values_Id;
+//        iEntry->dim1_length = _eqExp1->dim1_length;
+//        iEntry->total_length = _eqExp1->total_length;
+//        iEntry->has_return = _eqExp1->has_return;
 //        iEntry->isGlobal  不用在这里设置  isGlobal为了知道引用LVAL是否为全局 来决定la 还是lw  在lVal中已经赋值过了
     }
     Print_Grammar_Output("<LAndExp>");
@@ -2073,7 +2073,7 @@ void Parser::LOrExp(IEntry * iEntry,bool InOtherFunc) {
             LAndExp(_lAndExp2,InOtherFunc);
             //TODO :逻辑
             if (_lAndExp1->canGetValue && _lAndExp2->canGetValue){
-                _lAndExp1->imm = _lAndExp1->imm + _lAndExp2->imm;
+                _lAndExp1->imm =( _lAndExp1->imm  == 1) || (_lAndExp2->imm == 1);
                 _lAndExp1->canGetValue = true;
             }else{
                 ans =  new IEntry;
@@ -2085,22 +2085,22 @@ void Parser::LOrExp(IEntry * iEntry,bool InOtherFunc) {
         //error
     }
 
-    if (_lAndExp1->canGetValue){
-        iEntry->imm = _lAndExp1->imm;
-        iEntry->canGetValue = true;
-    }else{
-        iEntry->imm = _lAndExp1->imm;
-        iEntry->canGetValue = _lAndExp1->canGetValue;
+//    if (_lAndExp1->canGetValue){
+//        iEntry->imm = _lAndExp1->imm;
+//        iEntry->canGetValue = true;
+//    }else{
+//        iEntry->imm = _lAndExp1->imm;
+        iEntry->canGetValue = false;
         iEntry->startAddress = _lAndExp1->startAddress;
         iEntry->type = _lAndExp1->type;
-        iEntry->offset_IEntry = _lAndExp1->offset_IEntry;
+//        iEntry->offset_IEntry = _lAndExp1->offset_IEntry;
         iEntry->original_Name = _lAndExp1->original_Name;
-        iEntry->values_Id = _lAndExp1->values_Id;
-        iEntry->dim1_length = _lAndExp1->dim1_length;
-        iEntry->total_length = _lAndExp1->total_length;
-        iEntry->has_return = _lAndExp1->has_return;
+//        iEntry->values_Id = _lAndExp1->values_Id;
+//        iEntry->dim1_length = _lAndExp1->dim1_length;
+//        iEntry->total_length = _lAndExp1->total_length;
+//        iEntry->has_return = _lAndExp1->has_return;
 //        iEntry->isGlobal  不用在这里设置  isGlobal为了知道引用LVAL是否为全局 来决定la 还是lw  在lVal中已经赋值过了
-    }
+//    }
     Print_Grammar_Output("<LOrExp>");
 }
 
