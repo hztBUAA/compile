@@ -1531,64 +1531,76 @@ void Parser::Stmt() {
                 GET_A_WORD;
             }
             break;
-        case FORTK:
+        case FORTK: {
+            IEntry *startFor, *endFor, *condFor, *cond;
+            startFor = new IEntry("For_Start");
+            endFor = new IEntry("For_end");
             PRINT_WORD;//PRINT FOR
             GET_A_WORD;
             PRINT_WORD;//PRINT (
             GET_A_WORD;
-            if (WORD_TYPE == SEMICN){
+            if (WORD_TYPE == SEMICN) {
                 PRINT_WORD;//PRITN ;
                 GET_A_WORD;
-            }else{
+            } else {
+                //For_stmt_1
                 ForStmt();
-                if (WORD_TYPE != SEMICN){
+                if (WORD_TYPE != SEMICN) {
                     //ERROR
                     errorHandler.Insert_Error(SEMICOLON_MISSING);//虽然for语句强调了不会出现这个错误
-                }else{
+                } else {
                     PRINT_WORD;//PRINT ;
                     GET_A_WORD;
                 }
             }
-            if (WORD_TYPE == SEMICN){
+            if (WORD_TYPE == SEMICN) {
                 PRINT_WORD;//PRITN ;
                 GET_A_WORD;
-            }else{
-                IEntry *cond;
+            } else {
                 cond = new IEntry;
+                condFor = new IEntry("For_cond");
+                //cond 每次循环要重新算一遍
+                intermediateCode.addICode(Insert_Label, condFor, nullptr, nullptr);
                 Cond(cond);
-                if (WORD_TYPE != SEMICN){
+                intermediateCode.addICode(Beqz, cond, endFor, nullptr);
+                if (WORD_TYPE != SEMICN) {
                     //ERROR
                     errorHandler.Insert_Error(SEMICOLON_MISSING);
-                }else{
+                } else {
                     PRINT_WORD;//PRINT ;
                     GET_A_WORD;
                 }
             }
-            if(WORD_TYPE == RPARENT){
+            if (WORD_TYPE == RPARENT) {
                 PRINT_WORD;//PRINT )
                 GET_A_WORD;
-            }else{
+            } else {
+                //For_stmt_2  包含在循环体中
                 ForStmt();
-                if (WORD_TYPE != RPARENT){
+                if (WORD_TYPE != RPARENT) {
                     //error  这其实不可能会有
                     errorHandler.Insert_Error(RPARENT_MISSING);
-                }else{
+                } else {
                     PRINT_WORD;//PRINT )
                     GET_A_WORD;
                 }
             }
-            ident ="for";
-            semantic.recordEntries(semantic.fillInfoEntry(ident,FOR));
+            ident = "for";
+            semantic.recordEntries(semantic.fillInfoEntry(ident, FOR));
             //向下一层符号表
             tableManager.downTable(ident);
             tableManager.cur->loop_count++;
             Stmt();
+            intermediateCode.addICode(Jump_Label, condFor, nullptr, nullptr);
             tableManager.cur->loop_count--;
             tableManager.upTable();
             tableManager.cur->entries->erase(ident);//for 结束了就不需要再留位置 给之后的for让路
+
             //向上一层符号表
+            intermediateCode.addICode(Insert_Label, endFor, nullptr, nullptr);
             break;
-        case IFTK:
+        }
+        case IFTK:{
             ident = "if";//不用担心起冲突 不会重名关键字  同时多个if是栈结构
             PRINT_WORD;//PRINT IF
             GET_A_WORD;
@@ -1642,6 +1654,7 @@ void Parser::Stmt() {
             }
             intermediateCode.addICode(Insert_Label,label_end, nullptr, nullptr);
             break;
+        }
         case LBRACE:
             //from { start   not print
             ident = "###";
@@ -1776,6 +1789,9 @@ void Parser::Cond(IEntry *iEntry) {
 
 void Parser::ForStmt() {
     //TODO:ForStmt ICode  ASSIGN
+    IEntry * for_stmt;
+    for_stmt = new IEntry("for_stmt");//仅仅用来标识
+    intermediateCode.addICode(Insert_Label,for_stmt, nullptr, nullptr);
     IEntry *lVal,*exp;
     int v1,v2;
     lVal = new IEntry;
@@ -1784,11 +1800,11 @@ void Parser::ForStmt() {
     GET_A_WORD;
     exp = new IEntry;
     Exp(exp,v2,isInOtherFunc);
-    if (exp->canGetValue){
-        lVal->imm = v2;
-    }else{
-        intermediateCode.addICode(Assign,exp, nullptr,lVal);
-    }
+    /**
+     * 鉴于LVal找到的很多数据并没有真正找到 而是拷贝版本  所以不能直接将lVal的操作当成已经操作
+     */
+    intermediateCode.addICode(Assign,exp, nullptr,lVal);
+    lVal->canGetValue = false;
     Print_Grammar_Output("<ForStmt>");
 }
 

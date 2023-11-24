@@ -8,5 +8,14 @@ int main() {
    else{
    printf("a<t\n");
    }
+   int i = 0;
+   int interval = i;
+   printf("input a number to set the up number,and input a number to set the interval size:\n");
+   i = getint();
+   interval = getint();
+   int k;
+   for(k = 0; k < i; k = k + interval){
+        printf("k=%d\n",k);
+   }
    return 0;
 }
