@@ -218,8 +218,8 @@ void Parser::VarDef(vector<Entry*> &entries) {
             iEntry->values_Id->push_back((p = new IEntry)->Id);
             //exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
             p->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
-            p->canGetValue = true;
-            p->imm = 0;
+//            p->canGetValue = true;
+//            p->imm = 0;
         }
     }
     if(!error){
@@ -229,7 +229,6 @@ void Parser::VarDef(vector<Entry*> &entries) {
         if (ISGLOBAL){
             iEntry->isGlobal = true;//MIPS依据这个生成标签或者地址  lw  FIXME:标签采用   originalName_id：
         }
-
         if (hasValue){
             if (op == 0){
                 intermediateCode.addDef(ISGLOBAL,VAR_Def_Has_Value,iEntry, nullptr, nullptr);//FIXME:addDef本身也是加入ICode  多了一个isGlobal参数
@@ -1734,10 +1733,12 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
         int value;
         auto *exp_iEntry = new IEntry;
         Exp(exp_iEntry, value, isInOtherFunc);//下放错误
+        auto v = new IEntry;
         exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
+        intermediateCode.addICode(Assign,exp_iEntry, nullptr,v);
         //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;
         //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;//TODo:设置MIPS中的地址  为MIPS服务   由于我会在初始数组时sw
-        iEntry->values_Id->push_back(exp_iEntry->Id);
+        iEntry->values_Id->push_back(v->Id);
         nums++;
     }
 
