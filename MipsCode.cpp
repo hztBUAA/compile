@@ -373,8 +373,10 @@ IEntry * p_val = p;
                 break;
             case Add:{
                 if (src1->canGetValue && src2->canGetValue){
-                    dst->canGetValue = true;
-                    dst->imm = src1->imm + src2->imm;
+                    output << "li " << "$t0" << ", " << src1->imm + src2->imm<< endl;
+                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+//                    dst->canGetValue = true;
+//                    dst->imm = src1->imm + src2->imm;
                 }else {
                     if (src1->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm << endl;

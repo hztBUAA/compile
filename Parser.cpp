@@ -450,23 +450,23 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
             iEntry2 = new IEntry;
             MulExp(iEntry2, value2, iInOtherFunc);
             if (op == 0){
-                if (iEntry1->canGetValue &&  iEntry2->canGetValue){
-                    iEntry1->imm = iEntry1->imm + iEntry2->imm;
-                    iEntry1->canGetValue = true;
-                }else {
+//                if (iEntry1->canGetValue &&  iEntry2->canGetValue){
+//                    iEntry1->imm = iEntry1->imm + iEntry2->imm;
+//                    iEntry1->canGetValue = true;
+//                }else {
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, ans);
                     iEntry1 = ans;
-                }
+//                }
             }else{
-                if (iEntry1->canGetValue &&  iEntry2->canGetValue){
-                    iEntry1->imm = iEntry1->imm - iEntry2->imm;
-                    iEntry1->canGetValue = true;
-                }else{
+//                if (iEntry1->canGetValue &&  iEntry2->canGetValue){
+//                    iEntry1->imm = iEntry1->imm - iEntry2->imm;
+//                    iEntry1->canGetValue = true;
+//                }else{
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Sub,iEntry1,iEntry2,ans);
                     iEntry1 = ans;
-                }
+//                }
             }
 
         }
@@ -1989,7 +1989,7 @@ void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
                     ans =  new IEntry;
                     intermediateCode.addICode(I_not_eq,_relExp1,_relExp2,ans);
                     _relExp1 = ans;
-//                }
+                }
             }else{
                 //not this operator
             }
