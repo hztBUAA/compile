@@ -456,11 +456,13 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Sub,iEntry1,iEntry2,ans);
             }
-            intermediateCode.addICode(Assign,ans,nullptr,iEntry1);
+            iEntry1 = ans;
+//            intermediateCode.addICode(Assign,ans,nullptr,iEntry1);
         }
     }else{
         //error
     }
+
     intermediateCode.addICode(Assign,iEntry1,nullptr,iEntry);
     if (!isLValInStmt)
         Print_Grammar_Output("<AddExp>");
@@ -509,7 +511,8 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                 ans = new IEntry;
                 intermediateCode.addICode(IntermediateCodeType::Mod, iEntry1, iEntry2, ans);
             }
-            intermediateCode.addICode(Assign,ans,nullptr,iEntry1);
+            iEntry1 = ans;
+//            intermediateCode.addICode(Assign,ans,nullptr,iEntry1);
         }
     }else{
         //error
@@ -1832,7 +1835,8 @@ void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
                 default:
                     break;//no operator
             }
-            intermediateCode.addICode(Assign,ans, nullptr,_addExp1);
+            _addExp1 =ans;
+//            intermediateCode.addICode(Assign,ans, nullptr,_addExp1);
         }
     }
 intermediateCode.addICode(Assign,_addExp1, nullptr,iEntry);
@@ -1863,7 +1867,8 @@ void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
             }else{
                 //not this operator
             }
-            intermediateCode.addICode(Assign,ans, nullptr,_relExp1);
+            _relExp1 = ans;
+//            intermediateCode.addICode(Assign,ans, nullptr,_relExp1);
         }
     }else{
         //error
@@ -1887,7 +1892,8 @@ void Parser::LAndExp(IEntry * iEntry,bool InOtherFunc) {
             //TODO:逻辑
             ans =  new IEntry;
             intermediateCode.addICode(I_And,_eqExp1,_eqExp2,ans);
-            intermediateCode.addICode(Assign,ans, nullptr,_eqExp1);
+            _eqExp1 = ans;
+//            intermediateCode.addICode(Assign,ans, nullptr,_eqExp1);
         }
     }else{
         //error
@@ -1910,7 +1916,8 @@ void Parser::LOrExp(IEntry * iEntry,bool InOtherFunc) {
             //TODO :逻辑
             ans =  new IEntry;
             intermediateCode.addICode(I_Or,_lAndExp1,_lAndExp2,ans);
-            intermediateCode.addICode(Assign,ans, nullptr,_lAndExp1);
+            _lAndExp1 = ans;
+//            intermediateCode.addICode(Assign,ans, nullptr,_lAndExp1);
         }
     }else{
         //error

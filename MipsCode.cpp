@@ -191,7 +191,7 @@ str_5:  .asciiz   "ha"
             }
             case I_And:{
                 if (src1->canGetValue && src2->canGetValue){
-                    output << "li " << "$t0" << ", " << (src1->imm  & src2->imm ) << endl;
+                    output << "li " << "$t0" << ", " << (src1->imm!=0  & src2->imm!=0 ) << endl;
                     output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                 }else if (src1->canGetValue){
                     output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
@@ -211,7 +211,7 @@ str_5:  .asciiz   "ha"
             }
             case I_Or:{
                 if (src1->canGetValue && src2->canGetValue){
-                    output << "li " << "$t0" << ", " << (src1->imm| src2->imm) << endl;
+                    output << "li " << "$t0" << ", " << (src1->imm!=0| src2->imm!=0) << endl;
                     output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                 }else if (src1->canGetValue){
                     output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
@@ -789,6 +789,12 @@ addiu $sp, $sp, 30000
             vector<int> *fParam_ids;
 
             switch (type) {
+                case I_Not:{
+                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    output << "seq $t0, $t0, 0"<<endl;//0
+                    output << "sw $t0, "<<dst->startAddress<<"($zero)"<<endl;
+                    break;
+                }
                 case Beqz:{
                     output << "lw $t0," << src1->startAddress<<"($zero)" <<endl;
                     output << "beqz $t0, "<<src2->name<<endl;
@@ -804,7 +810,7 @@ addiu $sp, $sp, 30000
                 }
                 case I_And:{
                     if (src1->canGetValue && src2->canGetValue){
-                        output << "li " << "$t0" << ", " << (src1->imm  & src2->imm ) << endl;
+                        output << "li " << "$t0" << ", " << (src1->imm!=0  & src2->imm!=0 ) << endl;
                         output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                     }else if (src1->canGetValue){
                         output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
@@ -824,7 +830,7 @@ addiu $sp, $sp, 30000
                 }
                 case I_Or:{
                     if (src1->canGetValue && src2->canGetValue){
-                        output << "li " << "$t0" << ", " << (src1->imm| src2->imm) << endl;
+                        output << "li " << "$t0" << ", " << (src1->imm !=0 | src2->imm !=0) << endl;
                         output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                     }else if (src1->canGetValue){
                         output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
