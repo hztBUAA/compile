@@ -674,14 +674,10 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         if (op == 0){
             ;//无事
         }else if (op == 1){
-            if (iEntry->canGetValue){
-//                value = 0-value;
-iEntry->imm = -1*iEntry->imm;
-            }else{
-                intermediateCode.addICode(Sub,0,iEntry,iEntry);
-            }
+            intermediateCode.addICode(Sub,0,iEntry,iEntry);
         }else if(op ==2 ){
             //FIXME:仅出现在条件表达式？TODO
+            intermediateCode.addICode(I_Not,iEntry, nullptr,iEntry);
         }
     }
     if (!isLValInStmt)
@@ -734,18 +730,7 @@ void Parser::PrimaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
             //FIXME:这里是用来表示LVal是真正的左值  也就是语法树中不被算作Exp的  也就是本来LVal = getint（） | Exp这些是在Stmt中的  我的写法会让它在Stmt-》Exp中进行推导完成  无伤大雅  在此告诉自己
             isLValInStmt = true;
         }else{
-            //拷贝
-            iEntry->imm = lVal->imm;
-            iEntry->canGetValue = lVal->canGetValue;
-            iEntry->startAddress = lVal->startAddress;
-            iEntry->type = lVal->type;
-            iEntry->offset_IEntry = lVal->offset_IEntry;
-            iEntry->original_Name = lVal->original_Name;
-            iEntry->values_Id = lVal->values_Id;
-            iEntry->dim1_length = lVal->dim1_length;
-            iEntry->total_length = lVal->total_length;
-            iEntry->has_return = lVal->has_return;
-            iEntry->isGlobal = lVal->isGlobal;
+            intermediateCode.addICode(Assign,lVal, nullptr,iEntry);//一般的传递
         }
         //不是赋值语句   需要将LVal找到的IEntry 传回上面 我现在不想用二级指针
     }

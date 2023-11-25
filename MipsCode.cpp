@@ -170,6 +170,12 @@ str_5:  .asciiz   "ha"
         vector<int> *fParam_ids ;
 
         switch (type) {
+            case I_Not:{
+                output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                output << "xor $t0, 1"<<endl;
+                output << "sw $t0, "<<dst->startAddress<<"($zero)"<<endl;
+                break;
+            }
             case Beqz:{
                 output << "lw $t0," << src1->startAddress<<"($zero)" <<endl;
                 output << "beqz $t0, "<<src2->name<<endl;
