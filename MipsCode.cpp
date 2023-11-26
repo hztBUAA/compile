@@ -26,13 +26,22 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
      * TODO：多次写入的更新原则！！！
      * */
     output << "#assign" << endl;
-    if (src1->type == 0){
+    if (src1->type == 6){
+        output << "lw $t1," <<src1->imm*4<<"($sp)"<<endl;
+        if (dst->type == 6){
+            output << "sw " << "$t1, " << dst->imm*4 << "($sp)" << endl;
+        }else{
+            output << "sw " << "$t1, " << dst->startAddress << "($zero)" << endl;
+        }
+    }else if (src1->type == 0){
         if (src1->canGetValue){
             output << "li " << "$t1, " << src1->imm << endl;
         }else{
             output << "lw " << "$t1, " << src1->startAddress << "($zero)" << endl;
         }
-        if (dst->type == 2){
+        if (dst->type == 6) {//dst放在sp中  可能地址 也可能值  我们不区分  就是参数
+            output << "sw " << "$t1, " << dst->imm*4 << "($sp)" << endl;
+        }else if (dst->type == 2){//dst存储的是地址
             output << "lw " << "$t2, " << dst->startAddress << "($zero)" << endl;
             output << "sw " << "$t1, " << "0($t2)" << endl; //  需要从变量的IEntry的values_Id中取得的  t0  地址  为写语句而生
         }else{
@@ -41,9 +50,13 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
             dst->canGetValue =  false;//后台更新
     }else{
         output << "#地址拷贝\n";
-         output<< "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-         output<< "sw $t0, "<< dst->startAddress<< "($zero)"<<endl;
-        dst->canGetValue = false;
+        output<< "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+        if (dst->type == 6){
+            output<< "sw $t0, "<< dst->imm*4<< "($sp)"<<endl;
+        }else{
+            output<< "sw $t0, "<< dst->startAddress<< "($zero)"<<endl;
+        }
+
     }
 
 }
@@ -517,7 +530,9 @@ IEntry * p_val = p;
                 output << "#getint:\n";
                 output << "\nli $v0, 5\n";
                 output << "syscall\n";
-                if (dst->type == 2){
+                if(dst->type == 6){
+                    output << "sw $v0,"<<dst->imm*4<<"($sp)"<<endl;
+                }else if (dst->type == 2){
                     output << "lw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                     output << "sw " << "$v0" << ", " << "0($t0)" << endl;
                 }else{
@@ -529,7 +544,9 @@ IEntry * p_val = p;
             case GetAddress:{
                 output<< "#GetTheAddress  sw in dst 's address\n";
                 if (src2->type == 1){
-                     output<< "lw $t0,"<<IEntries.at(src2->values_Id->at(0))->startAddress<<"($zero)"<<endl;
+                    output<< "lw $t0,"<<IEntries.at(src2->values_Id->at(0))->startAddress<<"($zero)"<<endl;
+                }else if(src2->type == 7){
+                    output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
                 }else{
                     if (src2->isGlobal){
                         output<< "la $t0,"<<src2->original_Name<<endl;
@@ -539,14 +556,14 @@ IEntry * p_val = p;
                 }
                 if (src1){
                     if (src1->canGetValue){
-                         output<< "addu $t0,$t0,"<<src1->imm*4<<endl;
+                        output<< "addu $t0,$t0,"<<src1->imm*4<<endl;
                     }else{
-                         output<< "lw, $t1,"<<src1->startAddress<<"($zero)"<<endl;
-                         output << "sll $t1,$t1,2"<<endl;
-                         output<< "addu $t0,$t0,$t1"<<endl;
+                        output<< "lw, $t1,"<<src1->startAddress<<"($zero)"<<endl;
+                        output << "sll $t1,$t1,2"<<endl;
+                        output<< "addu $t0,$t0,$t1"<<endl;
                     }
                 }
-                 output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
                 break;
             }
             case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
@@ -561,7 +578,11 @@ IEntry * p_val = p;
                             output << "li " << "$t1" << ", " << index * 4 << endl;
                             output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                         }else{
-                            output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                            if(src2->type ==7){
+                                output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
+                            }else{
+                                output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                            }
                         }
                         //dst——type  1    0
                         if (dst->type ==0){
@@ -576,7 +597,12 @@ IEntry * p_val = p;
                         if (src2->isGlobal){
                             output << "la " << "$t0" << ", " << src2->original_Name << endl;
                         }else{
-                            output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                            if (src2->type ==7){
+                                output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
+                            }else{
+                                output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                            }
+
                         }
                         output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                         output << "sll " << "$t1" << ", " << "$t1" << ", 2" << endl;
@@ -591,7 +617,11 @@ IEntry * p_val = p;
                         }
                     }
                 }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
-                    output<< "lw $t0,"<<src2->startAddress<<"($zero)"<<endl;
+                    if (src2->type == 7){
+                        output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
+                    }else{
+                        output<< "lw $t0,"<<src2->startAddress<<"($zero)"<<endl;
+                    }
                     if (src1){
                         if (src1->canGetValue){
                             output<< "addu $t0,$t0,"<<src1->imm*4<<endl;
@@ -621,14 +651,29 @@ IEntry * p_val = p;
                      */
             //TODO:函数的格式理解  sp  压栈~虚拟？  IEntry:has_return?
             case FuncCall:
-                rParam_ids = src2->values_Id;//point to value
-                fParam_ids = src1->values_Id;//point to def
+                rParam_ids = src2->values_Id;
+                fParam_ids = src1->values_Id;
                 if (rParam_ids->size() != fParam_ids->size()) {
                     output << "error!!!!  rParam_ids->size() = " << rParam_ids->size() << "fParam_ids->size() = " << fParam_ids->size() << "\n";
                 }
-                output << "#调用函数" << src1->original_Name << ":\n ";
-                for (int i = 0; i < rParam_ids->size();i++){
-                    assign(IEntries.at(rParam_ids->at(i)), nullptr,IEntries.at(IEntries.at(fParam_ids->at(i))->values_Id->at(0)));
+                output << "#调用函数" << src1->original_Name << ": \n";
+                //ra 在sp中压栈
+                output << "addiu $sp, $sp, -30000\n";
+                output << "sw $ra, 0($sp)\n";
+                IEntry*f,*r;
+                for (int i = 0; i < rParam_ids->size(); i++) {
+                    r = IEntries.at(rParam_ids->at(i));
+                    if(r->type == 0){
+                        if (r->canGetValue){
+                            output << "li " << "$t1, " << r->imm << endl;
+                        }else{
+                            output << "lw " << "$t1, " << r->startAddress << "($zero)" << endl;
+                        }
+                        output << "sw " << "$t1, " << (i+1)*4<<"($sp)" << endl;
+                    }else {// only == 1
+                        output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
+                        output << "sw " << "$t0, " << (i + 1) * 4 << "($sp)" << endl;
+                    }
                 }
                 output << endl;
                 /**
@@ -641,17 +686,14 @@ lw $ra, 0($sp)
 # Pop params
 addiu $sp, $sp, 30000
                  */
-                //ra 在sp中压栈
-                output << "addiu $sp, $sp, -4\n";
-                output << "sw $ra, 0($sp)\n";
                 //call function
                 output << "jal " << "_" << src1->original_Name << endl;
                 //ra 出栈
+                output << "#返回函数"<<endl;
                 output << "lw $ra, 0($sp)\n";
-                output << "addiu $sp, $sp, 4\n";
-
-                //函数返回值在v0中  要sw
-//                output << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)" << endl;//src2 = IEntries.at(func->id)
+                output << "addiu $sp, $sp, 30000\n";
+                //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
+//                    output << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
                 if (dst != nullptr){
                     output << "sw " << "$v0" << ", " << dst->startAddress << "($zero)" << endl;//src2 = IEntries.at(func->id)
                 }
@@ -1113,7 +1155,9 @@ addiu $sp, $sp, 30000
                     output << "#getint:\n";
                     output << "li $v0, 5\n";
                     output << "syscall\n";
-                    if (dst->type == 2){
+                    if(dst->type == 6){
+                        output << "sw $v0,"<<dst->imm*4<<"($sp)"<<endl;
+                    }else if (dst->type == 2){
                         output << "lw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                         output << "sw " << "$v0" << ", " << "0($t0)" << endl;
                     }else{
@@ -1125,6 +1169,8 @@ addiu $sp, $sp, 30000
                     output<< "#GetTheAddress  sw in dst 's address\n";
                     if (src2->type == 1){
                         output<< "lw $t0,"<<IEntries.at(src2->values_Id->at(0))->startAddress<<"($zero)"<<endl;
+                    }else if(src2->type == 7){
+                        output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
                     }else{
                         if (src2->isGlobal){
                             output<< "la $t0,"<<src2->original_Name<<endl;
@@ -1157,7 +1203,11 @@ addiu $sp, $sp, 30000
                                 output << "li " << "$t1" << ", " << index * 4 << endl;
                                 output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                             }else{
-                                output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                                if(src2->type ==7){
+                                    output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
+                                }else{
+                                    output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                                }
                             }
                             //dst——type  1    0
                             if (dst->type ==0){
@@ -1172,7 +1222,12 @@ addiu $sp, $sp, 30000
                             if (src2->isGlobal){
                                 output << "la " << "$t0" << ", " << src2->original_Name << endl;
                             }else{
-                                output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                                if (src2->type ==7){
+                                    output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
+                                }else{
+                                    output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                                }
+
                             }
                             output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
                             output << "sll " << "$t1" << ", " << "$t1" << ", 2" << endl;
@@ -1187,7 +1242,11 @@ addiu $sp, $sp, 30000
                             }
                         }
                     }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
-                        output<< "lw $t0,"<<src2->startAddress<<"($zero)"<<endl;
+                        if (src2->type == 7){
+                            output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
+                        }else{
+                            output<< "lw $t0,"<<src2->startAddress<<"($zero)"<<endl;
+                        }
                         if (src1){
                             if (src1->canGetValue){
                                 output<< "addu $t0,$t0,"<<src1->imm*4<<endl;

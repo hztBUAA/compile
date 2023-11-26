@@ -1253,7 +1253,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             IEntry*v;
             rParam->values_Id->push_back((v = new IEntry)->Id);//new IEntry存放值
             v->type = 6;//TODO：6表示需要取的时候要用 sp  且不是lw地址
-            v->imm = (int)arguments.size();
+            v->imm = (int)arguments.size()+1;
             //函数的值需要sp来保存 imm来记录是第几个参数
         }else if(op == 1){
             kind = ARRAY_1_VAR;//关于kind 类型匹配 需要放宽 const常量  int变量？说明：常量数组不允许加到参数中  所以都是VAR类型即可
@@ -1265,7 +1265,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             rParam->values_Id->push_back((v = new IEntry)->Id);
 //            v->offset_IEntry = new IEntry;//不一定需要？
             v->type = 7;//lw 地址
-            v->imm = (int)arguments.size();
+            v->imm = (int)arguments.size()+1;
 //            rParam->offset_IEntry = new IEntry;
             //new IEntry存放地址
         }else{
@@ -1278,7 +1278,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             rParam->values_Id->push_back((v = new IEntry)->Id);
 //            v->offset_IEntry = new IEntry;
             v->type =7;
-            v->imm = (int)arguments.size();
+            v->imm = (int)arguments.size()+1;
 //            rParam->offset_IEntry = new IEntry;
             rParam->type = 7;
         }
