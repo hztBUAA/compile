@@ -1247,7 +1247,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
         if (op == 0){
             kind = VAR;
             rParam = new IEntry;
-            rParam->type = 0;
+            rParam->type = 6;
             rParam->values_Id = new vector<int>;
             rParam->original_Name = ident;
             IEntry*v;
@@ -1258,7 +1258,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
         }else if(op == 1){
             kind = ARRAY_1_VAR;//关于kind 类型匹配 需要放宽 const常量  int变量？说明：常量数组不允许加到参数中  所以都是VAR类型即可
             rParam = new IEntry();
-            rParam->type = 1;
+            rParam->type = 7;
             rParam->values_Id = new vector<int>;
             rParam->original_Name = ident;
             IEntry * v;
@@ -1280,7 +1280,7 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             v->type =7;
             v->imm = (int)arguments.size();
 //            rParam->offset_IEntry = new IEntry;
-            rParam->type = 1;
+            rParam->type = 7;
         }
 
        //TODo：函数形参站住位置  指向的是定义本身不是值本身 类似于定义变量！！！

@@ -44,18 +44,6 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
          output<< "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
          output<< "sw $t0, "<< dst->startAddress<< "($zero)"<<endl;
         dst->canGetValue = false;
-        //赋值的地址参数拷贝！！！
-
-//        dst->canGetValue = false;
-//        dst->isGlobal = src1->isGlobal;
-//        dst->values_Id = src1->values_Id;
-//        dst->values = src1->values;//none sense
-//        dst->type = 1;
-//        dst->total_length = src1->total_length;
-//        //dst->dim1_length = src1->dim1_length;//以FParam来标准 不需要传递
-//        dst->offset_IEntry = src1->offset_IEntry;
-//        dst->startAddress = src1->startAddress;//关于数组地址的属性都要拷贝
-        //FIXME:其他属性就不用拷贝的？   理清楚？ isGlobal保持自己 has_return 不可能
     }
 
 }
@@ -1240,9 +1228,23 @@ addiu $sp, $sp, 30000
                         output << "error!!!!  rParam_ids->size() = " << rParam_ids->size() << "fParam_ids->size() = " << fParam_ids->size() << "\n";
                     }
                     output << "#调用函数" << src1->original_Name << ": \n";
+                    //ra 在sp中压栈
+                    output << "addiu $sp, $sp, -30000\n";
+                    output << "sw $ra, 0($sp)\n";
+                    IEntry*f,*r;
                     for (int i = 0; i < rParam_ids->size(); i++) {
-                        assign(IEntries.at(rParam_ids->at(i)), nullptr,
-                               IEntries.at(IEntries.at(fParam_ids->at(i))->values_Id->at(0)));
+                        r = IEntries.at(rParam_ids->at(i));
+                        if(r->type == 0){
+                            if (r->canGetValue){
+                                output << "li " << "$t1, " << r->imm << endl;
+                            }else{
+                                output << "lw " << "$t1, " << r->startAddress << "($zero)" << endl;
+                            }
+                            output << "sw " << "$t1, " << (i+1)*4<<"($sp)" << endl;
+                        }else {// only == 1
+                            output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
+                            output << "sw " << "$t0, " << (i + 1) * 4 << "($sp)" << endl;
+                        }
                     }
                     output << endl;
                     /**
@@ -1255,15 +1257,12 @@ addiu $sp, $sp, 30000
     # Pop params
     addiu $sp, $sp, 30000
                      */
-                    //ra 在sp中压栈
-                    output << "addiu $sp, $sp, -4\n";
-                    output << "sw $ra, 0($sp)\n";
                     //call function
                     output << "jal " << "_" << src1->original_Name << endl;
                     //ra 出栈
-
+                    output << "#返回函数"<<endl;
                     output << "lw $ra, 0($sp)\n";
-                    output << "addiu $sp, $sp, 4\n";
+                    output << "addiu $sp, $sp, 30000\n";
                     //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
 //                    output << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
                     if (dst != nullptr){
