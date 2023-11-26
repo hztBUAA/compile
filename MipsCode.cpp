@@ -693,22 +693,11 @@ addiu $sp, $sp, 30000
             case VAR_Def_Has_Value:
                 output << "#local_var_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def:  " ;
                 if(IEntries.at(src1->values_Id->at(0))->canGetValue){
-                    //                    src1->imm = IEntries.at(src1->values_Id->at(0))->imm;
-                    //                    src1->canGetValue = true;
                     output << IEntries.at(src1->values_Id->at(0))->imm << " ";
                 }else{
-                    //                    output << "";
-                    //                    output << "lw " << "$t0" << ", " << (IEntries.at(src1->values_Id->at(0))->startAddress) << "($zero)" << endl;
-                    //                    output << "sw " << "$t0" << ", " << (src1->startAddress) << "($zero)" << endl;
                     output << "@(" << src1->values_Id->at(0) << ")" << " ";
                 }
                 output << endl;
-                if(IEntries.at(src1->values_Id->at(0))->canGetValue){
-                    output << "li " << "$t0" << ",  " << IEntries.at(src1->values_Id->at(0))->imm << endl;
-                }else{
-                    output << "lw " << "$t0" << ",  " << IEntries.at(src1->values_Id->at(0))->startAddress << "($zero)" << endl;
-                }
-                output << "sw " << "$t0, " << IEntries.at(src1->values_Id->at(0))->startAddress << "($zero)" << endl;
                 break;
             case VAR_Def_No_Value:
                 output << "#local_var_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "no_value_def\n  " ;
@@ -717,24 +706,13 @@ addiu $sp, $sp, 30000
                 output << "#local_array_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def:  " ;
                 for (auto id_init_value:*(src1->values_Id)) {
                     if (IEntries.at(id_init_value)->canGetValue){
-                        ;//FIXME:编译时可以得出的值  以后要用就再按需取
                         output << IEntries.at(id_init_value)->imm << " ";
                     }else{
                         output << "@(" << id_init_value << ")" << " ";
-                        ;//FIXME:编译时不可以得出的值  说明运行后通过getint的变量间接得到值  以后要用就再按需lw sw取  初始值IEntry是有若干个IEntry组成的 可以进行canGetValue的判断
                     }
                 }
                 output << endl;
                 cnt = 0;
-                for (auto id_init_value:*(src1->values_Id)) {
-                    if (IEntries.at(id_init_value)->canGetValue){ //认为数组内存是连续存储？
-                        output << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
-                    }else{
-                        output << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
-                    }
-                    output << "sw " << "$t0, " << src1->startAddress + cnt * 4 << "($zero)" << endl;
-                    cnt++;
-                }
                 break;
             case ARRAY_Def_No_Value:
                 output << "#local_array_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def\n  " ;
@@ -746,6 +724,7 @@ addiu $sp, $sp, 30000
                 }
                 cnt = 0;
                 output << endl;
+                //const的使用读取 也许不用再使用lw
                 for (auto id_init_value:*(src1->values_Id)) {
                     if (IEntries.at(id_init_value)->canGetValue){ //认为数组内存是连续存储？
                         output << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
@@ -1314,91 +1293,56 @@ addiu $sp, $sp, 30000
                      * 非全局变量的初始化定义
                      */
                 case VAR_Def_Has_Value:
-                    output << "#local_var_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def:  ";
-                    if (IEntries.at(src1->values_Id->at(0))->canGetValue) {
-                        //                    src1->imm = IEntries.at(src1->values_Id->at(0))->imm;
-                        //                    src1->canGetValue = true;
+                    output << "#local_var_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def:  " ;
+                    if(IEntries.at(src1->values_Id->at(0))->canGetValue){
                         output << IEntries.at(src1->values_Id->at(0))->imm << " ";
-                    } else {
-                        //                    output << "";
-                        //                    output << "lw " << "$t0" << ", " << (IEntries.at(src1->values_Id->at(0))->startAddress) << "($zero)" << endl;
-                        //                    output << "sw " << "$t0" << ", " << (src1->startAddress) << "($zero)" << endl;
+                    }else{
                         output << "@(" << src1->values_Id->at(0) << ")" << " ";
                     }
                     output << endl;
-                    if (IEntries.at(src1->values_Id->at(0))->canGetValue) {
-                        output << "li " << "$t0" << ",  " << IEntries.at(src1->values_Id->at(0))->imm << endl;
-                    } else {
-                        output << "lw " << "$t0" << ",  " << IEntries.at(src1->values_Id->at(0))->startAddress
-                             << "($zero)" << endl;
-                    }
-                    output << "sw " << "$t0, " << IEntries.at(src1->values_Id->at(0))->startAddress << "($zero)" << endl;
                     break;
                 case VAR_Def_No_Value:
-                    output << "#local_var_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name
-                         << "no_value_def\n  ";
+                    output << "#local_var_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "no_value_def\n  " ;
                     break;
                 case ARRAY_VAR_Def_Has_Value:
-                    output << "#local_array_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def:  ";
-                    for (auto id_init_value: *(src1->values_Id)) {
-                        if (IEntries.at(id_init_value)->canGetValue) { ;//FIXME:编译时可以得出的值  以后要用就再按需取
+                    output << "#local_array_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def:  " ;
+                    for (auto id_init_value:*(src1->values_Id)) {
+                        if (IEntries.at(id_init_value)->canGetValue){
                             output << IEntries.at(id_init_value)->imm << " ";
-                        } else {
-                            output << "@(" << id_init_value << ")"
-                                 << " ";;//FIXME:编译时不可以得出的值  说明运行后通过getint的变量间接得到值  以后要用就再按需lw sw取  初始值IEntry是有若干个IEntry组成的 可以进行canGetValue的判断
+                        }else{
+                            output << "@(" << id_init_value << ")" << " ";
                         }
                     }
                     output << endl;
                     cnt = 0;
-                    for (auto id_init_value: *(src1->values_Id)) {
-                        if (IEntries.at(id_init_value)->canGetValue) { //认为数组内存是连续存储？
-                            output << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
-                        } else {
-                            output << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)"
-                                 << endl;
-                        }
-                        output << "sw " << "$t0, " << src1->startAddress + cnt * 4 << "($zero)" << endl;
-                        cnt++;
-                    }
                     break;
                 case ARRAY_Def_No_Value:
-                    output << "#local_array_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def\n  ";
+                    output << "#local_array_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def\n  " ;
                     break;
                 case Const_Def_Has_Value:
-                    output << "#const_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def:  ";
-                    for (auto init_value: *(src1->values)) {
-                        output << init_value << " ";
+                    output << "#const_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def:  " ;
+                    for (auto init_id:*(src1->values_Id)) {
+                        output << IEntries.at(init_id)->imm << " ";
                     }
-                    output << endl;
                     cnt = 0;
-                    for (auto id_init_value: *(src1->values_Id)) {
-                        if (IEntries.at(id_init_value)->canGetValue) { //认为数组内存是连续存储？
+                    output << endl;
+                    //const的使用读取 也许不用再使用lw
+                    for (auto id_init_value:*(src1->values_Id)) {
+                        if (IEntries.at(id_init_value)->canGetValue){ //认为数组内存是连续存储？
                             output << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
-                        } else {
-                            output << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)"
-                                 << endl;
+                        }else{
+                            output << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
                         }
                         output << "sw " << "$t0, " << src1->startAddress + cnt * 4 << "($zero)" << endl;
                         cnt++;
                     }
                     break;
                 case ARRAY_CONST_Def_Has_Value:
-                    output << "#array_const@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "def   ";
+                    output << "#array_const@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "def   " ;
                     for (auto init_id:*(src1->values_Id)) {
                         output << IEntries.at(init_id)->imm << " ";
                     }
                     output << endl;
-                    cnt = 0;
-                    for (auto id_init_value: *(src1->values_Id)) {
-                        if (IEntries.at(id_init_value)->canGetValue) { //认为数组内存是连续存储？
-                            output << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
-                        } else {
-                            output << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)"
-                                 << endl;
-                        }
-                        output << "sw " << "$t0, " << src1->startAddress + cnt * 4 << "($zero)" << endl;
-                        cnt++;
-                    }
                     break;
                 default:
                     break;

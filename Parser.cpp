@@ -218,8 +218,6 @@ void Parser::VarDef(vector<Entry*> &entries) {
             iEntry->values_Id->push_back((p = new IEntry)->Id);
             //exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
             p->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
-//            p->canGetValue = true;
-//            p->imm = 0;
         }
     }
     if(!error){
@@ -448,16 +446,23 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
             GET_A_WORD;
             iEntry2 = new IEntry;
             MulExp(iEntry2, value2, iInOtherFunc);
-            if (op == 0){
-                    ans = new IEntry;
-                    intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, ans);
-            }else{
-                    ans = new IEntry;
-                    intermediateCode.addICode(IntermediateCodeType::Sub,iEntry1,iEntry2,ans);
+            if (op == 0) {
+                if (ISGLOBAL) {
+                    iEntry1->imm = iEntry1->imm + iEntry2->imm;
+                    iEntry1->canGetValue = true;
+                } else {
+                    intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, iEntry1);
+                }
+            }else if(op ==1){
+                if (ISGLOBAL) {
+                    iEntry1->imm = iEntry1->imm - iEntry2->imm;
+                    iEntry1->canGetValue = true;
+                } else {
+                    intermediateCode.addICode(IntermediateCodeType::Sub, iEntry1, iEntry2, iEntry1);
+                }
             }
-            iEntry1 = ans;
-//            intermediateCode.addICode(Assign,ans,nullptr,iEntry1);
         }
+
     }else{
         //error
     }
@@ -501,17 +506,28 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
             iEntry2 = new IEntry;
             UnaryExp(iEntry2, value2, InOtherFunc);
             if (op == 0){
-                ans = new IEntry;
-                intermediateCode.addICode(IntermediateCodeType::Mult, iEntry1, iEntry2, ans);
+                if (ISGLOBAL){
+                    iEntry1->canGetValue = true;
+                    iEntry1->imm = iEntry1->imm * iEntry2->imm;
+                }else{
+                    intermediateCode.addICode(IntermediateCodeType::Mult, iEntry1, iEntry2, iEntry1);
+                }
+
             }else if(op ==1){
-                ans = new IEntry;
-                intermediateCode.addICode(IntermediateCodeType::Div, iEntry1, iEntry2, ans);
+                if (ISGLOBAL){
+                    iEntry1->canGetValue = true;
+                    iEntry1->imm = iEntry1->imm / iEntry2->imm;
+                }else{
+                    intermediateCode.addICode(IntermediateCodeType::Div, iEntry1, iEntry2, iEntry1);
+                }
             }else{
-                ans = new IEntry;
-                intermediateCode.addICode(IntermediateCodeType::Mod, iEntry1, iEntry2, ans);
+                if (ISGLOBAL){
+                    iEntry1->canGetValue = true;
+                    iEntry1->imm = iEntry1->imm % iEntry2->imm;
+                }else{
+                    intermediateCode.addICode(IntermediateCodeType::Mod, iEntry1, iEntry2, iEntry1);
+                }
             }
-            iEntry1 = ans;
-//            intermediateCode.addICode(Assign,ans,nullptr,iEntry1);
         }
     }else{
         //error
@@ -939,10 +955,15 @@ void Parser::Number( IEntry *iEntry,int & value,bool InOtherFunc) {
         //Error
     }
     //TODO:  需要进一步明确value的值是否需要放在IEntry中？   这是后面的常数优化
-    value = lexer.token.number;
-//    iEntry = new IEntry;FIXME:高层建立iEntry  传下来  不然似乎会有野指针问题？
-    iEntry->canGetValue = true;
-    iEntry->imm = value;
+    if (ISGLOBAL){
+        iEntry->canGetValue = true;
+        iEntry->imm =  lexer.token.number;
+    }else{
+        auto v = new IEntry;
+        v->canGetValue = true;
+        v->imm = lexer.token.number;
+        intermediateCode.addICode(Assign,v,nullptr,iEntry);
+    }
     PRINT_WORD;
     Print_Grammar_Output("<Number>");
     GET_A_WORD;//NOT PW
@@ -1229,7 +1250,11 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             rParam->type = 0;
             rParam->values_Id = new vector<int>;
             rParam->original_Name = ident;
-            rParam->values_Id->push_back((new IEntry)->Id);//new IEntry存放值
+            IEntry*v;
+            rParam->values_Id->push_back((v = new IEntry)->Id);//new IEntry存放值
+            v->type = 6;//TODO：6表示需要取的时候要用 sp  且不是lw地址
+            v->imm = (int)arguments.size();
+            //函数的值需要sp来保存 imm来记录是第几个参数
         }else if(op == 1){
             kind = ARRAY_1_VAR;//关于kind 类型匹配 需要放宽 const常量  int变量？说明：常量数组不允许加到参数中  所以都是VAR类型即可
             rParam = new IEntry();
@@ -1239,7 +1264,8 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             IEntry * v;
             rParam->values_Id->push_back((v = new IEntry)->Id);
 //            v->offset_IEntry = new IEntry;//不一定需要？
-            v->type = 1;
+            v->type = 7;//lw 地址
+            v->imm = (int)arguments.size();
 //            rParam->offset_IEntry = new IEntry;
             //new IEntry存放地址
         }else{
@@ -1251,7 +1277,8 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             IEntry * v;
             rParam->values_Id->push_back((v = new IEntry)->Id);
 //            v->offset_IEntry = new IEntry;
-            v->type =1;
+            v->type =7;
+            v->imm = (int)arguments.size();
 //            rParam->offset_IEntry = new IEntry;
             rParam->type = 1;
         }
@@ -1733,12 +1760,21 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
         int value;
         auto *exp_iEntry = new IEntry;
         Exp(exp_iEntry, value, isInOtherFunc);//下放错误
-        auto v = new IEntry;
         exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
-        intermediateCode.addICode(Assign,exp_iEntry, nullptr,v);
+        if(ISGLOBAL){
+            exp_iEntry->canGetValue =false;
+            iEntry->values_Id->push_back(exp_iEntry->Id);
+        }else{
+            auto v = new IEntry;
+            v->startAddress = iEntry->startAddress + 4*nums;
+            v->canGetValue = false;
+            iEntry->values_Id->push_back(v->Id);
+            intermediateCode.addICode(Assign,exp_iEntry, nullptr,v);
+        }
+
         //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;
         //exp_iEntry->startAddress = iEntry->startAddress + 4*nums;//TODo:设置MIPS中的地址  为MIPS服务   由于我会在初始数组时sw
-        iEntry->values_Id->push_back(v->Id);
+
         nums++;
     }
 
@@ -1814,30 +1850,24 @@ void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
             //TODO:比较的逻辑 建立中间代码
             switch (t) {
                 case LSS:{
-                    ans =  new IEntry;
-                    intermediateCode.addICode(I_Less,_addExp1,_addExp2,ans);
+                    intermediateCode.addICode(I_Less,_addExp1,_addExp2,_addExp1);
                     break;
                 }
                 case GRE:{
-                    ans =  new IEntry;
-                    intermediateCode.addICode(I_Grt,_addExp1,_addExp2,ans);
+                    intermediateCode.addICode(I_Grt,_addExp1,_addExp2,_addExp1);
                     break;
                 }
                 case LEQ:{
-                    ans =  new IEntry;
-                    intermediateCode.addICode(I_Less_eq,_addExp1,_addExp2,ans);
+                    intermediateCode.addICode(I_Less_eq,_addExp1,_addExp2,_addExp1);
                     break;
                 }
                 case GEQ:{
-                    ans =  new IEntry;
-                    intermediateCode.addICode(I_Grt_eq,_addExp1,_addExp2,ans);
+                    intermediateCode.addICode(I_Grt_eq,_addExp1,_addExp2,_addExp1);
                     break;
                 }
                 default:
                     break;//no operator
             }
-            _addExp1 =ans;
-//            intermediateCode.addICode(Assign,ans, nullptr,_addExp1);
         }
     }
 intermediateCode.addICode(Assign,_addExp1, nullptr,iEntry);
@@ -1860,16 +1890,12 @@ void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
             RelExp(_relExp2,isInOtherFunc);
             //TODO:逻辑
             if (op ==0){//EQL
-                ans =  new IEntry;
-                intermediateCode.addICode(I_Eq,_relExp1,_relExp2,ans);
+                intermediateCode.addICode(I_Eq,_relExp1,_relExp2,_relExp1);
             }else if (op == 1){
-                ans =  new IEntry;
-                intermediateCode.addICode(I_not_eq,_relExp1,_relExp2,ans);
+                intermediateCode.addICode(I_not_eq,_relExp1,_relExp2,_relExp1);
             }else{
                 //not this operator
             }
-            _relExp1 = ans;
-//            intermediateCode.addICode(Assign,ans, nullptr,_relExp1);
         }
     }else{
         //error
@@ -1891,10 +1917,7 @@ void Parser::LAndExp(IEntry * iEntry,bool InOtherFunc) {
             _eqExp2 = new IEntry;
             EqExp(_eqExp2,InOtherFunc);
             //TODO:逻辑
-            ans =  new IEntry;
-            intermediateCode.addICode(I_And,_eqExp1,_eqExp2,ans);
-            _eqExp1 = ans;
-//            intermediateCode.addICode(Assign,ans, nullptr,_eqExp1);
+            intermediateCode.addICode(I_And,_eqExp1,_eqExp2,_eqExp1);
         }
     }else{
         //error
@@ -1915,10 +1938,7 @@ void Parser::LOrExp(IEntry * iEntry,bool InOtherFunc) {
             _lAndExp2 = new IEntry;
             LAndExp(_lAndExp2,InOtherFunc);
             //TODO :逻辑
-            ans =  new IEntry;
-            intermediateCode.addICode(I_Or,_lAndExp1,_lAndExp2,ans);
-            _lAndExp1 = ans;
-//            intermediateCode.addICode(Assign,ans, nullptr,_lAndExp1);
+            intermediateCode.addICode(I_Or,_lAndExp1,_lAndExp2,_lAndExp1);
         }
     }else{
         //error
