@@ -742,7 +742,6 @@ addiu $sp, $sp, 30000
                     }
                 }
                 output << endl;
-                cnt = 0;
                 break;
             case ARRAY_Def_No_Value:
                 output << "#local_array_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def\n  " ;

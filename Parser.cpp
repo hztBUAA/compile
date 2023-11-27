@@ -217,7 +217,13 @@ void Parser::VarDef(vector<Entry*> &entries) {
         for (int i = 0; i <total_length;i++){
             iEntry->values_Id->push_back((p = new IEntry)->Id);
             //exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
-            p->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
+            p->original_Name = iEntry->original_Name.append("_").append(to_string(i)).append("_");
+            p->startAddress = iEntry->startAddress + 4*i;
+//            IEntry *v;
+//            v = new IEntry;
+//            v->imm = 0;
+//            v->canGetValue = true;
+//            intermediateCode.addICode(Assign,v, nullptr,p);
         }
     }
     if(!error){
@@ -467,9 +473,12 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
         //error
     }
 
-    intermediateCode.addICode(Assign,iEntry1,nullptr,iEntry);
-    if (!isLValInStmt)
+
+    if (!isLValInStmt){
+        intermediateCode.addICode(Assign,iEntry1,nullptr,iEntry);
         Print_Grammar_Output("<AddExp>");
+    }
+
     //已经指向下一个
 }
 //MulExp是项  下面有因子
@@ -532,9 +541,12 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
     }else{
         //error
     }
-    intermediateCode.addICode(Assign,iEntry1,nullptr,iEntry);
-    if (!isLValInStmt)
+
+    if (!isLValInStmt){
+        intermediateCode.addICode(Assign,iEntry1,nullptr,iEntry);
         Print_Grammar_Output("<MulExp>");
+    }
+
     //已经指向下一个
 }
 void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
@@ -955,15 +967,15 @@ void Parser::Number( IEntry *iEntry,int & value,bool InOtherFunc) {
         //Error
     }
     //TODO:  需要进一步明确value的值是否需要放在IEntry中？   这是后面的常数优化
-    if (ISGLOBAL){
+//    if (ISGLOBAL){
         iEntry->canGetValue = true;
         iEntry->imm =  lexer.token.number;
-    }else{
-        auto v = new IEntry;
-        v->canGetValue = true;
-        v->imm = lexer.token.number;
-        intermediateCode.addICode(Assign,v,nullptr,iEntry);
-    }
+//    }else{
+//        auto v = new IEntry;
+//        v->canGetValue = true;
+//        v->imm = lexer.token.number;
+////        intermediateCode.addICode(Assign,v,nullptr,iEntry);
+//    }
     PRINT_WORD;
     Print_Grammar_Output("<Number>");
     GET_A_WORD;//NOT PW
