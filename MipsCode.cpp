@@ -401,16 +401,16 @@ IEntry * p_val = p;
                 }else {
                     if (src1->canGetValue){
                         output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                        output << "add " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
+                        output << "addu " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
                         output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                     }else if (src2->canGetValue){
                         output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                        output << "add " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
+                        output << "addu " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
                         output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                     }else{
                         output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
                         output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                        output << "add " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        output << "addu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
                         output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                     }
                 }
@@ -424,16 +424,16 @@ IEntry * p_val = p;
                     if (src1->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm << endl;
                         output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                        output << "sub " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        output << "subu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
                         output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                     }else if (src2->canGetValue){
                         output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                        output << "sub " << "$t2" << ", " << "$t1" << ", " << src2->imm<< endl;
+                        output << "subu " << "$t2" << ", " << "$t1" << ", " << src2->imm<< endl;
                         output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                     }else{
                         output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
                         output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                        output << "sub " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                        output << "subu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
                         output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                     }
                 }
@@ -1026,16 +1026,16 @@ addiu $sp, $sp, 30000
                     }else {
                         if (src1->canGetValue){
                             output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                            output << "add " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
+                            output << "addu " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
                             output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         }else if (src2->canGetValue){
                             output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                            output << "add " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
+                            output << "addu " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
                             output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         }else{
                             output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
                             output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                            output << "add " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                            output << "addu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
                             output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         }
                     }
@@ -1049,16 +1049,16 @@ addiu $sp, $sp, 30000
                         if (src1->canGetValue){
                             output << "li " << "$t0" << ", " << src1->imm << endl;
                             output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                            output << "sub " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                            output << "subu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
                             output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         }else if (src2->canGetValue){
                             output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
-                            output << "sub " << "$t2" << ", " << "$t1" << ", " << src2->imm<< endl;
+                            output << "subu " << "$t2" << ", " << "$t1" << ", " << src2->imm<< endl;
                             output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         }else{
                             output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
                             output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
-                            output << "sub " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
+                            output << "subu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
                             output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                         }
                     }

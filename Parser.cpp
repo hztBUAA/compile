@@ -453,14 +453,14 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
             iEntry2 = new IEntry;
             MulExp(iEntry2, value2, iInOtherFunc);
             if (op == 0) {
-                if (ISGLOBAL) {
+                if (ISGLOBAL || iEntry1->canGetValue&&iEntry2->canGetValue) {
                     iEntry1->imm = iEntry1->imm + iEntry2->imm;
                     iEntry1->canGetValue = true;
                 } else {
                     intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, iEntry1);
                 }
             }else if(op ==1){
-                if (ISGLOBAL) {
+                if (ISGLOBAL|| iEntry1->canGetValue&&iEntry2->canGetValue) {
                     iEntry1->imm = iEntry1->imm - iEntry2->imm;
                     iEntry1->canGetValue = true;
                 } else {
@@ -475,7 +475,13 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
 
 
     if (!isLValInStmt){
-        intermediateCode.addICode(Assign,iEntry1,nullptr,iEntry);
+        if (iEntry1->canGetValue){
+            iEntry->canGetValue = true;
+            iEntry->imm = iEntry1->imm;
+        }else{
+            intermediateCode.addICode(Assign,iEntry1,nullptr,iEntry);
+            iEntry->canGetValue = false;
+        }
         Print_Grammar_Output("<AddExp>");
     }
 
@@ -515,7 +521,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
             iEntry2 = new IEntry;
             UnaryExp(iEntry2, value2, InOtherFunc);
             if (op == 0){
-                if (ISGLOBAL){
+                if (ISGLOBAL|| iEntry1->canGetValue&&iEntry2->canGetValue){
                     iEntry1->canGetValue = true;
                     iEntry1->imm = iEntry1->imm * iEntry2->imm;
                 }else{
@@ -523,14 +529,14 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                 }
 
             }else if(op ==1){
-                if (ISGLOBAL){
+                if (ISGLOBAL|| iEntry1->canGetValue&&iEntry2->canGetValue){
                     iEntry1->canGetValue = true;
                     iEntry1->imm = iEntry1->imm / iEntry2->imm;
                 }else{
                     intermediateCode.addICode(IntermediateCodeType::Div, iEntry1, iEntry2, iEntry1);
                 }
             }else{
-                if (ISGLOBAL){
+                if (ISGLOBAL|| iEntry1->canGetValue&&iEntry2->canGetValue){
                     iEntry1->canGetValue = true;
                     iEntry1->imm = iEntry1->imm % iEntry2->imm;
                 }else{
@@ -543,7 +549,13 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
     }
 
     if (!isLValInStmt){
-        intermediateCode.addICode(Assign,iEntry1,nullptr,iEntry);
+        if (iEntry1->canGetValue){
+            iEntry->canGetValue = true;
+            iEntry->imm = iEntry1->imm;
+        }else{
+            intermediateCode.addICode(Assign,iEntry1,nullptr,iEntry);
+            iEntry->canGetValue = false;
+        }
         Print_Grammar_Output("<MulExp>");
     }
 
@@ -704,10 +716,18 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         if (op == 0){
             ;//无事
         }else if (op == 1){
-            intermediateCode.addICode(Sub,0,iEntry,iEntry);
+            if(iEntry->canGetValue){
+                iEntry->imm = -1*iEntry->imm;
+            }else{
+                intermediateCode.addICode(Sub,0,iEntry,iEntry);
+            }
         }else if(op ==2 ){
             //FIXME:仅出现在条件表达式？TODO
-            intermediateCode.addICode(I_Not,iEntry, nullptr,iEntry);
+            if (iEntry->canGetValue){
+                iEntry->imm = (iEntry->imm == 1) ? 0 : 1;
+            }else{
+                intermediateCode.addICode(I_Not,iEntry, nullptr,iEntry);
+            }
         }
     }
     if (!isLValInStmt)
