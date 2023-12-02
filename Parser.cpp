@@ -9,7 +9,7 @@
 #include <iostream>
 using namespace std;
 
-
+int funcInitAddress = 0;
 
 string funcLabel;
 bool isInOtherFunc;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
@@ -635,7 +635,7 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
                     if (func){
                         if (func->kind == FUNC_INT){//空参数
                             iEntry->canGetValue = false;
-                            iEntry->startAddress = IEntries.at(func->id)->return_IEntry->startAddress;//地址赋值 类似拷贝
+//                            iEntry->startAddress = IEntries.at(func->id)->return_IEntry->startAddress;//地址赋值 类似拷贝
                             intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, iEntry);//FIXME:又返回值的函数  把值给到这个新建的iEntry  需要自己新建iEntry
                         }else{//此时iEntry没用
                             intermediateCode.addICode(FuncCall,IEntries.at(func->id), params, nullptr);
@@ -1132,13 +1132,14 @@ void Parser::FuncRParams(int func_ident_line,vector<int>  *RParams) {
 }
 
 void Parser::FuncDef(Kind func_type) {
-    isInOtherFunc = true;
+
     //FuncDef 从名字<ident>开始
     bool error = false;
     string ident =WORD_DISPLAY;
     funcLabel = ident;
     auto* func = new IEntry ;//FIXME:表示函数定义时的相关信息头： 形参values_Id 有没有返回值
-
+    funcInitAddress = func->startAddress;
+    isInOtherFunc = true;
     //定义：先在这一层找   找到就报错REDEFINE  没找到就填表
     if(tableManager.isRedefine(ident)){
         errorHandler.Insert_Error(REDEFINE);
@@ -1156,6 +1157,10 @@ void Parser::FuncDef(Kind func_type) {
         func->original_Name = ident;
         if (func->has_return ){
             func->return_IEntry = new IEntry;
+        }else{
+            //占位
+            ;
+            func->return_IEntry = new IEntry;
         }
         func->values_Id = new vector<int>;
         INFO_ENTRY->fParams = new vector<Entry *>;
@@ -1169,6 +1174,8 @@ void Parser::FuncDef(Kind func_type) {
             errorHandler.Insert_Error(RPARENT_MISSING);
         }
         tableManager.downTable(ident);
+
+
         Block();
         tableManager.upTable();
     }else{
@@ -1194,6 +1201,10 @@ void Parser::FuncDef(Kind func_type) {
             }else{
                 if (func->has_return ){
                     func->return_IEntry = new IEntry;
+                }else{
+//占位
+                    ;
+                    func->return_IEntry = new IEntry;
                 }
                 intermediateCode.addICode(IntermediateCodeType::FuncDef,func, nullptr, nullptr);
                 PRINT_WORD;//PRINT )
@@ -1202,6 +1213,8 @@ void Parser::FuncDef(Kind func_type) {
 
             tableManager.cur->fParams = new vector(entries);//还真是   如果直接&entries  会丢失
 //            semantic.recordEntries(entries);//参数也重新放进这个函数中 当做局部变量
+//            funcInitAddress = func->startAddress;
+
             Block();
             tableManager.upTable();
         }else{
@@ -1300,24 +1313,24 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
         if (op == 0){
             kind = VAR;
             rParam = new IEntry;
-            rParam->type = 6;
+            rParam->type = 0;
             rParam->values_Id = new vector<int>;
             rParam->original_Name = ident;
             IEntry*v;
             rParam->values_Id->push_back((v = new IEntry)->Id);//new IEntry存放值
-            v->type = 6;//TODO：6表示需要取的时候要用 sp  且不是lw地址
+            v->type = 0;//TODO：6表示需要取的时候要用 sp  且不是lw地址
             v->imm = (int)arguments.size()+1;
             //函数的值需要sp来保存 imm来记录是第几个参数
         }else if(op == 1){
             kind = ARRAY_1_VAR;//关于kind 类型匹配 需要放宽 const常量  int变量？说明：常量数组不允许加到参数中  所以都是VAR类型即可
             rParam = new IEntry();
-            rParam->type = 7;
+            rParam->type = 1;
             rParam->values_Id = new vector<int>;
             rParam->original_Name = ident;
             IEntry * v;
             rParam->values_Id->push_back((v = new IEntry)->Id);
 //            v->offset_IEntry = new IEntry;//不一定需要？
-            v->type = 7;//lw 地址
+            v->type = 1;//lw 地址
             v->imm = (int)arguments.size()+1;
 //            rParam->offset_IEntry = new IEntry;
             //new IEntry存放地址
@@ -1330,10 +1343,10 @@ void Parser::FuncFParam(vector<Entry *> & arguments) {
             IEntry * v;
             rParam->values_Id->push_back((v = new IEntry)->Id);
 //            v->offset_IEntry = new IEntry;
-            v->type =7;
+            v->type =1;
             v->imm = (int)arguments.size()+1;
 //            rParam->offset_IEntry = new IEntry;
-            rParam->type = 7;
+            rParam->type = 1;
         }
 
        //TODo：函数形参站住位置  指向的是定义本身不是值本身 类似于定义变量！！！

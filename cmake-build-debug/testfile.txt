@@ -1,7 +1,18 @@
 int b=1,a[1][1] = {{b}};
-int main(){
+int func1(){
+printf("func1\n");
+    int a[1][1] = {{b}};
     printf("%d %d\n",a[0][0],b);
-    b = 3;
+    b = b+3;
+    a[0][0] = b+3;
+    printf("%d %d\n",a[0][0],b);
+    return 0;
+}
+int main(){
+func1();
+printf("main\n");
+    printf("%d %d\n",a[0][0],b);
+    b = b +3;
     a[0][0] = b+3;
     printf("%d %d\n",a[0][0],b);
     //printf("%d",b);

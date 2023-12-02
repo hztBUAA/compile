@@ -88,7 +88,7 @@ public:
     int startAddress;//用来跟MIPS的后端对接  ---由于数组的存在地址不是和id一一对应  FIXME:type = 1时只能使用startAddress 和offset  startAddress是数组的首地址  offset是偏移量  函数形参中的数组也是这样的  type判断1时要加上offset+startAddress  否则就是直接对应的地址
     IEntry * offset_IEntry;//配合地址使用  只有type = 1时成立   直接就是值
     bool isGlobal{};
-    bool isInOtherFunc{};
+//    bool isInOtherFunc{};
     //---------FuncCall---------
     /**
      * 类似于Entry  包含id即可  id是查询符号表时已经有对应的id在对应的Entry（定义该变量时就存在的）

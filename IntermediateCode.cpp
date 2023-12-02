@@ -3,6 +3,7 @@
 //
 
 #include "IntermediateCode.h"
+extern int funcInitAddress;
 vector<int> strings;
 vector<ICode *> mainICodes ;
 map<string, vector<ICode *>> otherFuncICodes;
@@ -29,7 +30,11 @@ IEntry::IEntry(const string& s){
 
 IEntry::IEntry(){
     this->Id = generateId();
-    this->startAddress = tempMemoryAddressTop;
+    if (isInOtherFunc){
+        this->startAddress = tempMemoryAddressTop - funcInitAddress;
+    }else{
+        this->startAddress = tempMemoryAddressTop;
+    }
     this->name = "@"+ to_string(this->Id);
     this->values_Id = new vector<int>;
     this->values = new vector<int>;
@@ -41,7 +46,11 @@ IEntry::IEntry(){
 //FIXME数组的定义时的IEntry的生成  type = 0  只有地址时才是1
  IEntry::IEntry(int length){
     this->Id = generateId();
-    this->startAddress = tempMemoryAddressTop;
+    if (isInOtherFunc){
+        this->startAddress = tempMemoryAddressTop - funcInitAddress;
+    }else{
+        this->startAddress = tempMemoryAddressTop;
+    }
     this->values_Id = new vector<int>;
     this->values = new vector<int>;
     this->name = "@"+ to_string(this->Id);
