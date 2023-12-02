@@ -217,7 +217,7 @@ void Parser::VarDef(vector<Entry*> &entries) {
         for (int i = 0; i <total_length;i++){
             iEntry->values_Id->push_back((p = new IEntry)->Id);
             //exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
-            p->original_Name = iEntry->original_Name.append("_").append(to_string(i)).append("_");
+            p->original_Name = iEntry->original_Name;
             p->startAddress = iEntry->startAddress + 4*i;
             p->canGetValue = true;
             p->imm = 0;
@@ -420,7 +420,7 @@ void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
             iEntry->values_Id->push_back(_constExp->Id);
         }else{
             v->startAddress = iEntry->startAddress + 4*nums;
-            v->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
+            v->original_Name = iEntry->original_Name;
             iEntry->values_Id->push_back(v->Id);//值要不统一存到values中  定义时  因为你不知道是数组还是啥 TODO： imm是确定的中间变量再用？
             intermediateCode.addICode(Assign,_constExp, nullptr,v);
         }
@@ -1850,7 +1850,7 @@ void Parser::InitVal(IEntry * iEntry,int & nums) { //变量数组值   iEntry存
         int value;
         auto *exp_iEntry = new IEntry;
         Exp(exp_iEntry, value, isInOtherFunc);//下放错误
-        exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
+        exp_iEntry->original_Name = iEntry->original_Name;
         if(ISGLOBAL){
             exp_iEntry->canGetValue =false;
             iEntry->values_Id->push_back(exp_iEntry->Id);
