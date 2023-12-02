@@ -987,6 +987,7 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
                     errorHandler.error_line = error_const_line;
                     errorHandler.Insert_Error(CONST_LEFT);
                 }
+                break;
             }
             t = t->Father_Entry;
         }
