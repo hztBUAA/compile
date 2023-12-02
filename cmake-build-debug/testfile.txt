@@ -1,162 +1,58 @@
-const int N=510,M=-520,KK=-1;
-const int NN = 55,MM = 2222;
-const int K = -24;
-const int a_3[2] = {4,5},a_4[2][2] = {{899,99},{1222,25555}};
-const int a_1[2]={1,2},a_2[1][1]={{2}};
-
-int a[510],b[510][510],n,m;
-int xxxx,yyyy;
-int t = 1234,u = 2345;
-int d[2][2] = {{1+3,2-4},{3*5,4*1+2}};
-int tmp_0[5] = {0,1,2,3,4};
-
-void pr(){
-    return;
+int isPrime(int m) {
+    int i;
+    i = 2;
+    for (;i < m;) {
+        if (m % i == 0)
+            return 0;
+        i = i +  1;
+    }
+    return 1;
 }
 
-void nonsense(){
-    ;
-    ;
-    return;
+
+void check_group(int t[]) {
+    int i;
+    i = 0;
+    for (;i < 2;) {
+        int tmp;
+        tmp = t[i];
+        printf("check:%d ", tmp);
+        tmp = isPrime(tmp);
+        printf("%d\n", tmp);
+        i = i + 1;
+    }
+
+
 }
 
-void matrix() {
-    int m[2][4] = {{-1+2-3*4/5%6,-1+2+3+4,(1-2)-3-4,1*2*3*4},{100/10/10*(-1),(1-2)*(3+5),1,2}},m1[3]={1,-2,3},m2[2][2];
-    int tu=t+u;
-    tu=t*u;
-    tmp_0[0]=5*5+1;
-    m[0][0] = 134 % 100 +- 1;
-    return;
+int test(int t[][2]) {
+    if (!t[0][1]) {
+        ;
+    }
+    return 0;
 }
 
-void logic() {
-    int i = 0,j = 0;
-    if (i <= j) {
-        i = j;
-    }
-    if (i >= j) {
-        i = j;
-    }
-    if (i < 100 && j >100) {
+int main() {
+    int num;
+    num = 30;
+    printf("%d\n", isPrime(num));
+    num = 31;
+    printf("%d\n", isPrime(num));
+    int tmp[3][2] = {{111, 2222},{3,   4},{5,   6}};
+    printf("%d %d %d\n", tmp[0][0], tmp[0][1], tmp[1][0]);
+    printf("prime:%d %d %d %d %d %d\n",isPrime(tmp[0][0]), isPrime(tmp[0][1]), isPrime(tmp[1][0]), isPrime(tmp[1][1]), isPrime(tmp[2][0]), isPrime(tmp[2][1]));
+    check_group(tmp[0]);
+    check_group(tmp[1]);
+    check_group(tmp[5]);
 
-    }
-    if (i == 0 && j != 0) {
-        
-    }
-    if (i==0 && !j) {
-        printf("YeG1\n");
-    }
-    if (!i || j) {
-        printf("YeG2\n");
-    }
-    if(i || !j) {
-        printf("YeG3\n");
-    }
-    if(!i || !j) {
-        printf("YeG4\n");
-    }
-    if(!i && !j) {
-        printf("YeG5\n");
-    }
-    if(!i != j) {
-        i = j;
-    }
-    if (i != !j) {
-        j = i;
-    }
-    else {
-        j = i-+-+i * 100 / 10 %10 * (-1);
-    }
-    return;
-}
-
-int getInt() {
-    int a;
-    a=getint();
-    return a;
-}
-
-void prd(int d[][2],int x,int a[]) {
-    int i=0,j=0;
-    for(;i>=0;) {
-        printf("%d\n",d[i][j]);
-        j=j+1;
-        if(j==2) {
-            j=0;
-            i=i+1;
-        }
-        if(i==2) {
+    int t;
+    t = 1;
+    for (;t > 0;) {
+        if (t < 10)
             break;
-        }
-        else {continue;}
+        t = t + 1;
     }
-    return;
-}
+    printf("t:%d\n", t);
 
-void f1(int x) {
-    printf("%d",x);
-}
-void f2(int d[][1+1]) {
-    d[0][1] = 10000;
-}
-void f3(int x) {
-    ;
-    ;
-}
-void f4(int a[]) {
-
-}
-void f5(int x,int y[]){
-
-}
-
-int main()
-{
-    pr();
-    nonsense();
-    n=getInt();
-    m=getInt();
-    matrix();
-    f1(n);
-    f2(d);
-    f3(n+m);
-    f3(tmp_0[0]+tmp_0[1]);
-    f3(a_2[0][0]+a_2[0][0]);
-    f3(a_2[0][0]*tmp_0[0]);
-    f3(tmp_0[0]+n);
-    f3(a_2[0][0]+m);
-    //f4(tmp_0+1);	//2022-10-23 移除此行：存在部分数组传参与int非法运算的问题
-    f4(d[1]);
-    f5(tmp_0[0],d[0]);
-    f5(n,tmp_0);
-    logic();
-    int a = n;
-    int b = m;
-    a = a+-+a;
-    b = b -+-a;
-    if (a == b) {
-        a = 1;
-        b = 1;
-    }
-    else if (a <= b) {
-        a = 1;
-        b = 2;
-    }
-    else {
-        a = 2;
-        b = 1;
-    }
-    if(!a) {
-        a = 10000;
-    }
-    else {
-        
-    }
-    printf("%d -- %d\n",n,m);
-    prd(d,100,tmp_0);
-    printf("%d\n",n+m);
-    printf("%d\n",n-m);
-    printf("%d\n",n*m);
-    printf("%d\n",n%m);
     return 0;
 }

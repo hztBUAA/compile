@@ -1280,7 +1280,7 @@ addiu $sp, $sp, 30000
                             output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
                         }else{
                             output<< "lw $t0,"<<src2->startAddress<<"($sp)"<<endl;
-                            output << "addu $t0, $t0,$sp\n";
+//                            output << "addu $t0, $t0,$sp\n";
                         }
                         if (src1){
                             if (src1->canGetValue){
