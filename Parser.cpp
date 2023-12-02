@@ -416,10 +416,14 @@ void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
         auto *v= new IEntry;
         auto* _constExp = new IEntry;//true canGet 会在内部进行设置
         ConstExp(_constExp, value, isInOtherFunc);
-        v->startAddress = iEntry->startAddress + 4*nums;
-        v->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
-        iEntry->values_Id->push_back(v->Id);//值要不统一存到values中  定义时  因为你不知道是数组还是啥 TODO： imm是确定的中间变量再用？
-        intermediateCode.addICode(Assign,_constExp, nullptr,v);
+        if (ISGLOBAL){
+            iEntry->values_Id->push_back(_constExp->Id);
+        }else{
+            v->startAddress = iEntry->startAddress + 4*nums;
+            v->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
+            iEntry->values_Id->push_back(v->Id);//值要不统一存到values中  定义时  因为你不知道是数组还是啥 TODO： imm是确定的中间变量再用？
+            intermediateCode.addICode(Assign,_constExp, nullptr,v);
+        }
         nums++;
     }
     Print_Grammar_Output("<ConstInitVal>");
@@ -1936,24 +1940,29 @@ void Parser::RelExp(IEntry * iEntry,bool InOtherFunc) {
             //TODO:比较的逻辑 建立中间代码
             switch (t) {
                 case LSS:{
-                    intermediateCode.addICode(I_Less,_addExp1,_addExp2,_addExp1);
+                    ans =  new IEntry;
+                    intermediateCode.addICode(I_Less,_addExp1,_addExp2,ans);
                     break;
                 }
                 case GRE:{
-                    intermediateCode.addICode(I_Grt,_addExp1,_addExp2,_addExp1);
+                    ans =  new IEntry;
+                    intermediateCode.addICode(I_Grt,_addExp1,_addExp2,ans);
                     break;
                 }
                 case LEQ:{
-                    intermediateCode.addICode(I_Less_eq,_addExp1,_addExp2,_addExp1);
+                    ans =  new IEntry;
+                    intermediateCode.addICode(I_Less_eq,_addExp1,_addExp2,ans);
                     break;
                 }
                 case GEQ:{
-                    intermediateCode.addICode(I_Grt_eq,_addExp1,_addExp2,_addExp1);
+                    ans =  new IEntry;
+                    intermediateCode.addICode(I_Grt_eq,_addExp1,_addExp2,ans);
                     break;
                 }
                 default:
                     break;//no operator
             }
+            intermediateCode.addICode(Assign,ans, nullptr,_addExp1);
         }
     }
 intermediateCode.addICode(Assign,_addExp1, nullptr,iEntry);
@@ -1976,12 +1985,15 @@ void Parser::EqExp(IEntry * iEntry,bool InOtherFunc) {
             RelExp(_relExp2,isInOtherFunc);
             //TODO:逻辑
             if (op ==0){//EQL
-                intermediateCode.addICode(I_Eq,_relExp1,_relExp2,_relExp1);
+                ans =  new IEntry;
+                intermediateCode.addICode(I_Eq,_relExp1,_relExp2,ans);
             }else if (op == 1){
-                intermediateCode.addICode(I_not_eq,_relExp1,_relExp2,_relExp1);
+                ans =  new IEntry;
+                intermediateCode.addICode(I_not_eq,_relExp1,_relExp2,ans);
             }else{
                 //not this operator
             }
+            intermediateCode.addICode(Assign,ans, nullptr,_relExp1);
         }
     }else{
         //error
@@ -2003,7 +2015,9 @@ void Parser::LAndExp(IEntry * iEntry,bool InOtherFunc) {
             _eqExp2 = new IEntry;
             EqExp(_eqExp2,InOtherFunc);
             //TODO:逻辑
-            intermediateCode.addICode(I_And,_eqExp1,_eqExp2,_eqExp1);
+            ans =  new IEntry;
+            intermediateCode.addICode(I_And,_eqExp1,_eqExp2,ans);
+            intermediateCode.addICode(Assign,ans, nullptr,_eqExp1);
         }
     }else{
         //error
@@ -2024,7 +2038,9 @@ void Parser::LOrExp(IEntry * iEntry,bool InOtherFunc) {
             _lAndExp2 = new IEntry;
             LAndExp(_lAndExp2,InOtherFunc);
             //TODO :逻辑
-            intermediateCode.addICode(I_Or,_lAndExp1,_lAndExp2,_lAndExp1);
+            ans =  new IEntry;
+            intermediateCode.addICode(I_Or,_lAndExp1,_lAndExp2,ans);
+            intermediateCode.addICode(Assign,ans, nullptr,_lAndExp1);
         }
     }else{
         //error
