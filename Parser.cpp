@@ -413,11 +413,13 @@ void Parser::ConstInitVal(IEntry *iEntry,int&nums) {
         GET_A_WORD;
     }else{
         int value;
+        auto *v= new IEntry;
         auto* _constExp = new IEntry;//true canGet 会在内部进行设置
         ConstExp(_constExp, value, isInOtherFunc);
-        _constExp->startAddress = iEntry->startAddress + 4*nums;
-        _constExp->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
-        iEntry->values_Id->push_back(_constExp->Id);//值要不统一存到values中  定义时  因为你不知道是数组还是啥 TODO： imm是确定的中间变量再用？
+        v->startAddress = iEntry->startAddress + 4*nums;
+        v->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
+        iEntry->values_Id->push_back(v->Id);//值要不统一存到values中  定义时  因为你不知道是数组还是啥 TODO： imm是确定的中间变量再用？
+        intermediateCode.addICode(Assign,_constExp, nullptr,v);
         nums++;
     }
     Print_Grammar_Output("<ConstInitVal>");
@@ -461,6 +463,7 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
                 } else {
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, ans);
+                    iEntry1 = ans;
                 }
             }else if(op ==1){
                 if (ISGLOBAL|| iEntry1->canGetValue&&iEntry2->canGetValue) {
@@ -469,9 +472,10 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
                 } else {
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Sub, iEntry1, iEntry2, ans);
+                    iEntry1 = ans;
                 }
             }
-            iEntry1 = ans;
+
         }
 
     }else{
@@ -532,6 +536,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                 }else{
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mult, iEntry1, iEntry2, ans);
+                    iEntry1 = ans;
                 }
 
             }else if(op ==1){
@@ -541,6 +546,7 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                 }else{
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Div, iEntry1, iEntry2, ans);
+                    iEntry1 = ans;
                 }
             }else{
                 if (ISGLOBAL|| iEntry1->canGetValue&&iEntry2->canGetValue){
@@ -549,9 +555,10 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                 }else{
                     ans = new IEntry;
                     intermediateCode.addICode(IntermediateCodeType::Mod, iEntry1, iEntry2, ans);
+                    iEntry1 = ans;
                 }
             }
-            iEntry1 = ans;
+
         }
     }else{
         //error
