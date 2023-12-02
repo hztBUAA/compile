@@ -219,6 +219,8 @@ void Parser::VarDef(vector<Entry*> &entries) {
             //exp_iEntry->original_Name = iEntry->original_Name.append("_").append(to_string(nums)).append("_");
             p->original_Name = iEntry->original_Name.append("_").append(to_string(i)).append("_");
             p->startAddress = iEntry->startAddress + 4*i;
+            p->canGetValue = true;
+            p->imm = 0;
 //            IEntry *v;
 //            v = new IEntry;
 //            v->imm = 0;

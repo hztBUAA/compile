@@ -76,13 +76,13 @@ private:
 
 public:
     int Id;
-    int type;//0定位元素 1维地址 2表示函数调用FuncCALL--  type ==5=> label  for jump in code2
+    int type{};//0定位元素 1维地址 2表示函数调用FuncCALL--  type ==5=> label  for jump in code2
     string name;
     int imm;//立即数或者已经算出  不能直接再被用来计算 由于另一个操作区待定
     bool canGetValue{};
 
-    int total_length;
-    int dim1_length;
+    int total_length{};
+    int dim1_length{};
     vector<int> *values;//存储数组的值   -----假想的会放在对应的Address位置上
     vector<int > *values_Id;
     int startAddress;//用来跟MIPS的后端对接  ---由于数组的存在地址不是和id一一对应  FIXME:type = 1时只能使用startAddress 和offset  startAddress是数组的首地址  offset是偏移量  函数形参中的数组也是这样的  type判断1时要加上offset+startAddress  否则就是直接对应的地址
