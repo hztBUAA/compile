@@ -459,16 +459,19 @@ void Parser::AddExp(IEntry *iEntry,int&value,bool iInOtherFunc) {
                     iEntry1->imm = iEntry1->imm + iEntry2->imm;
                     iEntry1->canGetValue = true;
                 } else {
-                    intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, iEntry1);
+                    ans = new IEntry;
+                    intermediateCode.addICode(IntermediateCodeType::Add, iEntry1, iEntry2, ans);
                 }
             }else if(op ==1){
                 if (ISGLOBAL|| iEntry1->canGetValue&&iEntry2->canGetValue) {
                     iEntry1->imm = iEntry1->imm - iEntry2->imm;
                     iEntry1->canGetValue = true;
                 } else {
-                    intermediateCode.addICode(IntermediateCodeType::Sub, iEntry1, iEntry2, iEntry1);
+                    ans = new IEntry;
+                    intermediateCode.addICode(IntermediateCodeType::Sub, iEntry1, iEntry2, ans);
                 }
             }
+            iEntry1 = ans;
         }
 
     }else{
@@ -527,7 +530,8 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                     iEntry1->canGetValue = true;
                     iEntry1->imm = iEntry1->imm * iEntry2->imm;
                 }else{
-                    intermediateCode.addICode(IntermediateCodeType::Mult, iEntry1, iEntry2, iEntry1);
+                    ans = new IEntry;
+                    intermediateCode.addICode(IntermediateCodeType::Mult, iEntry1, iEntry2, ans);
                 }
 
             }else if(op ==1){
@@ -535,16 +539,19 @@ void Parser::MulExp(IEntry *iEntry,int&value,bool InOtherFunc) {
                     iEntry1->canGetValue = true;
                     iEntry1->imm = iEntry1->imm / iEntry2->imm;
                 }else{
-                    intermediateCode.addICode(IntermediateCodeType::Div, iEntry1, iEntry2, iEntry1);
+                    ans = new IEntry;
+                    intermediateCode.addICode(IntermediateCodeType::Div, iEntry1, iEntry2, ans);
                 }
             }else{
                 if (ISGLOBAL|| iEntry1->canGetValue&&iEntry2->canGetValue){
                     iEntry1->canGetValue = true;
                     iEntry1->imm = iEntry1->imm % iEntry2->imm;
                 }else{
-                    intermediateCode.addICode(IntermediateCodeType::Mod, iEntry1, iEntry2, iEntry1);
+                    ans = new IEntry;
+                    intermediateCode.addICode(IntermediateCodeType::Mod, iEntry1, iEntry2, ans);
                 }
             }
+            iEntry1 = ans;
         }
     }else{
         //error

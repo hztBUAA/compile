@@ -1,15 +1,76 @@
-int fib(int i){
-    if (i == 1) {
-        return 1;
+const int a = 1, b = 2;
+const int c = 3;
+int d, e = 1 + 2;
+int f;
+
+
+int double2(int x1) {
+    if (!x1) {
+        return 2*x1;
     }
-    if (i == 2) {
-        return 2;
+    else {
+        return (2*-x1);
     }
-    return fib(i - 1) + fib(i - 2);
-}
-int main () {
-    int t = fib(5);
-    printf("%d\n%d\n%d", t,fib(6), fib(7));
     return 0;
 }
 
+int add(int x1, int x2) {
+    int sum = 0;
+    sum = x1 + x2;
+    return sum;
+}
+
+int sub(int x1, int x2) {
+    int sum = 0;
+    sum = x1 - x2;
+    if (sum >= 0) {
+        return sum;
+    }
+    if (sum <= 0) {
+        return 0;
+    }
+    return 0;
+}
+
+void print_none() {
+    return;
+}
+
+int main() {
+    {
+        int x = 0;
+        int flag;
+        int temp;
+        int x1, x2;
+        for(;x < 4;) {
+            if (x != 4) {
+                x = x + 1;
+            } else {
+                break;
+            }
+	    flag = getint();
+            if (flag == 0) {
+		x1 = getint();
+                temp = double2(x1) % 1;
+                printf("%d ", temp);
+                temp = double2(x1) / +1;
+                printf("%d\n", temp);
+                continue;
+            }
+            if (flag > 0) {
+		x1 = getint();
+		x2 = getint();
+                printf("%d\n", add(x1, x2));
+                continue;
+            }
+            if (flag < 0) {
+		x1 = getint();
+		x2 = getint();
+                printf("%d\n", sub(x1, x2));
+                continue;
+            }
+
+        }
+    }
+    return 0;
+}
