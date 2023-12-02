@@ -34,7 +34,11 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
             output << "sw " << "$t1, " << dst->startAddress << "($zero)" << endl;
         }
     }else if (src1->type == 0){
-        if (src1->canGetValue){
+        if (src1->isGlobal){
+            output << "la $t1," << src1->original_Name << endl;
+        }
+
+        else if (src1->canGetValue){
             output << "li " << "$t1, " << src1->imm << endl;
         }else{
             output << "lw " << "$t1, " << src1->startAddress << "($zero)" << endl;
@@ -376,7 +380,7 @@ syscall
                     if (IEntries.at(id)->str == "%d"){//lw  li  1 syscall
                         IEntry * p = IEntries.at( src2->values_Id->at(cnt_param++));
 //                        IEntry * p_val = IEntries.at(p->values_Id->at(0));//VALUE!!!
-IEntry * p_val = p;
+                        IEntry * p_val = p;
                         if (p_val->canGetValue){
                             output << "li $a0, " << p_val->imm << endl;
                         }else{
@@ -1304,6 +1308,7 @@ addiu $sp, $sp, 30000
                             output << "sw " << "$t0, " << (i + 1) * 4 << "($sp)" << endl;
                         }
                     }
+
                     output << endl;
                     /**
                      * # Pushing Function Real Params:
