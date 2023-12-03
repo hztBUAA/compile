@@ -744,7 +744,7 @@ void Parser::UnaryExp(IEntry * iEntry,int & value,bool InOtherFunc) {
         }else if(op ==2 ){
             //FIXME:仅出现在条件表达式？TODO
             if (iEntry->canGetValue){
-                iEntry->imm = (iEntry->imm == 1) ? 0 : 1;
+                iEntry->imm = !(iEntry->imm);
             }else{
                 intermediateCode.addICode(I_Not,iEntry, nullptr,iEntry);
             }
