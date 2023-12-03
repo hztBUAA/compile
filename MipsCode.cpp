@@ -205,7 +205,7 @@ str_5:  .asciiz   "ha"
         switch (type) {
             case I_Not:{
                 output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                output << "nori $t0,$t0,0\n";
+                output << "seq $t0, $t0,0"<<endl;//0
                 output << "sw $t0, "<<dst->startAddress<<"($zero)"<<endl;
                 break;
             }
@@ -857,7 +857,7 @@ addiu $sp, $sp, 30000
             switch (type) {
                 case I_Not:{
                     output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                    output << "nori $t0, $t0, 0"<<endl;//0
+                    output << "seq $t0, $t0,0"<<endl;//0
                     output << "sw $t0, "<<dst->startAddress<<"($sp)"<<endl;
                     break;
                 }
