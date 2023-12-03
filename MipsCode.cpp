@@ -1258,6 +1258,7 @@ addiu $sp, $sp, 30000
                             output<< "la $t0,"<<src2->original_Name<<endl;
                         }else{
                             output<< "li $t0,"<<src2->startAddress<<endl;
+                            output << "addu $t0,$t0,$sp"<<endl;
                         }
                     }
                     if (src1){
