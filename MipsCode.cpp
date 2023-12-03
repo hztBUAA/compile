@@ -728,7 +728,7 @@ syscall
                 }
                 output << "#调用函数" << src1->original_Name << ": \n";
                 //ra 在sp中压栈
-                output << "addiu $sp, $sp, -30000\n";
+                output << "addiu $sp, $sp, -80000\n";
                 output << "sw $ra, 0($sp)\n";
                 IEntry*f,*r;
                 for (int i = 0; i < rParam_ids->size(); i++) {
@@ -748,20 +748,20 @@ syscall
                 output << endl;
                 /**
                  * # Pushing Function Real Params:
-addiu $sp, $sp, -30000
+addiu $sp, $sp, -80000
 sw $ra, 0($sp)
 # Call function!
 jal Label_1
 lw $ra, 0($sp)
 # Pop params
-addiu $sp, $sp, 30000
+addiu $sp, $sp, 80000
                  */
                 //call function
                 output << "jal " << "Funccccc_" << src1->original_Name << endl;
                 //ra 出栈
                 output << "#返回函数"<<endl;
                 output << "lw $ra, 0($sp)\n";
-                output << "addiu $sp, $sp, 30000\n";
+                output << "addiu $sp, $sp, 80000\n";
                 //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
 //                    output << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
                 if (dst != nullptr){
@@ -1399,7 +1399,7 @@ addiu $sp, $sp, 30000
                     }
                     output << "#调用函数" << src1->original_Name << ": \n";
                     //ra 在sp中压栈
-                    output << "addiu $sp, $sp, -30000\n";
+                    output << "addiu $sp, $sp, -80000\n";
                     output << "sw $ra, 0($sp)\n";
                     IEntry*f,*r;
                     for (int i = 0; i < rParam_ids->size(); i++) {
@@ -1408,11 +1408,11 @@ addiu $sp, $sp, 30000
                             if (r->canGetValue){
                                 output << "li " << "$t1, " << r->imm << endl;
                             }else{
-                                output << "lw " << "$t1, " << r->startAddress+30000 << "($sp)" << endl;
+                                output << "lw " << "$t1, " << r->startAddress+80000 << "($sp)" << endl;
                             }
                             output << "sw " << "$t1, " <<IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<<"($sp)" << endl;//多存一个return
                         }else {// only == 1
-                            output << "lw $t0, " << src1->startAddress+30000 << "($sp)" << endl;
+                            output << "lw $t0, " << src1->startAddress+80000 << "($sp)" << endl;
                             output << "sw " << "$t0, " << IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress << "($sp)" << endl;
                         }
                     }
@@ -1420,20 +1420,20 @@ addiu $sp, $sp, 30000
                     output << endl;
                     /**
                      * # Pushing Function Real Params:
-    addiu $sp, $sp, -30000
+    addiu $sp, $sp, -80000
     sw $ra, 0($sp)
     # Call function!
     jal Label_1
     lw $ra, 0($sp)
     # Pop params
-    addiu $sp, $sp, 30000
+    addiu $sp, $sp, 80000
                      */
                     //call function
                     output << "jal " << "Funccccc_" << src1->original_Name << endl;
                     //ra 出栈
                     output << "#返回函数"<<endl;
                     output << "lw $ra, 0($sp)\n";
-                    output << "addiu $sp, $sp, 30000\n";
+                    output << "addiu $sp, $sp, 80000\n";
                     //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
 //                    output << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($sp)"<< endl;//src2 = IEntries.at(func->id)
                     if (dst != nullptr){
