@@ -373,7 +373,8 @@ str_5:  .asciiz   "ha"
                     //src2需要lw
 //                    output << "li $t0, "<< src1->imm<<endl;
                     output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
-                    output << "slti $t0 , $t0,"<<src1->imm<<endl;//故意反一下符号 结果正确
+                    output << "li $t1, "<<src1->imm<< endl;
+                    output << "slt $t0 , $t0, $t1"<<endl;//故意反一下符号 结果正确   slti不适用
                     output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
                 }else if (src2->canGetValue){
                     output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
@@ -397,7 +398,8 @@ str_5:  .asciiz   "ha"
                     output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
                 }else if (src2->canGetValue){
                     output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                    output << "slti $t0 , $t0,"<<src2->imm<<endl;
+                    output << "li $t1, "<<src2->imm<< endl;
+                    output << "slt $t0 , $t0, $t1"<<endl;
                     output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
                 }else{
                     output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
@@ -754,7 +756,7 @@ lw $ra, 0($sp)
 addiu $sp, $sp, 30000
                  */
                 //call function
-                output << "jal " << "_" << src1->original_Name << endl;
+                output << "jal " << "Func_" << src1->original_Name << endl;
                 //ra 出栈
                 output << "#返回函数"<<endl;
                 output << "lw $ra, 0($sp)\n";
@@ -773,7 +775,7 @@ addiu $sp, $sp, 30000
             }
                  */
             case FuncDef:
-                output << "_" << src1->original_Name << ":\n";//函数名标签
+                output << "Func_" << src1->original_Name << ":\n";//函数名标签
                 output << "#" << src1->original_Name << "部分: ";
                 for (auto id: *src1->values_Id) {
                     if(IEntries.at(id)->type == 0){
@@ -1035,7 +1037,8 @@ addiu $sp, $sp, 30000
                         //src2需要lw
 //                    output << "li $t0, "<< src1->imm<<endl;
                         output << "lw $t0, "<<src2->startAddress<<"($sp)"<<endl;
-                        output << "slti $t0 , $t0,"<<src1->imm<<endl;//故意反一下符号 结果正确
+                        output << "li $t1, "<<src1->imm<< endl;
+                        output << "slt $t0 , $t0, $t1"<<endl;
                         output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
                     }else if (src2->canGetValue){
                         output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
@@ -1059,7 +1062,8 @@ addiu $sp, $sp, 30000
                         output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
                     }else if (src2->canGetValue){
                         output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                        output << "slti $t0 , $t0,"<<src2->imm<<endl;
+                        output << "li $t1, "<<src2->imm<< endl;
+                        output << "slt $t0 , $t0, $t1"<<endl;
                         output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
                     }else{
                         output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
@@ -1424,7 +1428,7 @@ addiu $sp, $sp, 30000
     addiu $sp, $sp, 30000
                      */
                     //call function
-                    output << "jal " << "_" << src1->original_Name << endl;
+                    output << "jal " << "Func_" << src1->original_Name << endl;
                     //ra 出栈
                     output << "#返回函数"<<endl;
                     output << "lw $ra, 0($sp)\n";
@@ -1443,7 +1447,7 @@ addiu $sp, $sp, 30000
                 }
                      */
                 case FuncDef:
-                    output << "_" << src1->original_Name << ":\n";//函数名标签
+                    output << "Func_" << src1->original_Name << ":\n";//函数名标签
                     output << "#" << src1->original_Name << "部分: ";
                     for (auto id: *src1->values_Id) {
                         if (IEntries.at(id)->type == 0) {
