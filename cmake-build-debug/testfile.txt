@@ -1,3 +1,4 @@
+
 int isPrime(int m) {
     int i;
     i = 2;
@@ -16,7 +17,6 @@ void check_group(int t[]) {
     for (;i < 2;) {
         int tmp;
         tmp = t[i];
-        printf("check:%d ", tmp);
         tmp = isPrime(tmp);
         printf("%d\n", tmp);
         i = i + 1;
@@ -39,11 +39,9 @@ int main() {
     num = 31;
     printf("%d\n", isPrime(num));
     int tmp[3][2] = {{111, 2222},{3,   4},{5,   6}};
-    printf("%d %d %d\n", tmp[0][0], tmp[0][1], tmp[1][0]);
-    printf("prime:%d %d %d %d %d %d\n",isPrime(tmp[0][0]), isPrime(tmp[0][1]), isPrime(tmp[1][0]), isPrime(tmp[1][1]), isPrime(tmp[2][0]), isPrime(tmp[2][1]));
     check_group(tmp[0]);
     check_group(tmp[1]);
-    check_group(tmp[5]);
+    check_group(tmp[2]);
 
     int t;
     t = 1;

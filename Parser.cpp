@@ -961,8 +961,15 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
             //没有其他需要加的offset
             intermediateCode.addICode(GetAddress, nullptr,IEntries.at(find->id),*iEntry);
         }else{
-            //有一个数字需要加
-            intermediateCode.addICode(GetAddress, array_exps[1],IEntries.at(find->id),*iEntry);
+            //有一个数字需要加  exps[1]*dim1
+            if (array_exps[1]->canGetValue){
+                index = array_exps[1]->imm*dim1_length;
+                intermediateCode.addICode(GetAddress, index,IEntries.at(find->id),*iEntry);
+            }
+            else{
+                intermediateCode.addICode(Mult,dim1_length,array_exps[1],index_entry);
+                intermediateCode.addICode(GetAddress, index_entry,IEntries.at(find->id),*iEntry);
+            }
         };
     }else{ // 二级地址要小心 TODO: 形参的ConstExp是有用的  const不能作为数组参数！！！ 所以只用伪造valuesID
         //2维地址  伪造iEntry数组 认为是type = 1!!!!  取元素才不会取到你、空
