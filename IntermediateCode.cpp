@@ -165,31 +165,44 @@ void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src
     }
 }
 
+/**
+ * 在你之前的版本中，当你使用mainICodes.erase(mainICodes.begin()+i+1)时，你删除了一个元素，并且通过i--试图回退索引。然而，由于你的循环会在下一次迭代中自增i，这可能导致跳过一个元素。这是因为erase操作会使容器内的元素重新排列，而你的代码中并没有很好地处理这种情况。
+
+使用迭代器的好处在于，当你在循环中删除元素时，迭代器会被适当地更新，避免了直接使用索引带来的混乱。在上述修改中，我使用了it = mainICodes.erase(std::next(it));，这样可以确保迭代器指向正确的位置。
+
+总的来说，使用迭代器更加安全，因为它们可以适应容器结构的变化，而不需要手动管理索引。这有助于防止因删除元素而引起的错误。
+ */
 void IntermediateCode::optimize1() {
-    //扫描所有的中间代码 对相邻的assign语句进行合并
-    for (int i = 0; i < mainICodes.size()-1; ++i) {
-        auto cur = mainICodes.at(i);
-        auto next = mainICodes.at(i+1);
-        if (cur->type == Assign && next->type == Assign&&cur->dst->Id == next->src1->Id && cur->dst->type == 0 && next->src1->type == 0){
-            //合并
-            cur->dst = next->dst;
-            mainICodes.erase(mainICodes.begin()+i+1);
-            i--;
+    // 扫描所有的中间代码，对相邻的assign语句进行合并
+    for (auto it = mainICodes.begin(); it != mainICodes.end(); ++it) {
+        if (std::next(it) != mainICodes.end()) {
+            auto cur = *it;
+            auto next = *std::next(it);
+            if (cur->type == Assign && next->type == Assign && cur->dst->Id == next->src1->Id ) {
+                // 合并
+                cur->dst = next->dst;
+                it = mainICodes.erase(std::next(it));
+                --it;  // 回退迭代器，保证不会跳过元素
+            }
         }
     }
-    for (auto func: otherFuncICodes) {
-        for (int i = 0; i < func.second.size()-1; ++i) {
-            auto cur = func.second.at(i);
-            auto next = func.second.at(i+1);
-            if ( cur->type == Assign && next->type == Assign&&cur->dst->Id == next->src1->Id && cur->dst->type == 0 && next->src1->type == 0){
-                //合并
-                cur->dst = next->dst;
-                func.second.erase(func.second.begin()+i+1);
-                i--;
+
+    for (auto& func : otherFuncICodes) {
+        for (auto it = func.second.begin(); it != func.second.end(); ++it) {
+            if (std::next(it) != func.second.end()) {
+                auto cur = *it;
+                auto next = *std::next(it);
+                if (cur->type == Assign && next->type == Assign && cur->dst->Id == next->src1->Id) {
+                    // 合并
+                    cur->dst = next->dst;
+                    it = func.second.erase(std::next(it));
+                    --it;  // 回退迭代器，保证不会跳过元素
+                }
             }
         }
     }
 }
+
 
 
 
