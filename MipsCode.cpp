@@ -223,20 +223,33 @@ str_5:  .asciiz   "ha"
                 break;
             }
             case I_And:{
+                output << "##################I_And###########\n";
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << (src1->imm!=0  & src2->imm!=0 ) << endl;
                     output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                 }else if (src1->canGetValue){
-                    output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
-                    output << "andi $t0 , $t0,"<<src1->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    if (src1->imm == 0){
+                        output << "li $t0,0\n";
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else {
+                        output << "lw $t0, " << src2->startAddress << "($zero)" << endl;
+                        output << "sne $t0,$t0,0\n";
+                        output << "sw $t0, " << dst->startAddress << "($zero)" << endl;
+                    }
                 }else if (src2->canGetValue){
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                    output << "andi $t0 , $t0,"<<src2->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    if (src2->imm == 0){
+                        output << "li $t0,0\n";
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else {
+                        output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
+                        output << "sne $t0,$t0,0\n";
+                        output << "sw $t0, " << dst->startAddress << "($zero)" << endl;
+                    }
                 }else{
                     output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    output << "sne $t0,$t0,0\n";
                     output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    output << "sne $t1,$t1,0\n";
                     output << "and $t0 , $t0, $t1"<<endl;
                     output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
                 }
@@ -247,16 +260,28 @@ str_5:  .asciiz   "ha"
                     output << "li " << "$t0" << ", " << (src1->imm!=0| src2->imm!=0) << endl;
                     output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
                 }else if (src1->canGetValue){
-                    output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
-                    output << "ori $t0 , $t0,"<<src1->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    if (src1->imm == 1){
+                        output << "li $t0,1\n";
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, " << src2->startAddress << "($zero)" << endl;
+                        output << "sne $t0,$t0,0\n";
+                        output << "sw $t0, " << dst->startAddress << "($zero)" << endl;
+                    }
                 }else if (src2->canGetValue){
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                    output << "ori $t0 , $t0,"<<src2->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    if (src2->imm == 1){
+                        output << "li $t0,1\n";
+                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    }else{
+                        output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
+                        output << "sne $t0,$t0,0\n";
+                        output << "sw $t0, " << dst->startAddress << "($zero)" << endl;
+                    }
                 }else{
                     output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    output << "sne $t0,$t0,0\n";
                     output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    output << "sne $t1,$t1,0\n";
                     output << "or $t0 , $t0, $t1"<<endl;
                     output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
                 }
@@ -850,20 +875,33 @@ addiu $sp, $sp, 30000
                     break;
                 }
                 case I_And:{
+                    output << "##################I_And###########\n";
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << (src1->imm!=0  & src2->imm!=0 ) << endl;
                         output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
                     }else if (src1->canGetValue){
-                        output << "lw $t0, "<<src2->startAddress<<"($sp)"<<endl;
-                        output << "andi $t0 , $t0,"<<src1->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        if (src1->imm ==0){
+                            output << "li $t0,0\n";
+                            output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        }else{
+                            output << "lw $t0, " << src2->startAddress << "($sp)" << endl;
+                            output << "sne $t0,$t0,0\n";
+                            output << "sw $t0, " << dst->startAddress << "($sp)" << endl;
+                        }
                     }else if (src2->canGetValue){
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                        output << "andi $t0 , $t0,"<<src2->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        if (src2->imm ==0){
+                            output << "li $t0,0\n";
+                            output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        }else{
+                            output << "lw $t0, " << src1->startAddress << "($sp)" << endl;
+                            output << "sne $t0,$t0,0\n";
+                            output << "sw $t0, " << dst->startAddress << "($sp)" << endl;
+                        }
                     }else{
                         output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        output << "sne $t0,$t0,0\n";
                         output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        output << "sne $t1,$t1,0\n";
                         output << "and $t0 , $t0, $t1"<<endl;
                         output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
                     }
@@ -874,16 +912,28 @@ addiu $sp, $sp, 30000
                         output << "li " << "$t0" << ", " << (src1->imm !=0 | src2->imm !=0) << endl;
                         output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
                     }else if (src1->canGetValue){
-                        output << "lw $t0, "<<src2->startAddress<<"($sp)"<<endl;
-                        output << "ori $t0 , $t0,"<<src1->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        if (src1->imm == 1){
+                            output << "li $t0,1\n";
+                            output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        }else{
+                            output << "lw $t0, " << src2->startAddress << "($sp)" << endl;
+                            output << "sne $t0,$t0,0\n";
+                            output << "sw $t0, " << dst->startAddress << "($sp)" << endl;
+                        }
                     }else if (src2->canGetValue){
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                        output << "ori $t0 , $t0,"<<src2->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        if (src2->imm == 1){
+                            output << "li $t0,1\n";
+                            output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        }else{
+                            output << "lw $t0, " << src1->startAddress << "($sp)" << endl;
+                            output << "sne $t0,$t0,0\n";
+                            output << "sw $t0, " << dst->startAddress << "($sp)" << endl;
+                        }
                     }else{
                         output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        output << "sne $t0,$t0,0\n";
                         output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        output << "sne $t1,$t1,0\n";
                         output << "or $t0 , $t0, $t1"<<endl;
                         output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
                     }
