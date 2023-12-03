@@ -1,0 +1,24 @@
+120
+in main:t = 120
+in main:ddd = 120
+in main:c[0] = 120,c[1] = 14400,c[2] = 14401
+in main:c[0] = 14400,c[1] = 14400,c[2] = 14401
+in main:f = 9
+before !!!!!!in f1:a[0][0] = 1
+before !!!!!!in f2:a[0][0] = 1
+before !!!!!!in f2:a[0][0] = 1
+input y:less than 3
+2
+in f3: a[0][0] = 1
+in f3: a[0][0] = 100
+before !!!!!!!in test:a[0]= 3
+after !!!!!!!in test:a[0] = 100
+after !!!!!!!in f2:a[0][0] = 100
+before !!!!!!!in test:a[0]= 100
+after !!!!!!!in test:a[0] = 100
+after !!!!!!!in f2:a[0][0] = 100
+after !!!!!!!in f1:a[0][0] = 100
+in main: h = 101
+in main: hh = 101
+
+-- program is finished running --

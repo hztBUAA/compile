@@ -55,6 +55,7 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
         }else if (dst->type == 2){//dst存储的是地址
             if (assignSp){
                 output << "lw " << "$t2, " << dst->startAddress << "($sp)" << endl;
+                //output << "addu $t2,$t2,$sp\n";
                 output << "sw " << "$t1, " <<  "0($t2)" << endl;
             }else{
                 output << "lw " << "$t2, " << dst->startAddress << "($zero)" << endl;
@@ -122,7 +123,7 @@ void MipsCode::translate()  {
     output << ".data 0x10010000\n";
 //    output << ".data 0x1000\n";
 
-    output << "temp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
+    output << "temppppppppppppp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
     /**字符串区
 # string tokens:
 str_1:  .asciiz   "hello!"

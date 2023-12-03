@@ -1,3 +1,9 @@
+#include<stdio.h>
+int getint(){
+	int n;
+	scanf("%d",&n);
+	return n;
+}
 int max(int a, int b)
 {
 //    if(a == 100){
