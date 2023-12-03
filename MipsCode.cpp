@@ -209,6 +209,16 @@ str_5:  .asciiz   "ha"
                 output << "sw $t0, "<<dst->startAddress<<"($zero)"<<endl;
                 break;
             }
+            case Beq:{
+                if (src1->canGetValue){
+                    output << "li $t0," << src1->imm <<endl;
+                }else{
+                    output << "lw $t0," << src1->startAddress<<"($zero)" <<endl;
+                }
+                output << "lw $t1," << src2->startAddress<<"($zero)" <<endl;
+                output << "beq $t0, $t1,"<<dst->name<<endl;
+                break;
+            }
             case Beqz:{
                 output << "lw $t0," << src1->startAddress<<"($zero)" <<endl;
                 output << "beqz $t0, "<<src2->name<<endl;
@@ -864,6 +874,16 @@ addiu $sp, $sp, 30000
                 case Beqz:{
                     output << "lw $t0," << src1->startAddress<<"($sp)" <<endl;
                     output << "beqz $t0, "<<src2->name<<endl;
+                    break;
+                }
+                case Beq:{
+                    if (src1->canGetValue){
+                        output << "li $t0," << src1->imm <<endl;
+                    }else{
+                        output << "lw $t0," << src1->startAddress<<"($sp)" <<endl;
+                    }
+                    output << "lw $t1," << src2->startAddress<<"($sp)" <<endl;
+                    output << "beq $t0, $t1,"<<dst->name<<endl;
                     break;
                 }
                 case Jump_Label:{

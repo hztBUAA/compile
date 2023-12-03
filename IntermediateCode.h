@@ -55,6 +55,7 @@ enum IntermediateCodeType{
     Insert_Label,//src1->type ==5   =>  label   name:label_<src1->id>
     Jump_Label,
     Beqz,
+    Beq
     };
 
 

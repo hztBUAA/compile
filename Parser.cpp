@@ -2015,6 +2015,9 @@ void Parser::LAndExp(IEntry * iEntry,bool InOtherFunc) {
     IEntry *_eqExp1,*_eqExp2,*ans;
     _eqExp1 = new IEntry;
     EqExp(_eqExp1,InOtherFunc);
+    IEntry* LAnd_end;
+    LAnd_end = new IEntry("LAnd_end");
+    intermediateCode.addICode(Beqz,_eqExp1,LAnd_end, nullptr);
     if(WORD_TYPE == AND){
         while(WORD_TYPE == AND){
             Print_Grammar_Output("<LAndExp>");
@@ -2026,10 +2029,12 @@ void Parser::LAndExp(IEntry * iEntry,bool InOtherFunc) {
             ans =  new IEntry;
             intermediateCode.addICode(I_And,_eqExp1,_eqExp2,ans);
             intermediateCode.addICode(Assign,ans, nullptr,_eqExp1);
+            intermediateCode.addICode(Beqz,_eqExp1,LAnd_end, nullptr);
         }
     }else{
         //error
     }
+    intermediateCode.addICode(Insert_Label,LAnd_end, nullptr, nullptr);
     intermediateCode.addICode(Assign,_eqExp1, nullptr,iEntry);
     Print_Grammar_Output("<LAndExp>");
 }
@@ -2038,6 +2043,9 @@ void Parser::LOrExp(IEntry * iEntry,bool InOtherFunc) {
     IEntry *_lAndExp1,*_lAndExp2,*ans;
     _lAndExp1  =new IEntry;
     LAndExp(_lAndExp1,InOtherFunc);
+    IEntry* LOr_end;
+    LOr_end = new IEntry("LOr_end");
+    intermediateCode.addICode(Beq,1,_lAndExp1,LOr_end);
     if(WORD_TYPE == OR){
         while(WORD_TYPE == OR){
             Print_Grammar_Output("<LOrExp>");
@@ -2049,10 +2057,12 @@ void Parser::LOrExp(IEntry * iEntry,bool InOtherFunc) {
             ans =  new IEntry;
             intermediateCode.addICode(I_Or,_lAndExp1,_lAndExp2,ans);
             intermediateCode.addICode(Assign,ans, nullptr,_lAndExp1);
+            intermediateCode.addICode(Beq,1,_lAndExp1,LOr_end);
         }
-    }else{
+    }else {
         //error
     }
+    intermediateCode.addICode(Insert_Label,LOr_end, nullptr, nullptr);
     intermediateCode.addICode(Assign,_lAndExp1, nullptr,iEntry);
     Print_Grammar_Output("<LOrExp>");
 }
