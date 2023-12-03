@@ -12,7 +12,7 @@ using namespace std;
 int funcInitAddress = 0;
 
 string funcLabel;
-bool isInOtherFunc;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
+bool isInOtherFunc = false;//区分中间代码是在主函数还是自定义函数   --注意定义还要分一个全局--既不是主函数 也不是
 extern vector<ICode *> mainICodes ;
 extern vector<ICode *>globalDef ;
 extern int  tempMemoryAddressTop;
@@ -1251,6 +1251,7 @@ void Parser::FuncDef(Kind func_type) {
         }
     }
     tableManager.cur->entries->erase("main");//如果是重定义的函数 需要抹掉它
+    isInOtherFunc = false;//确保func的startAddress是大数
     //TODO:FuncCall中间代码 FIXME：完成FuncCALL   src1为函数头
 
 
