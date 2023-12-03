@@ -22,6 +22,7 @@ int main() {
     if (errorHandler.cnt_errors!=0){
         errorHandler.Print_Errors();
     } else{
+        IntermediateCode::optimize1();
         mipsCode.translate();
     }
 //    intermediateCode.debug_print();

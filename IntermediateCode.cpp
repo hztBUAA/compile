@@ -165,6 +165,37 @@ void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src
     }
 }
 
+void IntermediateCode::optimize1() {
+    //扫描所有的中间代码 对相邻的assign语句进行合并
+    for (int i = 0; i < mainICodes.size()-1; ++i) {
+        auto cur = mainICodes.at(i);
+        auto next = mainICodes.at(i+1);
+        if (cur->type == Assign && next->type == Assign&&cur->dst->Id == next->src1->Id && cur->dst->type == 0 && next->src1->type == 0){
+            //合并
+            cur->dst = next->dst;
+            mainICodes.erase(mainICodes.begin()+i+1);
+            i--;
+        }
+    }
+    for (auto func: otherFuncICodes) {
+        for (int i = 0; i < func.second.size()-1; ++i) {
+            auto cur = func.second.at(i);
+            auto next = func.second.at(i+1);
+            if ( cur->type == Assign && next->type == Assign&&cur->dst->Id == next->src1->Id && cur->dst->type == 0 && next->src1->type == 0){
+                //合并
+                cur->dst = next->dst;
+                func.second.erase(func.second.begin()+i+1);
+                i--;
+            }
+        }
+    }
+}
+
+
+
+
+
+
 
 //void IntermediateCode::debug_print() {
 //    output<<"#全局变量"<<endl;

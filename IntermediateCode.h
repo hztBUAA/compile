@@ -141,6 +141,9 @@ public:
     void addICode(IntermediateCodeType type, int src1, IEntry *src2, IEntry *dst);
 
     void debug_print();
+
+    //优化
+    static void optimize1();
 };
 extern vector<IEntry *> IEntries;
 #endif //LEX_INTERMEDIATECODE_H
