@@ -19,7 +19,7 @@ IEntry::IEntry(const string& s){
     this->Id = generateId();
     this->type =5;
 //    this->startAddress = tempMemoryAddressTop;
-    this->name = "Label_"+s+"_"+ to_string(this->Id);//label输出iEntry->name
+    this->name = "Labellllll_"+s+"_"+ to_string(this->Id);//label输出iEntry->name
 //    this->values_Id = new vector<int>;
 //    this->values = new vector<int>;
 //    this->imm = 0;

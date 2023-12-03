@@ -756,7 +756,7 @@ lw $ra, 0($sp)
 addiu $sp, $sp, 30000
                  */
                 //call function
-                output << "jal " << "Func_" << src1->original_Name << endl;
+                output << "jal " << "Funccccc_" << src1->original_Name << endl;
                 //ra 出栈
                 output << "#返回函数"<<endl;
                 output << "lw $ra, 0($sp)\n";
@@ -775,7 +775,7 @@ addiu $sp, $sp, 30000
             }
                  */
             case FuncDef:
-                output << "Func_" << src1->original_Name << ":\n";//函数名标签
+                output << "Funccccc_" << src1->original_Name << ":\n";//函数名标签
                 output << "#" << src1->original_Name << "部分: ";
                 for (auto id: *src1->values_Id) {
                     if(IEntries.at(id)->type == 0){
@@ -1428,7 +1428,7 @@ addiu $sp, $sp, 30000
     addiu $sp, $sp, 30000
                      */
                     //call function
-                    output << "jal " << "Func_" << src1->original_Name << endl;
+                    output << "jal " << "Funccccc_" << src1->original_Name << endl;
                     //ra 出栈
                     output << "#返回函数"<<endl;
                     output << "lw $ra, 0($sp)\n";
@@ -1447,7 +1447,7 @@ addiu $sp, $sp, 30000
                 }
                      */
                 case FuncDef:
-                    output << "Func_" << src1->original_Name << ":\n";//函数名标签
+                    output << "Funccccc_" << src1->original_Name << ":\n";//函数名标签
                     output << "#" << src1->original_Name << "部分: ";
                     for (auto id: *src1->values_Id) {
                         if (IEntries.at(id)->type == 0) {
