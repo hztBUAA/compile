@@ -202,6 +202,57 @@ void IntermediateCode::optimize1() {
         }
     }
 }
+int log2OfPowerOfTwo(int n) {
+    // 如果不是2的幂次，返回-1或采取其他适当的处理
+    if (n <= 0 || (n & (n - 1)) != 0) {
+        //error
+        return -1;
+    }
+
+    int count = 0;
+    while (n > 1) {
+        n >>= 1;
+        count++;
+    }
+
+    return count;
+}
+//mod 2^k  div 2^k转化成移位运算
+void IntermediateCode::optimize2() {
+    for (auto iCode:mainICodes) {
+        int d = 0 ;
+        if (iCode->src2) {
+            d = iCode->src2->imm;
+        }
+        if (iCode->type == Div &&iCode->src2->canGetValue && d>0 && (d&(d-1))==0) {
+            iCode->type = Right_Shift;
+            iCode->src2->imm = log2OfPowerOfTwo(d);
+        }else if(iCode->type == Mult &&iCode->src2->canGetValue && d>0 && (d&(d-1))==0){
+            iCode->type = Left_Shift;
+            iCode->src2->imm = log2OfPowerOfTwo(d);
+        }else if(iCode->type == Mod &&iCode->src2->canGetValue && d>0 && (d&(d-1))==0){
+            //not sure
+        }
+    }
+    //对于自定义函数同样进行优化
+    for (auto& func : otherFuncICodes) {
+        for (auto iCode:func.second) {
+            int d = 0 ;
+            if (iCode->src2) {
+                d = iCode->src2->imm;
+            }
+            if (iCode->type == Div &&iCode->src2->canGetValue && d>0 && (d&(d-1))==0) {
+                iCode->type = Right_Shift;
+                iCode->src2->imm = log2OfPowerOfTwo(d);
+            }else if(iCode->type == Mult &&iCode->src2->canGetValue && d>0 && (d&(d-1))==0){
+                iCode->type = Left_Shift;
+                iCode->src2->imm = log2OfPowerOfTwo(d);
+            }else if(iCode->type == Mod &&iCode->src2->canGetValue && d>0 && (d&(d-1))==0){
+                //not sure
+            }
+        }
+    }
+}
 
 
 

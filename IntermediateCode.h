@@ -55,7 +55,11 @@ enum IntermediateCodeType{
     Insert_Label,//src1->type ==5   =>  label   name:label_<src1->id>
     Jump_Label,
     Beqz,
-    Beq
+    Beq,
+    //for optimize
+    Right_Shift,
+    Left_Shift
+
     };
 
 
@@ -143,7 +147,8 @@ public:
     void debug_print();
 
     //优化
-    static void optimize1();
+    static void optimize1();//删除多余assign
+    static void optimize2();//mod div转化
 };
 extern vector<IEntry *> IEntries;
 #endif //LEX_INTERMEDIATECODE_H

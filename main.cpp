@@ -23,6 +23,7 @@ int main() {
         errorHandler.Print_Errors();
     } else{
         IntermediateCode::optimize1();
+        IntermediateCode::optimize2();
         mipsCode.translate();
     }
 //    intermediateCode.debug_print();

@@ -14,7 +14,7 @@ extern vector<ICode *> mainICodes ;
 extern map<string, vector<ICode *>> otherFuncICodes;
 extern vector<ICode *>globalDef ;
 bool assignSp = false;
-
+extern int log2OfPowerOfTwo(int n);
 
 
 
@@ -204,6 +204,25 @@ str_5:  .asciiz   "ha"
         vector<int> *fParam_ids ;
 
         switch (type) {
+            case Right_Shift:{
+                output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                output << "slt $t1,$t0,$zero"<<endl;
+
+                output << "beqz $t1, "<<"Test_neg_"<<src1->Id<<endl;
+                output << "addu $t0,$t0,"<< (1<<src2->imm)-1<<endl;
+                output << "Test_neg_"<<src1->Id<<":"<<endl;
+                output << "sra $t0, $t0, "<<src2->imm << endl;
+                output << "sw $t0, "<<dst->startAddress<<"($zero)"<<endl;
+                break;
+            }
+            case Left_Shift:{
+                output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+//                output << "li " << "$t1" << ", " << src2->imm << endl;
+                output << "sll $t0, $t0,  "<<src2->imm<< endl;
+                output << "sw $t0, "<<dst->startAddress<<"($zero)"<<endl;
+                break;
+            }
+            //#################################################################################//
             case I_Not:{
                 output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
                 output << "seq $t0, $t0,0"<<endl;//0
@@ -576,11 +595,29 @@ syscall
                         output << "mfhi " << "$t2" << endl;
                         output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
                     }else if (src2->canGetValue){
-                        output << "li " << "$t1" << ", " << src2->imm << endl;
-                        output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
-                        output << "div " << "$t0" << ", " << "$t1" << endl;
-                        output << "mfhi " << "$t2" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        int d = src2->imm;
+                        if ((d&(d-1)) == 0 &&d >0) {
+                            output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
+                            output << "sgt $t1, $t0, $zero"<< endl;
+                            output << "beqz $t1, "<<"Mod_"<<src1->Id<<endl;
+
+                            output << "andi $t0, $t0, "<< ((1<< log2OfPowerOfTwo(d))-1)<< endl;
+                            output << "j "<<"Mod_end_"<<src1->Id<<endl;
+
+                            output << "Mod_"<<src1->Id<<":"<<endl;
+                            output << "subu $t0, $zero, $t0"<< endl;
+                            output << "andi $t0, $t0, "<< ((1<< log2OfPowerOfTwo(d))-1)<< endl;
+                            output << "subu $t0, $zero, $t0"<< endl;
+                            output << "Mod_end_"<<src1->Id<<":"<<endl;
+                            output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                        }
+                        else{
+                            output << "li " << "$t1" << ", " << src2->imm << endl;
+                            output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
+                            output << "div " << "$t0" << ", " << "$t1" << endl;
+                            output << "mfhi " << "$t2" << endl;
+                            output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        }
                     }else{
                         output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
                         output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
@@ -728,7 +765,7 @@ syscall
                 }
                 output << "#调用函数" << src1->original_Name << ": \n";
                 //ra 在sp中压栈
-                output << "addiu $sp, $sp, -80000\n";
+                output << "addiu $sp, $sp, -100000\n";
                 output << "sw $ra, 0($sp)\n";
                 IEntry*f,*r;
                 for (int i = 0; i < rParam_ids->size(); i++) {
@@ -748,20 +785,20 @@ syscall
                 output << endl;
                 /**
                  * # Pushing Function Real Params:
-addiu $sp, $sp, -80000
+addiu $sp, $sp, -100000
 sw $ra, 0($sp)
 # Call function!
 jal Label_1
 lw $ra, 0($sp)
 # Pop params
-addiu $sp, $sp, 80000
+addiu $sp, $sp, 100000
                  */
                 //call function
                 output << "jal " << "Funccccc_" << src1->original_Name << endl;
                 //ra 出栈
                 output << "#返回函数"<<endl;
                 output << "lw $ra, 0($sp)\n";
-                output << "addiu $sp, $sp, 80000\n";
+                output << "addiu $sp, $sp, 100000\n";
                 //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
 //                    output << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
                 if (dst != nullptr){
@@ -868,6 +905,24 @@ addiu $sp, $sp, 80000
             vector<int> *fParam_ids;
 
             switch (type) {
+                case Right_Shift:{
+                    output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                    output << "slt $t1,$t0,$zero"<<endl;
+                    output << "beqz $t1, "<<"Test_neg_"<<src1->Id<<endl;
+                    output << "addu $t0,$t0,"<< (1<<src2->imm)-1<<endl;
+                    output << "Test_neg_"<<src1->Id<<":"<<endl;
+                    output << "sra $t0, $t0," <<src2->imm<< endl;
+                    output << "sw $t0, "<<dst->startAddress<<"($sp)"<<endl;
+                    break;
+                }
+                case Left_Shift:{
+                    output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+//                    output << "li " << "$t1" << ", " << src2->imm << endl;
+                    output << "sll $t0, $t0," << src2->imm <<endl;
+                    output << "sw $t0, "<<dst->startAddress<<"($sp)"<<endl;
+                    break;
+                }
+                //#############################################
                 case I_Not:{
                     output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
                     output << "seq $t0, $t0,0"<<endl;//0
@@ -1239,11 +1294,31 @@ addiu $sp, $sp, 80000
                             output << "mfhi " << "$t2" << endl;
                             output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
                         }else if (src2->canGetValue){
-                            output << "li " << "$t1" << ", " << src2->imm << endl;
-                            output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
-                            output << "div " << "$t0" << ", " << "$t1" << endl;
-                            output << "mfhi " << "$t2" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            int d = src2->imm;
+                            if ((d&(d-1)) == 0 && d>0) {
+                                output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
+                                output << "sgt $t1, $t0, $zero"<< endl;
+                                output << "beqz $t1, "<<"Mod_"<<src1->Id<<endl;
+
+                                output << "andi $t0, $t0, "<< ((1<< log2OfPowerOfTwo(d))-1)<< endl;
+                                output << "j "<<"Mod_end_"<<src1->Id<<endl;
+
+                                output << "Mod_"<<src1->Id<<":"<<endl;
+                                output << "subu $t0, $zero, $t0"<< endl;
+                                output << "andi $t0, $t0, "<< ((1<< log2OfPowerOfTwo(d))-1)<< endl;
+                                output << "subu $t0, $zero, $t0"<< endl;
+
+                                output << "Mod_end_"<<src1->Id<<":"<<endl;
+                                output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                            }
+                            else{
+                                output << "li " << "$t1" << ", " << src2->imm << endl;
+                                output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
+                                //TOdo  除法优化
+                                output << "div " << "$t0" << ", " << "$t1" << endl;
+                                output << "mfhi " << "$t2" << endl;
+                                output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            }
                         }else{
                             output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
                             output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
@@ -1399,7 +1474,7 @@ addiu $sp, $sp, 80000
                     }
                     output << "#调用函数" << src1->original_Name << ": \n";
                     //ra 在sp中压栈
-                    output << "addiu $sp, $sp, -80000\n";
+                    output << "addiu $sp, $sp, -100000\n";
                     output << "sw $ra, 0($sp)\n";
                     IEntry*f,*r;
                     for (int i = 0; i < rParam_ids->size(); i++) {
@@ -1408,11 +1483,11 @@ addiu $sp, $sp, 80000
                             if (r->canGetValue){
                                 output << "li " << "$t1, " << r->imm << endl;
                             }else{
-                                output << "lw " << "$t1, " << r->startAddress+80000 << "($sp)" << endl;
+                                output << "lw " << "$t1, " << r->startAddress+100000 << "($sp)" << endl;
                             }
                             output << "sw " << "$t1, " <<IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<<"($sp)" << endl;//多存一个return
                         }else {// only == 1
-                            output << "lw $t0, " << src1->startAddress+80000 << "($sp)" << endl;
+                            output << "lw $t0, " << src1->startAddress+100000 << "($sp)" << endl;
                             output << "sw " << "$t0, " << IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress << "($sp)" << endl;
                         }
                     }
@@ -1420,20 +1495,20 @@ addiu $sp, $sp, 80000
                     output << endl;
                     /**
                      * # Pushing Function Real Params:
-    addiu $sp, $sp, -80000
+    addiu $sp, $sp, -100000
     sw $ra, 0($sp)
     # Call function!
     jal Label_1
     lw $ra, 0($sp)
     # Pop params
-    addiu $sp, $sp, 80000
+    addiu $sp, $sp, 100000
                      */
                     //call function
                     output << "jal " << "Funccccc_" << src1->original_Name << endl;
                     //ra 出栈
                     output << "#返回函数"<<endl;
                     output << "lw $ra, 0($sp)\n";
-                    output << "addiu $sp, $sp, 80000\n";
+                    output << "addiu $sp, $sp, 100000\n";
                     //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
 //                    output << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($sp)"<< endl;//src2 = IEntries.at(func->id)
                     if (dst != nullptr){
