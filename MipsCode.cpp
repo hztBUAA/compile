@@ -17,7 +17,7 @@ bool assignSp = false;
 extern int log2OfPowerOfTwo(int n);
 
 
-
+//TODO:更改lw sw load store func
 
 void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要已经values_Id处理好
     /*
@@ -1598,6 +1598,57 @@ addiu $sp, $sp, 100000
 // 重定向结束后，可以将outputFile的流恢复到原始状态
 //    std::output.rdbuf(outputFileBuffer);
 
+}
+
+
+//TODO:还需要注意 la 全局变量的地址
+void MipsCode::loadIEntry(IEntry *iEntry, Reg toReg) {
+    int id;
+    id = iEntry->Id;
+    Reg fromReg = canFindInReg(iEntry);
+    if( fromReg != Reg::$zero){
+        output << "move " << reg2s.at(fromReg)<< ", " << reg2s.at(toReg) << endl;
+    }else{
+        if (iEntry->canGetValue) {
+            output << "li " << reg2s.at(toReg) << ", " << iEntry->imm << endl;
+        } else {
+            if (assignSp){
+                output << "lw " << reg2s.at(toReg) << ", " << iEntry->startAddress << "($sp)" << endl;
+            }else{
+                output << "lw " << reg2s.at(toReg) << ", " << iEntry->startAddress << "($zero)" << endl;
+            }
+        }
+    }
+}
+
+void MipsCode::storeIEntry(IEntry *iEntry, Reg fromReg) {
+    int id;
+    id = iEntry->Id;
+    Reg toReg = canFindInReg(iEntry);
+    if( toReg != Reg::$zero){
+        output << "move " << reg2s.at(fromReg)<< ", " << reg2s.at(toReg) << endl;
+    }else{
+        if (iEntry->canGetValue) {
+            output << "li " << reg2s.at(toReg) << ", " << iEntry->imm << endl;
+        } else {
+            if (assignSp){
+                output << "sw " << reg2s.at(toReg) << ", " << iEntry->startAddress << "($sp)" << endl;
+            }else{
+                output << "sw " << reg2s.at(toReg) << ", " << iEntry->startAddress << "($zero)" << endl;
+            }
+        }
+    }
+}
+
+Reg MipsCode::canFindInReg(IEntry *iEntry) {
+    //搜索RegInfo的寄存器池  second有没有等于iEntry的id
+    int id = iEntry->Id;
+    for (auto regInfo:RegInfo) {
+        if (regInfo.second == id) {
+            return regInfo.first;
+        }
+    }
+    return Reg::$zero;
 }
 
 
