@@ -5,17 +5,20 @@ int getint(){
 	return n;
 }
 
-//检测乘法中数是2的幂次    除法中数是2的幂次
-int main(){
-    int a,b,c;
-    a = getint();
-//    b = getint();
-//    c = getint();
-    printf("%d\n",a%8);
-    printf("%d\n",a%2);
-    //printf("%d\n",b%2);
-    //printf("%d\n",c%2);
-    //printf("%d\n",a%3);
-    //printf("%d\n",a/3);
+const int N = 10;
+int a[10] = {0,1,2,3,4,5,6,7,8,9};
+int fib(int i) {
+    if (i == 1) {
+        return 1;
+    }
+    if (i == 2) {
+        return 2;
+    }
+    return fib(i - 1) + fib(i - 2);
+}
+int main()
+{
+    int i = 0;
+    i = fib(5);
     return 0;
 }

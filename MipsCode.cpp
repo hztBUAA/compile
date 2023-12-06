@@ -15,7 +15,41 @@ extern map<string, vector<ICode *>> otherFuncICodes;
 extern vector<ICode *>globalDef ;
 bool assignSp = false;
 extern int log2OfPowerOfTwo(int n);
-
+queue<Reg> regPoolsUsed;
+map<Reg,int>RegInfo = {
+//        {Reg::$zero, -1},
+//        {Reg::$at,   -1},
+//        {Reg::$v0,   -1},
+        {Reg::$v1,   -1},
+//        {Reg::$a0,   -1},
+        {Reg::$a1,   -1},
+        {Reg::$a2,   -1},
+        {Reg::$a3,   -1},
+//        {Reg::$t0,   -1},
+//        {Reg::$t1,   -1},
+//        {Reg::$t2,   -1},
+        {Reg::$t3,   -1},
+        {Reg::$t4,   -1},
+        {Reg::$t5,   -1},
+        {Reg::$t6,   -1},
+        {Reg::$t7,   -1},
+        {Reg::$t8,   -1},
+        {Reg::$t9,   -1},
+        {Reg::$s0,   -1},
+        {Reg::$s1,   -1},
+        {Reg::$s2,   -1},
+        {Reg::$s3,   -1},
+        {Reg::$s4,   -1},
+        {Reg::$s5,   -1},
+        {Reg::$s6,   -1},
+        {Reg::$s7,   -1},
+//        {Reg::$k0,   -1},
+//        {Reg::$k1,   -1},
+//        {Reg::$gp,   -1},
+//        {Reg::$sp,   -1},
+//        {Reg::$fp,   -1},
+//        {Reg::$ra,   -1}
+};
 
 //TODO:更改lw sw load store func
 
@@ -677,12 +711,14 @@ syscall
                         if (r->canGetValue){
                             output << "li " << "$t1, " << r->imm << endl;
                         }else{
+//                            output << "lw " << "$t1, " << r->startAddress<<"($zero)" << endl;
                             loadIEntry(r,Reg::$t1);
                         }
 //                        storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t1);
                         output << "sw " << "$t1, " <<  IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<<"($sp)" << endl;
                     }else {// only == 1
-                        output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
+//                        output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "sw " << "$t0, " <<  IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<< "($sp)" << endl;
                     }
                 }
@@ -761,7 +797,7 @@ addiu $sp, $sp, 100000
                 for (auto init_id:*(src1->values_Id)) {
                     output << IEntries.at(init_id)->imm << " ";
                 }
-                cnt = 0;
+                output << endl;
                 break;
             case ARRAY_CONST_Def_Has_Value:
                 output << "#array_const@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "def   " ;
@@ -782,10 +818,15 @@ addiu $sp, $sp, 100000
     /**
      * 输出其他函数的代码ICode
      */
-     assignSp  =true;
+
     output << "#自定义函数的代码ICode\n";
     for (const auto& func_codes:otherFuncICodes) {
-
+    output<< "#clearRegPool()\n";
+/**
+ * 寄存器池需要清空
+ */
+        clearRegPool();
+        assignSp  =true;
 //        output << "_" << func_codes.first << ":\n";  第一行总是函数的定义头
         for (auto ICode: func_codes.second) {
             IntermediateCodeType type = ICode->type;
@@ -1340,10 +1381,12 @@ addiu $sp, $sp, 100000
                             if (r->canGetValue){
                                 output << "li " << "$t1, " << r->imm << endl;
                             }else{
-                                output << "lw " << "$t1, " << r->startAddress+100000 << "($sp)" << endl;
+                                loadIEntry(r,Reg::$t1);
+//                                output << "lw " << "$t1, " << r->startAddress+100000 << "($sp)" << endl;
                             }
 //                            storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t1);
-                            output << "sw " << "$t1, " <<IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<<"($sp)" << endl;//多存一个return
+                            storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t1);
+//                            output << "sw " << "$t1, " <<IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<<"($sp)" << endl;//多存一个return
                         }else {// only == 1
                             output << "lw $t0, " << src1->startAddress+100000 << "($sp)" << endl;
 //                            storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t0);
@@ -1450,7 +1493,7 @@ void MipsCode::loadIEntry(IEntry *iEntry, Reg toReg) {
     id = iEntry->Id;
     Reg fromReg = canFindInReg(iEntry);
     if( fromReg != Reg::$zero){
-        output << "move " << reg2s.at(fromReg)<< ", " << reg2s.at(toReg) << endl;
+        output << "move " << reg2s.at(toReg)<< ", " << reg2s.at(fromReg) << endl;
     }else{
         if (iEntry->canGetValue) {
             output << "li " << reg2s.at(toReg) << ", " << iEntry->imm << endl;
@@ -1470,15 +1513,26 @@ void MipsCode::storeIEntry(IEntry *to_iEntry, Reg fromReg) {
     id = to_iEntry->Id;
     Reg toReg = hasOneRegToStore();
     if( toReg != Reg::$zero){
-        output << "move " << reg2s.at(fromReg)<< ", " << reg2s.at(toReg) << endl;
+        output<<"#find a reg to store:\n";
+        output << "move " << reg2s.at(toReg)<< ", " << reg2s.at(fromReg) << endl;
+        regPoolsUsed.push(toReg);
         RegInfo[toReg] = id;
     }else{
-        //TODO:需要进行寄存器池的替换  找到可能已经没用的寄存器换出 sw
+        int toSwId;
+        Reg outReg = regPoolsUsed.front();
+        toSwId = RegInfo.at(outReg);
+        IEntry* toSwIEntry = IEntries.at(toSwId);
+        output << "#release the outReg:"<< reg2s.at(outReg)<<", store new value"<< endl;
         if (assignSp){
-            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($sp)" << endl;
+            output << "sw " << reg2s.at(outReg) << ", " << toSwIEntry->startAddress << "($sp)" << endl;
         }else{
-            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;
+            output << "sw " << reg2s.at(outReg) << ", " << toSwIEntry->startAddress << "($zero)" << endl;
         }
+        regPoolsUsed.pop();
+
+        output << "move " << reg2s.at(outReg)<< ", " << reg2s.at(fromReg) << endl;
+        regPoolsUsed.push(outReg);
+        RegInfo[outReg] = id;
     }
 }
 
@@ -1502,6 +1556,25 @@ Reg MipsCode::canFindInReg(IEntry *iEntry) {
         }
     }
     return Reg::$zero;
+}
+
+void MipsCode::clearRegPool() {
+    for (auto &item: RegInfo) {
+        if (item.second != -1) {
+            Reg outReg = item.first;
+            IEntry * toSwIEntry = IEntries.at(item.second);
+            /**
+             * sw 返回
+             */
+            if (assignSp){
+                output << "sw " << reg2s.at(outReg) << ", " << toSwIEntry->startAddress << "($sp)" << endl;
+            }else{
+                output << "sw " << reg2s.at(outReg) << ", " << toSwIEntry->startAddress << "($zero)" << endl;
+            }
+            item.second = -1;
+        }
+
+    }
 }
 
 
