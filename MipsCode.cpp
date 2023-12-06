@@ -641,6 +641,7 @@ syscall
                         }
                         //dst——type  1    0
                         if (dst->type ==0){
+                            clearRegPool();
                             output << "lw " << "$t0" << ", 0($t0)" << endl;
                             storeIEntry(dst,Reg::$t0);
                         }else{
@@ -657,6 +658,7 @@ syscall
                         output << "sll " << "$t1" << ", " << "$t1" << ", 2" << endl;
                         output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                         if (dst->type ==0){
+                            clearRegPool();
                             output << "lw " << "$t0" << ", 0($t0)" << endl;
                             storeIEntry(dst,Reg::$t0);
                         }else{
@@ -676,6 +678,7 @@ syscall
                         }
                     }
                     if(dst->type == 0){
+                        clearRegPool();
                         output<< "lw $t0,0($t0)"<<endl;
                         storeIEntry(dst,Reg::$t0);
                     }else{
@@ -701,6 +704,8 @@ syscall
                     output << "error!!!!  rParam_ids->size() = " << rParam_ids->size() << "fParam_ids->size() = " << fParam_ids->size() << "\n";
                 }
                 output << "#调用函数" << src1->original_Name << ": \n";
+                output << "#before jal clearRegPool for better lw args\n";
+                clearRegPool();
                 //ra 在sp中压栈
                 output << "addiu $sp, $sp, -100000\n";
                 output << "sw $ra, 0($sp)\n";
@@ -711,14 +716,14 @@ syscall
                         if (r->canGetValue){
                             output << "li " << "$t1, " << r->imm << endl;
                         }else{
-//                            output << "lw " << "$t1, " << r->startAddress<<"($zero)" << endl;
-                            loadIEntry(r,Reg::$t1);
+                            output << "lw " << "$t1, " << r->startAddress<<"($zero)" << endl;
+//                            loadIEntry(r,Reg::$t1);
                         }
 //                        storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t1);
                         output << "sw " << "$t1, " <<  IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<<"($sp)" << endl;
                     }else {// only == 1
-//                        output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
-                        loadIEntry(src1,Reg::$t0);
+                        output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
+//                        loadIEntry(src1,Reg::$t0);
                         output << "sw " << "$t0, " <<  IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<< "($sp)" << endl;
                     }
                 }
@@ -1305,6 +1310,7 @@ addiu $sp, $sp, 100000
                             }
                             //dst——type  1    0
                             if (dst->type ==0){
+                                clearRegPool();
                                 output << "lw " << "$t0" << ", 0($t0)" << endl;
                                 storeIEntry(dst,Reg::$t0);
                             }else{
@@ -1322,6 +1328,7 @@ addiu $sp, $sp, 100000
                             output << "sll " << "$t1" << ", " << "$t1" << ", 2" << endl;
                             output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                             if (dst->type ==0){
+                                clearRegPool();
                                 output << "lw " << "$t0" << ", 0($t0)" << endl;
                                 storeIEntry(dst,Reg::$t0);
                             }else{
@@ -1341,6 +1348,7 @@ addiu $sp, $sp, 100000
                             }
                         }
                         if(dst->type == 0){
+                            clearRegPool();
                             output<< "lw $t0,0($t0)"<<endl;
                             storeIEntry(dst,Reg::$t0);
                         }else{
@@ -1371,6 +1379,8 @@ addiu $sp, $sp, 100000
                         output << "error!!!!  rParam_ids->size() = " << rParam_ids->size() << "fParam_ids->size() = " << fParam_ids->size() << "\n";
                     }
                     output << "#调用函数" << src1->original_Name << ": \n";
+                    output << "#before jal clearRegPool for better lw args\n";
+                    clearRegPool();
                     //ra 在sp中压栈
                     output << "addiu $sp, $sp, -100000\n";
                     output << "sw $ra, 0($sp)\n";
@@ -1381,12 +1391,12 @@ addiu $sp, $sp, 100000
                             if (r->canGetValue){
                                 output << "li " << "$t1, " << r->imm << endl;
                             }else{
-                                loadIEntry(r,Reg::$t1);
-//                                output << "lw " << "$t1, " << r->startAddress+100000 << "($sp)" << endl;
+//                                loadIEntry(r,Reg::$t1);
+                                output << "lw " << "$t1, " << r->startAddress+100000 << "($sp)" << endl;
                             }
 //                            storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t1);
-                            storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t1);
-//                            output << "sw " << "$t1, " <<IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<<"($sp)" << endl;//多存一个return
+//                            storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t1);
+                            output << "sw " << "$t1, " <<IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<<"($sp)" << endl;//多存一个return
                         }else {// only == 1
                             output << "lw $t0, " << src1->startAddress+100000 << "($sp)" << endl;
 //                            storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t0);
@@ -1493,6 +1503,7 @@ void MipsCode::loadIEntry(IEntry *iEntry, Reg toReg) {
     id = iEntry->Id;
     Reg fromReg = canFindInReg(iEntry);
     if( fromReg != Reg::$zero){
+        output << "#loadIEntry\n";
         output << "move " << reg2s.at(toReg)<< ", " << reg2s.at(fromReg) << endl;
     }else{
         if (iEntry->canGetValue) {
@@ -1559,6 +1570,7 @@ Reg MipsCode::canFindInReg(IEntry *iEntry) {
 }
 
 void MipsCode::clearRegPool() {
+    output <<"#clearRegPool\n";
     for (auto &item: RegInfo) {
         if (item.second != -1) {
             Reg outReg = item.first;
@@ -1576,5 +1588,15 @@ void MipsCode::clearRegPool() {
 
     }
 }
+
+//void MipsCode::loadAddress(int iEntry_address, Reg toReg) {
+//    for (auto &item: RegInfo) {
+//        IEntry * iEntry = IEntries.at(item.second);
+//        if (iEntry->startAddress == iEntry_address
+//
+//        }
+//    }
+//    output << "lw " << reg2s.at(toReg) << ", " << iEntry_address << endl;
+//}
 
 

@@ -1,17 +1,16 @@
-const int N = 10;
-int a[10] = {0,1,2,3,4,5,6,7,8,9};
-int fib(int i) {
-    if (i == 1) {
-        return 1;
-    }
-    if (i == 2) {
-        return 2;
-    }
-    return fib(i - 1) + fib(i - 2);
+int f1(int a){
+printf("f1, a = %d\n",a);
+if(!a){
+printf("f1,if,a = %d\n",a);
+    return 2*a;
+}else{
+    return 2*-a;
 }
-int main()
-{
-    int i = 0;
-    i = fib(5);
+    return a + 1;
+}
+int main(){
+    int a = 1;
+    a = f1(a);
+    printf("a = %d\n",a);
     return 0;
 }

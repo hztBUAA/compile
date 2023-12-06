@@ -1,24 +1,83 @@
 #include<stdio.h>
 int getint(){
-	int n;
-	scanf("%d",&n);
-	return n;
+    int n;
+    scanf("%d",&n);
+    return n;
+}
+const int a = 1, b = 2;
+const int c = 3;
+int d, e = 1 + 2;
+int f;
+
+
+int double2(int x1) {
+    if (!x1) {
+        return 2*x1;
+    }
+    else {
+        return (2*-x1);
+    }
+    return 0;
 }
 
-const int N = 10;
-int a[10] = {0,1,2,3,4,5,6,7,8,9};
-int fib(int i) {
-    if (i == 1) {
-        return 1;
-    }
-    if (i == 2) {
-        return 2;
-    }
-    return fib(i - 1) + fib(i - 2);
+int add(int x1, int x2) {
+    int sum = 0;
+    sum = x1 + x2;
+    return sum;
 }
-int main()
-{
-    int i = 0;
-    i = fib(5);
+
+int sub(int x1, int x2) {
+    int sum = 0;
+    sum = x1 - x2;
+    if (sum >= 0) {
+        return sum;
+    }
+    if (sum <= 0) {
+        return 0;
+    }
+    return 0;
+}
+
+void print_none() {
+    return;
+}
+
+int main() {
+    {
+        int x = 0;
+        int flag;
+        int temp;
+        int x1, x2;
+        for(;x < 4;) {
+            if (x != 4) {
+                x = x + 1;
+            } else {
+                break;
+            }
+            flag = getint();
+            if (flag == 0) {
+                x1 = getint();
+                temp = double2(x1) % 1;
+
+                printf("%d %d ", double2(x1) ,temp);
+                temp = double2(x1) / +1;
+                printf("%d\n", temp);
+                continue;
+            }
+            if (flag > 0) {
+                x1 = getint();
+                x2 = getint();
+                printf("%d\n", add(x1, x2));
+                continue;
+            }
+            if (flag < 0) {
+                x1 = getint();
+                x2 = getint();
+                printf("%d\n", sub(x1, x2));
+                continue;
+            }
+
+        }
+    }
     return 0;
 }
