@@ -597,7 +597,7 @@ syscall
                     loadIEntry(dst,Reg::$t0);
                     output << "sw " << "$v0" << ", " << "0($t0)" << endl;
                 }else{
-                    storeIEntry(dst,Reg::$t0);
+                    storeIEntry(dst,Reg::$v0);
                 }
                 dst->canGetValue = false;
                 break;
@@ -1527,6 +1527,7 @@ void MipsCode::storeIEntry(IEntry *to_iEntry, Reg fromReg) {
         output<<"#find a reg to store:\n";
         output << "move " << reg2s.at(toReg)<< ", " << reg2s.at(fromReg) << endl;
         regPoolsUsed.push(toReg);
+        delSameIdInRegInfo(id);
         RegInfo[toReg] = id;
     }else{
         int toSwId;
@@ -1543,6 +1544,7 @@ void MipsCode::storeIEntry(IEntry *to_iEntry, Reg fromReg) {
 
         output << "move " << reg2s.at(outReg)<< ", " << reg2s.at(fromReg) << endl;
         regPoolsUsed.push(outReg);
+        delSameIdInRegInfo(id);
         RegInfo[outReg] = id;
     }
 }
@@ -1586,6 +1588,14 @@ void MipsCode::clearRegPool() {
             item.second = -1;
         }
 
+    }
+}
+
+void MipsCode::delSameIdInRegInfo(int id) {
+    for (auto & item: RegInfo) {
+        if (item.second == id) {
+            item.second = -1;
+        }
     }
 }
 

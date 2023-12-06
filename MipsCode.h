@@ -93,6 +93,7 @@ public:
 
     void storeIEntry(IEntry* iEntry,Reg fromReg);
     Reg canFindInReg(IEntry* iEntry);
+    void delSameIdInRegInfo(int id);
     void testRe();
     void clearRegPool();
     Reg hasOneRegToStore();
