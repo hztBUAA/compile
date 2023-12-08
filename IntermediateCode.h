@@ -150,6 +150,7 @@ public:
     static void optimize1();//删除多余assign
     static void optimize2();//mod div转化
     static void optimize3();//删除临时变量
+    static void optimize4();//删除四元式操作前面的assign
 };
 extern vector<IEntry *> IEntries;
 #endif //LEX_INTERMEDIATECODE_H
