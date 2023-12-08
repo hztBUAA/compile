@@ -1,24 +1,854 @@
-120
-in main:t = 120
-in main:ddd = 120
-in main:c[0] = 120,c[1] = 14400,c[2] = 14401
-in main:c[0] = 14400,c[1] = 14400,c[2] = 14401
-in main:f = 9
-before !!!!!!in f1:a[0][0] = 1
-before !!!!!!in f2:a[0][0] = 1
-before !!!!!!in f2:a[0][0] = 1
-input y:less than 3
-2
-in f3: a[0][0] = 1
-in f3: a[0][0] = 100
-before !!!!!!!in test:a[0]= 3
-after !!!!!!!in test:a[0] = 100
-after !!!!!!!in f2:a[0][0] = 100
-before !!!!!!!in test:a[0]= 100
-after !!!!!!!in test:a[0] = 100
-after !!!!!!!in f2:a[0][0] = 100
-after !!!!!!!in f1:a[0][0] = 100
-in main: h = 101
-in main: hh = 101
+.data 0x10010000
+temppppppppppppp:  .space  160000
 
--- program is finished running --
+#strings in printf
+str_116: .asciiz "j : "
+str_117: .asciiz "%d"
+str_118: .asciiz ", k : "
+str_119: .asciiz "%d"
+str_120: .asciiz ", l : "
+str_121: .asciiz "%d"
+str_122: .asciiz "\n"
+str_270: .asciiz "a! = "
+str_271: .asciiz "%d"
+str_272: .asciiz ", num = "
+str_273: .asciiz "%d"
+str_274: .asciiz "\n"
+str_496: .asciiz "%d"
+str_497: .asciiz "\n"
+.text 0x00400000 
+#主函数main的代码ICode
+main:
+#调用函数fun1: 
+addiu $sp, $sp, -100000
+sw $ra, 0($sp)
+
+jal Funccccc_fun1
+#返回函数
+lw $ra, 0($sp)
+addiu $sp, $sp, 100000
+#assign
+lw $t1, 268503132($zero)
+sw $t1, 268503124($zero)
+li $v0, 10
+syscall 
+#自定义函数的代码ICode
+Funccccc_fun1:
+#fun1部分: 
+#local_var_@2_jno_value_def
+  #assign
+li $t1, 4
+sw $t1, 16($sp)
+#local_var_@4_k_def:  @(8) 
+#assign
+li $t1, 6
+sw $t1, 36($sp)
+#local_var_@9_l_def:  @(13) 
+#GetArray Element
+li $t0, 36
+addu $t0, $t0,$sp
+sw $t0, 68($sp)
+#GetArray Element
+li $t0, 16
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 84($sp)
+#assign
+lw $t1, 84($sp)
+lw $t2, 68($sp)
+sw $t1, 0($t2)
+#GetArray Element
+li $t0, 8
+addu $t0, $t0,$sp
+sw $t0, 116($sp)
+#assign
+li $t1, 3
+lw $t2, 116($sp)
+sw $t1, 0($t2)
+#GetArray Element
+li $t0, 8
+addu $t0, $t0,$sp
+sw $t0, 152($sp)
+#GetArray Element
+li $t0, 8
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 180($sp)
+li $t1, 20
+lw $t0, 180($sp)
+div $t0, $t1
+mfhi $t2
+sw $t2, 172($sp)
+#assign
+lw $t1, 172($sp)
+sw $t1, 168($sp)
+lw $t1, 168($sp)
+subu $t2, $t1, 1
+sw $t2, 212($sp)
+lw $t1, 212($sp)
+addu $t2, $t1, 9
+sw $t2, 152($sp)
+#assign
+li $t1, 0
+sw $t1, 228($sp)
+#local_var_@57_i_def:  @(61) 
+Labellllll_For_start_62:
+Labellllll_For_cond_66:
+#GetArray Element
+li $t0, 228
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 268($sp)
+#assign
+lw $t1, 268($sp)
+sw $t1, 264($sp)
+lw $t0, 264($sp)
+sle $t0 , $t0,7
+sw $t0, 260($sp)
+#assign
+lw $t1, 260($sp)
+sw $t1, 256($sp)
+lw $t0,256($sp)
+beqz $t0, Labellllll_LAnd_end_81
+Labellllll_LAnd_end_81:
+#assign
+lw $t1, 256($sp)
+sw $t1, 252($sp)
+li $t0,1
+lw $t1,252($sp)
+beq $t0, $t1,Labellllll_LOr_end_82
+Labellllll_LOr_end_82:
+#assign
+lw $t1, 252($sp)
+sw $t1, 248($sp)
+lw $t0,248($sp)
+beqz $t0, Labellllll_For_end_63
+j Labellllll_For_main_64
+Labellllll_For_op_65:
+j Labellllll_For_cond_66
+Labellllll_For_main_64:
+#GetArray Element
+li $t0, 228
+addu $t0, $t0,$sp
+sw $t0, 324($sp)
+#GetArray Element
+li $t0, 228
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 340($sp)
+lw $t1, 340($sp)
+addu $t2, $t1, 1
+sw $t2, 324($sp)
+#GetArray Element
+li $t0, 8
+addu $t0, $t0,$sp
+sw $t0, 384($sp)
+#GetArray Element
+li $t0, 8
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 400($sp)
+lw $t1, 400($sp)
+subu $t2, $t1, 1
+sw $t2, 384($sp)
+j Labellllll_For_op_65
+Labellllll_For_end_63:
+#GetArray Element
+li $t0, 8
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 472($sp)
+#assign
+lw $t1, 472($sp)
+sw $t1, 468($sp)
+#GetArray Element
+li $t0, 16
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 496($sp)
+#assign
+lw $t1, 496($sp)
+sw $t1, 492($sp)
+#GetArray Element
+li $t0, 36
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 520($sp)
+#assign
+lw $t1, 520($sp)
+sw $t1, 516($sp)
+#printf语句:3个exp参数
+la $a0, str_116
+li $v0, 4
+syscall
+lw $a0, 468($sp)
+li $v0, 1
+syscall
+la $a0, str_118
+li $v0, 4
+syscall
+lw $a0, 492($sp)
+li $v0, 1
+syscall
+la $a0, str_120
+li $v0, 4
+syscall
+lw $a0, 516($sp)
+li $v0, 1
+syscall
+la $a0, str_122
+li $v0, 4
+syscall
+jr $ra
+Funccccc_fun2:
+#fun2部分: value:@143 
+#assign
+li $t1, 1
+sw $t1, 16($sp)
+#local_var_@146_b_def:  @(150) 
+#assign
+li $t1, 1
+sw $t1, 36($sp)
+#local_var_@151_num_def:  @(155) 
+Labellllll_For_start_156:
+Labellllll_For_cond_160:
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 76($sp)
+#assign
+lw $t1, 76($sp)
+sw $t1, 72($sp)
+lw $t0, 72($sp)
+sge $t0 , $t0,1
+sw $t0, 68($sp)
+#assign
+lw $t1, 68($sp)
+sw $t1, 64($sp)
+lw $t0,64($sp)
+beqz $t0, Labellllll_LAnd_end_175
+Labellllll_LAnd_end_175:
+#assign
+lw $t1, 64($sp)
+sw $t1, 60($sp)
+li $t0,1
+lw $t1,60($sp)
+beq $t0, $t1,Labellllll_LOr_end_176
+Labellllll_LOr_end_176:
+#assign
+lw $t1, 60($sp)
+sw $t1, 56($sp)
+lw $t0,56($sp)
+beqz $t0, Labellllll_For_end_157
+j Labellllll_For_main_158
+Labellllll_For_op_159:
+j Labellllll_For_cond_160
+Labellllll_For_main_158:
+#GetArray Element
+li $t0, 16
+addu $t0, $t0,$sp
+sw $t0, 132($sp)
+#GetArray Element
+li $t0, 16
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 152($sp)
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 168($sp)
+#执行乘法
+lw $t0, 152($sp)
+lw $t1, 168($sp)
+mul $t2, $t0, $t1
+sw $t2, 144($sp)
+#assign
+lw $t1, 144($sp)
+lw $t2, 132($sp)
+sw $t1, 0($t2)
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+sw $t0, 200($sp)
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 216($sp)
+lw $t1, 216($sp)
+subu $t2, $t1, 1
+sw $t2, 200($sp)
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 268($sp)
+#assign
+lw $t1, 268($sp)
+sw $t1, 260($sp)
+#assign
+li $t1, 1
+sw $t1, 288($sp)
+lw $t0, 260($sp)
+lw $t1, 288($sp)
+seq $t0 , $t0, $t1
+sw $t0, 256($sp)
+lw $t0,256($sp)
+beqz $t0, Labellllll_LAnd_end_227
+Labellllll_LAnd_end_227:
+#assign
+lw $t1, 256($sp)
+sw $t1, 252($sp)
+li $t0,1
+lw $t1,252($sp)
+beq $t0, $t1,Labellllll_LOr_end_228
+Labellllll_LOr_end_228:
+#assign
+lw $t1, 252($sp)
+sw $t1, 248($sp)
+lw $t0,248($sp)
+beqz $t0, Labellllll_else_231
+Labellllll_if_211:
+Labellllll_break_232:
+j Labellllll_For_end_157
+j Labellllll_end_230
+Labellllll_else_231:
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 332($sp)
+#assign
+lw $t1, 332($sp)
+sw $t1, 324($sp)
+#assign
+li $t1, 1
+sw $t1, 352($sp)
+lw $t0, 324($sp)
+lw $t1, 352($sp)
+sne $t0 , $t0, $t1
+sw $t0, 320($sp)
+lw $t0,320($sp)
+beqz $t0, Labellllll_LAnd_end_249
+Labellllll_LAnd_end_249:
+#assign
+lw $t1, 320($sp)
+sw $t1, 316($sp)
+li $t0,1
+lw $t1,316($sp)
+beq $t0, $t1,Labellllll_LOr_end_250
+Labellllll_LOr_end_250:
+#assign
+lw $t1, 316($sp)
+sw $t1, 312($sp)
+lw $t0,312($sp)
+beqz $t0, Labellllll_else_253
+Labellllll_if_233:
+#GetArray Element
+li $t0, 36
+addu $t0, $t0,$sp
+sw $t0, 388($sp)
+#GetArray Element
+li $t0, 36
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 404($sp)
+lw $t1, 404($sp)
+addu $t2, $t1, 1
+sw $t2, 388($sp)
+Labellllll_else_253:
+Labellllll_end_252:
+Labellllll_end_230:
+j Labellllll_For_op_159
+Labellllll_For_end_157:
+#GetArray Element
+li $t0, 16
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 468($sp)
+#assign
+lw $t1, 468($sp)
+sw $t1, 464($sp)
+#GetArray Element
+li $t0, 36
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 492($sp)
+#assign
+lw $t1, 492($sp)
+sw $t1, 488($sp)
+#printf语句:2个exp参数
+la $a0, str_270
+li $v0, 4
+syscall
+lw $a0, 464($sp)
+li $v0, 1
+syscall
+la $a0, str_272
+li $v0, 4
+syscall
+lw $a0, 488($sp)
+li $v0, 1
+syscall
+la $a0, str_274
+li $v0, 4
+syscall
+li $v0, 1
+jr $ra
+Funccccc_fun3:
+#fun3部分: value:@292 value:@294 
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 44($sp)
+#assign
+lw $t1, 44($sp)
+sw $t1, 40($sp)
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 68($sp)
+#assign
+lw $t1, 68($sp)
+sw $t1, 64($sp)
+lw $t0, 40($sp)
+lw $t1, 64($sp)
+sgt $t0 , $t0, $t1
+sw $t0, 36($sp)
+#assign
+lw $t1, 36($sp)
+sw $t1, 32($sp)
+lw $t0,32($sp)
+beqz $t0, Labellllll_LAnd_end_315
+Labellllll_LAnd_end_315:
+#assign
+lw $t1, 32($sp)
+sw $t1, 28($sp)
+li $t0,1
+lw $t1,28($sp)
+beq $t0, $t1,Labellllll_LOr_end_316
+Labellllll_LOr_end_316:
+#assign
+lw $t1, 28($sp)
+sw $t1, 24($sp)
+lw $t0,24($sp)
+beqz $t0, Labellllll_else_319
+Labellllll_if_297:
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 100($sp)
+#assign
+lw $t1, 100($sp)
+sw $t1, 96($sp)
+lw $v0, 96($sp)
+jr $ra
+j Labellllll_end_318
+Labellllll_else_319:
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 140($sp)
+#assign
+lw $t1, 140($sp)
+sw $t1, 136($sp)
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 164($sp)
+#assign
+lw $t1, 164($sp)
+sw $t1, 160($sp)
+lw $t0, 136($sp)
+lw $t1, 160($sp)
+slt $t0 , $t0, $t1
+sw $t0, 132($sp)
+#assign
+lw $t1, 132($sp)
+sw $t1, 128($sp)
+lw $t0,128($sp)
+beqz $t0, Labellllll_LAnd_end_344
+Labellllll_LAnd_end_344:
+#assign
+lw $t1, 128($sp)
+sw $t1, 124($sp)
+li $t0,1
+lw $t1,124($sp)
+beq $t0, $t1,Labellllll_LOr_end_345
+Labellllll_LOr_end_345:
+#assign
+lw $t1, 124($sp)
+sw $t1, 120($sp)
+lw $t0,120($sp)
+beqz $t0, Labellllll_else_348
+Labellllll_if_326:
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 196($sp)
+#assign
+lw $t1, 196($sp)
+sw $t1, 192($sp)
+lw $v0, 192($sp)
+jr $ra
+Labellllll_else_348:
+Labellllll_end_347:
+Labellllll_end_318:
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 220($sp)
+#assign
+lw $t1, 220($sp)
+sw $t1, 216($sp)
+lw $v0, 216($sp)
+jr $ra
+Funccccc_fun4:
+#fun4部分: value:@461 value:@463 value:@465 
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 48($sp)
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 68($sp)
+lw $t0, 48($sp)
+lw $t1, 68($sp)
+addu $t2, $t0, $t1
+sw $t2, 88($sp)
+#GetArray Element
+li $t0, 20
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 92($sp)
+lw $t0, 88($sp)
+lw $t1, 92($sp)
+subu $t2, $t0, $t1
+sw $t2, 44($sp)
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 116($sp)
+#执行乘法
+lw $t0, 44($sp)
+lw $t1, 116($sp)
+mul $t2, $t0, $t1
+sw $t2, 36($sp)
+#assign
+lw $t1, 36($sp)
+sw $t1, 32($sp)
+#local_var_@468_d_def:  @(494) 
+#GetArray Element
+li $t0, 32
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 160($sp)
+#assign
+lw $t1, 160($sp)
+sw $t1, 156($sp)
+#printf语句:1个exp参数
+lw $a0, 156($sp)
+li $v0, 1
+syscall
+la $a0, str_497
+li $v0, 4
+syscall
+jr $ra
+Funccccc_fun5:
+#fun5部分: value:@506 
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 36($sp)
+#assign
+lw $t1, 36($sp)
+sw $t1, 28($sp)
+#assign
+li $t1, 1
+sw $t1, 56($sp)
+lw $t0, 28($sp)
+lw $t1, 56($sp)
+seq $t0 , $t0, $t1
+sw $t0, 24($sp)
+lw $t0,24($sp)
+beqz $t0, Labellllll_LAnd_end_525
+Labellllll_LAnd_end_525:
+#assign
+lw $t1, 24($sp)
+sw $t1, 20($sp)
+li $t0,1
+lw $t1,20($sp)
+beq $t0, $t1,Labellllll_LOr_end_526
+Labellllll_LOr_end_526:
+#assign
+lw $t1, 20($sp)
+sw $t1, 16($sp)
+lw $t0,16($sp)
+beqz $t0, Labellllll_else_529
+Labellllll_if_509:
+li $v0, 1
+jr $ra
+j Labellllll_end_528
+Labellllll_else_529:
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 112($sp)
+#assign
+lw $t1, 112($sp)
+sw $t1, 104($sp)
+#assign
+li $t1, 2
+sw $t1, 132($sp)
+lw $t0, 104($sp)
+lw $t1, 132($sp)
+seq $t0 , $t0, $t1
+sw $t0, 100($sp)
+lw $t0,100($sp)
+beqz $t0, Labellllll_LAnd_end_549
+Labellllll_LAnd_end_549:
+#assign
+lw $t1, 100($sp)
+sw $t1, 96($sp)
+li $t0,1
+lw $t1,96($sp)
+beq $t0, $t1,Labellllll_LOr_end_550
+Labellllll_LOr_end_550:
+#assign
+lw $t1, 96($sp)
+sw $t1, 92($sp)
+lw $t0,92($sp)
+beqz $t0, Labellllll_else_553
+Labellllll_if_533:
+li $v0, 1
+jr $ra
+Labellllll_else_553:
+Labellllll_end_552:
+Labellllll_end_528:
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 188($sp)
+lw $t1, 188($sp)
+subu $t2, $t1, 1
+sw $t2, 184($sp)
+#调用函数fun5: 
+addiu $sp, $sp, -100000
+sw $ra, 0($sp)
+lw $t1, 100184($sp)
+sw $t1, 4($sp)
+
+jal Funccccc_fun5
+#返回函数
+lw $ra, 0($sp)
+addiu $sp, $sp, 100000
+sw $v0, 176($sp)
+#assign
+lw $t1, 176($sp)
+sw $t1, 172($sp)
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 236($sp)
+lw $t1, 236($sp)
+subu $t2, $t1, 2
+sw $t2, 232($sp)
+#调用函数fun5: 
+addiu $sp, $sp, -100000
+sw $ra, 0($sp)
+lw $t1, 100232($sp)
+sw $t1, 4($sp)
+
+jal Funccccc_fun5
+#返回函数
+lw $ra, 0($sp)
+addiu $sp, $sp, 100000
+sw $v0, 224($sp)
+#assign
+lw $t1, 224($sp)
+sw $t1, 220($sp)
+lw $t0, 172($sp)
+lw $t1, 220($sp)
+addu $t2, $t0, $t1
+sw $t2, 168($sp)
+lw $v0, 168($sp)
+jr $ra
+Funccccc_gcd:
+#gcd部分: value:@362 value:@364 
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 48($sp)
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 64($sp)
+lw $t0, 48($sp)
+lw $t1, 64($sp)
+div $t0, $t1
+mfhi $t2
+sw $t2, 40($sp)
+#assign
+lw $t1, 40($sp)
+sw $t1, 36($sp)
+#assign
+li $t1, 0
+sw $t1, 84($sp)
+lw $t0, 36($sp)
+lw $t1, 84($sp)
+seq $t0 , $t0, $t1
+sw $t0, 32($sp)
+lw $t0,32($sp)
+beqz $t0, Labellllll_LAnd_end_388
+Labellllll_LAnd_end_388:
+#assign
+lw $t1, 32($sp)
+sw $t1, 28($sp)
+li $t0,1
+lw $t1,28($sp)
+beq $t0, $t1,Labellllll_LOr_end_389
+Labellllll_LOr_end_389:
+#assign
+lw $t1, 28($sp)
+sw $t1, 24($sp)
+lw $t0,24($sp)
+beqz $t0, Labellllll_else_392
+Labellllll_if_367:
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 112($sp)
+#assign
+lw $t1, 112($sp)
+sw $t1, 108($sp)
+lw $v0, 108($sp)
+jr $ra
+Labellllll_else_392:
+Labellllll_end_391:
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 152($sp)
+#assign
+lw $t1, 152($sp)
+sw $t1, 148($sp)
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 180($sp)
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 196($sp)
+lw $t0, 180($sp)
+lw $t1, 196($sp)
+div $t0, $t1
+mfhi $t2
+sw $t2, 172($sp)
+#调用函数gcd: 
+addiu $sp, $sp, -100000
+sw $ra, 0($sp)
+lw $t1, 100148($sp)
+sw $t1, 4($sp)
+lw $t1, 100172($sp)
+sw $t1, 12($sp)
+
+jal Funccccc_gcd
+#返回函数
+lw $ra, 0($sp)
+addiu $sp, $sp, 100000
+sw $v0, 140($sp)
+#assign
+lw $t1, 140($sp)
+sw $t1, 132($sp)
+lw $v0, 132($sp)
+jr $ra
+Funccccc_lcm:
+#lcm部分: value:@421 value:@423 
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 48($sp)
+#assign
+lw $t1, 48($sp)
+sw $t1, 44($sp)
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 72($sp)
+#assign
+lw $t1, 72($sp)
+sw $t1, 68($sp)
+#调用函数gcd: 
+addiu $sp, $sp, -100000
+sw $ra, 0($sp)
+lw $t1, 100044($sp)
+sw $t1, 4($sp)
+lw $t1, 100068($sp)
+sw $t1, 12($sp)
+
+jal Funccccc_gcd
+#返回函数
+lw $ra, 0($sp)
+addiu $sp, $sp, 100000
+sw $v0, 36($sp)
+#assign
+lw $t1, 36($sp)
+sw $t1, 28($sp)
+#assign
+lw $t1, 28($sp)
+sw $t1, 24($sp)
+#local_var_@426_gcds_def:  @(443) 
+#GetArray Element
+li $t0, 4
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 104($sp)
+#GetArray Element
+li $t0, 12
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 120($sp)
+#执行乘法
+lw $t0, 104($sp)
+lw $t1, 120($sp)
+mul $t2, $t0, $t1
+sw $t2, 136($sp)
+#GetArray Element
+li $t0, 24
+addu $t0, $t0,$sp
+lw $t0, 0($t0)
+sw $t0, 140($sp)
+#执行div：
+lw $t0, 136($sp)
+lw $t1, 140($sp)
+div $t0, $t1
+mflo $t2
+sw $t2, 96($sp)
+lw $v0, 96($sp)
+jr $ra

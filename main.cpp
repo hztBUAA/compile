@@ -24,6 +24,7 @@ int main() {
     } else{
         IntermediateCode::optimize1();
         IntermediateCode::optimize2();
+        IntermediateCode::optimize3();
         mipsCode.translate();
     }
 //    intermediateCode.debug_print();
