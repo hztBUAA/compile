@@ -9,7 +9,11 @@ void fun1()
     for (;i <= 7;)
     {
         i = i + 1;
-
+        if (j == i)
+        {
+            k = k + j;
+            continue;
+        }
         j = j - 1;
     }
     printf("j : %d, k : %d, l : %d\n", j, k, l);
@@ -86,20 +90,20 @@ int fun5(int a)
 int main()
 {
     fun1();
-    //fun2(6);
-//    printf("%d\n", fun3(2, fun3(3, 6)));
-//    int a, b;
-//    printf("scanf a, b to get gcd and lcm\n");
-//    a = getint();
-//    b = getint();
-//    printf("gcd is %d\n", gcd(a, b));
-//    printf("lcm is %d\n", lcm(a, b));
-//    int temp;
-//    temp = getint();
-//    fun4(temp, 3, 10);
-//    printf("scanf a to get Fibonacci\n");
-//    int fib;
-//    fib = getint();
-//    printf("fib is %d\n", fun5(fib));
+    fun2(6);
+    printf("%d\n", fun3(2, fun3(3, 6)));
+    int a, b;
+    printf("scanf a, b to get gcd and lcm\n");
+    a = getint();
+    b = getint();
+    printf("gcd is %d\n", gcd(a, b));
+    printf("lcm is %d\n", lcm(a, b));
+    int temp;
+    temp = getint();
+    fun4(temp, 3, 10);
+    printf("scanf a to get Fibonacci\n");
+    int fib;
+    fib = getint();
+    printf("fib is %d\n", fun5(fib));
     return 0;
 }

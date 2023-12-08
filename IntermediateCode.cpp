@@ -261,7 +261,8 @@ void IntermediateCode::optimize3() {
             auto cur = *it;
             auto next = *std::next(it);
             if ((cur->type == Add || cur->type == Sub || cur->type == Mult || cur->type == Div || cur->type == Mod || cur->type == GetArrayElement || cur->type == GetAddress || cur->type == I_Not || cur->type == I_Eq ||cur->type
-            == I_not_eq || cur->type == I_Grt || cur->type == I_Grt_eq || cur->type == I_Or || cur->type == I_And || cur->type == I_Less || cur->type == I_Less_eq || cur->type == Right_Shift || cur->type == Left_Shift)&& next->type == Assign && cur->dst->Id == next->src1->Id ) {
+            == I_not_eq || cur->type == I_Grt || cur->type == I_Grt_eq || cur->type == I_Or || cur->type == I_And || cur->type == I_Less || cur->type == I_Less_eq || cur->type == Right_Shift || cur->type == Left_Shift)
+            && next->type == Assign && next->dst->type != 2 && cur->dst->Id == next->src1->Id ) {
                 // 合并
                 cur->dst = next->dst;
                 it = mainICodes.erase(std::next(it));
@@ -275,7 +276,8 @@ void IntermediateCode::optimize3() {
                 auto cur = *it;
                 auto next = *std::next(it);
                 if ((cur->type == Add || cur->type == Sub || cur->type == Mult || cur->type == Div || cur->type == Mod || cur->type == GetArrayElement || cur->type == GetAddress || cur->type == I_Not || cur->type == I_Eq ||cur->type
-                == I_not_eq || cur->type == I_Grt || cur->type == I_Grt_eq || cur->type == I_Or || cur->type == I_And || cur->type == I_Less || cur->type == I_Less_eq || cur->type == Right_Shift || cur->type == Left_Shift)&& next->type == Assign && cur->dst->Id == next->src1->Id ) {
+                == I_not_eq || cur->type == I_Grt || cur->type == I_Grt_eq || cur->type == I_Or || cur->type == I_And || cur->type == I_Less || cur->type == I_Less_eq || cur->type == Right_Shift || cur->type == Left_Shift)
+                && next->type == Assign && next->dst->type != 2&& cur->dst->Id == next->src1->Id ) {
                     // 合并
                     cur->dst = next->dst;
                     it = func.second.erase(std::next(it));
