@@ -15,6 +15,7 @@ extern map<string, vector<ICode *>> otherFuncICodes;
 extern vector<ICode *>globalDef ;
 bool assignSp = false;
 extern int log2OfPowerOfTwo(int n);
+bool inForLoop = false;
 queue<Reg> regPoolsUsed;
 map<Reg,int>RegInfo = {
 //        {Reg::$zero, -1},
@@ -174,6 +175,16 @@ void MipsCode::translate()  {
         vector<int> *fParam_ids ;
 
         switch (type) {
+            case For_START_LOOP:
+                output << "#FOR_START_LOOP\n";
+                clearRegPool();
+                inForLoop = true;
+                break;
+            case FOR_END_LOOP:
+                output << "#FOR_END_LOOP\n";
+                inForLoop = false;
+                break;
+            //##########为了控制循环体内不进行寄存器替换
             case Right_Shift:{
                 loadIEntry(src1,Reg::$t0);
                 output << "slt $t1,$t0,$zero"<<endl;
@@ -1523,7 +1534,13 @@ void MipsCode::storeIEntry(IEntry *to_iEntry, Reg fromReg) {
     int id;
     id = to_iEntry->Id;
     Reg toReg = hasOneRegToStore();
-    if( toReg != Reg::$zero){
+    if (inForLoop) {
+        if (assignSp){
+            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($sp)" << endl;
+        }else{
+            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;
+        }
+    }else if( toReg != Reg::$zero){
         output<<"#find a reg to store:\n";
         output << "move " << reg2s.at(toReg)<< ", " << reg2s.at(fromReg) << endl;
         regPoolsUsed.push(toReg);

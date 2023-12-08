@@ -58,7 +58,11 @@ enum IntermediateCodeType{
     Beq,
     //for optimize
     Right_Shift,
-    Left_Shift
+    Left_Shift,
+    For_START_LOOP,
+    FOR_END_LOOP,
+
+
 
     };
 

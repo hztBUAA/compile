@@ -43,41 +43,9 @@ void print_none() {
 }
 
 int main() {
-    {
-        int x = 0;
-        int flag;
-        int temp;
-        int x1, x2;
-        for(;x < 4;) {
-            if (x != 4) {
-                x = x + 1;
-            } else {
-                break;
-            }
-            flag = getint();
-            if (flag == 0) {
-                x1 = getint();
-                temp = double2(x1) % 1;
-
-                printf("%d %d ", double2(x1) ,temp);
-                temp = double2(x1) / +1;
-                printf("%d\n", temp);
-                continue;
-            }
-            if (flag > 0) {
-                x1 = getint();
-                x2 = getint();
-                printf("%d\n", add(x1, x2));
-                continue;
-            }
-            if (flag < 0) {
-                x1 = getint();
-                x2 = getint();
-                printf("%d\n", sub(x1, x2));
-                continue;
-            }
-
-        }
+    int i =0;
+    for (i = 0;i <4; i =i+1){
+        printf("%d\n",i);
     }
     return 0;
 }
