@@ -4,8 +4,10 @@
 
 #ifndef LEX_MIPSCODE_H
 #define LEX_MIPSCODE_H
-#include "IntermediateCode.h"
 
+#include <queue>
+#include "IntermediateCode.h"
+using namespace std;
 enum class Reg {
     $zero,
 
@@ -64,6 +66,10 @@ const std::map<Reg, std::string> reg2s = {
         {Reg::$ra,   "$ra"}
 };
 
+
+
+
+
 class MipsCode {
 private:
     ofstream &output;
@@ -81,8 +87,16 @@ public:
     /**
      * 一些被traslate调用的工具代码 如：lw、sw、add、sub、mul、div、beq、bne、bge、bgt、ble、blt、j、jal、jr、li、la、move、mflo、mfhi、syscall
      */
+    void loadIEntry(IEntry* iEntry,Reg toReg);
 
+
+
+    void storeIEntry(IEntry* iEntry,Reg fromReg);
+    static Reg canFindInReg(IEntry* iEntry);
+    static void delSameIdInRegInfo(int id);
     void testRe();
+    void clearRegPool();
+    Reg hasOneRegToStore();
 };
 
 

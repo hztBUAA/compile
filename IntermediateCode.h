@@ -58,7 +58,11 @@ enum IntermediateCodeType{
     Beq,
     //for optimize
     Right_Shift,
-    Left_Shift
+    Left_Shift,
+    For_START_LOOP,
+    FOR_END_LOOP,
+
+
 
     };
 
@@ -110,7 +114,7 @@ public:
     string str;
 
     //------for optimize------//
-
+    unsigned int cnt_use_til{};
 
     static int generateId();
     IEntry();

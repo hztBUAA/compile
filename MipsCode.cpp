@@ -15,7 +15,43 @@ extern map<string, vector<ICode *>> otherFuncICodes;
 extern vector<ICode *>globalDef ;
 bool assignSp = false;
 extern int log2OfPowerOfTwo(int n);
-
+bool inForLoop = false;
+queue<Reg> regPoolsUsed;
+int cnt = 0;//for optimize
+map<Reg,int>RegInfo = {
+//        {Reg::$zero, -1},
+//        {Reg::$at,   -1},
+//        {Reg::$v0,   -1},
+        {Reg::$v1,   -1},
+//        {Reg::$a0,   -1},
+        {Reg::$a1,   -1},
+        {Reg::$a2,   -1},
+        {Reg::$a3,   -1},
+//        {Reg::$t0,   -1},
+//        {Reg::$t1,   -1},
+//        {Reg::$t2,   -1},
+        {Reg::$t3,   -1},
+        {Reg::$t4,   -1},
+        {Reg::$t5,   -1},
+        {Reg::$t6,   -1},
+        {Reg::$t7,   -1},
+        {Reg::$t8,   -1},
+        {Reg::$t9,   -1},
+        {Reg::$s0,   -1},
+        {Reg::$s1,   -1},
+        {Reg::$s2,   -1},
+        {Reg::$s3,   -1},
+        {Reg::$s4,   -1},
+        {Reg::$s5,   -1},
+        {Reg::$s6,   -1},
+        {Reg::$s7,   -1},
+        {Reg::$k0,   -1},
+        {Reg::$k1,   -1},
+//        {Reg::$gp,   -1},
+//        {Reg::$sp,   -1},
+//        {Reg::$fp,   -1},
+//        {Reg::$ra,   -1}
+};
 
 
 
@@ -107,38 +143,15 @@ void MipsCode::testRe(){
 //    std::output.rdbuf(outputFileBuffer);
 }
 void MipsCode::translate()  {
-// 创建一个ofstream对象
-//    std::ofstream output("mips.txt");
 
-// 保存outputFile的原始缓冲区指针
-//    std::streambuf* outputFileBuffer = std::output.rdbuf();
-
-// 将outputFile的流重定向到outputFile
-//    std::output.rdbuf(output.rdbuf());
-
-
-    /**
-     * 输出全局的变量定义data段  以及全局变量的初始化
-     */
     output << ".data 0x10010000\n";
-//    output << ".data 0x1000\n";
-
     output << "temppppppppppppp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
-    /**字符串区
-# string tokens:
-str_1:  .asciiz   "hello!"
-str_3:  .asciiz   "haha"
-str_5:  .asciiz   "ha"
-
-     */
      output << "#strings in printf\n";
     for (auto id: strings) {
         output << "str_" << id << ": .asciiz " << "\"" << IEntries.at(id)->str << "\"" << endl;
     }
     for (auto def:globalDef) {
-        //形如 def src1
         IntermediateCodeType type = def->type;
-        //TODO:名字需要注意  是否在语法分析时准备好名字
         switch (type) {
             case VAR_Def_Has_Value:
                 output << def->src1->original_Name << ":  .word  " ;
@@ -149,8 +162,8 @@ str_5:  .asciiz   "ha"
                 break;
             case VAR_Def_No_Value:
                 output << def->src1->original_Name << ":  .word  " ;
-                for (int i = 0;i<def->src1->total_length;i++) { //单个普通全局变量
-                    output << "0 ";//此时输出值也会是0 在语法分析部分进行了判断补充
+                for (int i = 0;i<def->src1->total_length;i++) {
+                    output << "0 ";
                 }
                 output << endl;
                 break;
@@ -193,54 +206,65 @@ str_5:  .asciiz   "ha"
      output << "#主函数main的代码ICode\n";
      output << "main:\n";
     for (auto ICode: mainICodes) {
+        cnt++;
         IntermediateCodeType type = ICode->type;
         IEntry *src1 = ICode->src1;
         IEntry *src2 = ICode->src2;
         IEntry *dst= ICode->dst;
-        IEntry **dst_ptr = &dst;
         int cnt_param;//for printf_exp
-        int cnt = 0;//for def sw address
+
         vector<int> *rParam_ids ;
         vector<int> *fParam_ids ;
-
+        if (inForLoop){
+            if (src1){
+                src1->cnt_use_til = cnt;
+            }
+            if (src2){
+                src2->cnt_use_til = cnt;
+            }
+        }
         switch (type) {
-            case Right_Shift:{
-                output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                output << "slt $t1,$t0,$zero"<<endl;
+            case For_START_LOOP:
+                output << "#FOR_START_LOOP\n";
 
+                inForLoop = true;
+                break;
+            case FOR_END_LOOP:
+                output << "#FOR_END_LOOP\n";
+                inForLoop = false;
+                break;
+            //##########为了控制循环体内不进行寄存器替换
+            case Right_Shift:{
+                loadIEntry(src1,Reg::$t0);
+                output << "slt $t1,$t0,$zero"<<endl;
                 output << "beqz $t1, "<<"Test_neg_"<<src1->Id<<endl;
                 output << "addu $t0,$t0,"<< (1<<src2->imm)-1<<endl;
                 output << "Test_neg_"<<src1->Id<<":"<<endl;
                 output << "sra $t0, $t0, "<<src2->imm << endl;
-                output << "sw $t0, "<<dst->startAddress<<"($zero)"<<endl;
+                storeIEntry(dst,Reg::$t0);
                 break;
             }
             case Left_Shift:{
-                output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-//                output << "li " << "$t1" << ", " << src2->imm << endl;
+                loadIEntry(src1,Reg::$t0);
                 output << "sll $t0, $t0,  "<<src2->imm<< endl;
-                output << "sw $t0, "<<dst->startAddress<<"($zero)"<<endl;
+                storeIEntry(dst,Reg::$t0);
                 break;
             }
             //#################################################################################//
             case I_Not:{
-                output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                loadIEntry(src1,Reg::$t0);
                 output << "seq $t0, $t0,0"<<endl;//0
-                output << "sw $t0, "<<dst->startAddress<<"($zero)"<<endl;
+                storeIEntry(dst,Reg::$t0);
                 break;
             }
             case Beq:{
-                if (src1->canGetValue){
-                    output << "li $t0," << src1->imm <<endl;
-                }else{
-                    output << "lw $t0," << src1->startAddress<<"($zero)" <<endl;
-                }
-                output << "lw $t1," << src2->startAddress<<"($zero)" <<endl;
+                loadIEntry(src1,Reg::$t0);
+                loadIEntry(src2,Reg::$t1);
                 output << "beq $t0, $t1,"<<dst->name<<endl;
                 break;
             }
             case Beqz:{
-                output << "lw $t0," << src1->startAddress<<"($zero)" <<endl;
+                loadIEntry(src1,Reg::$t0);
                 output << "beqz $t0, "<<src2->name<<endl;
                 break;
             }
@@ -256,64 +280,65 @@ str_5:  .asciiz   "ha"
                 output << "##################I_And###########\n";
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << (src1->imm!=0  & src2->imm!=0 ) << endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src1->canGetValue){
                     if (src1->imm == 0){
-                        output << "li $t0,0\n";
-                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                        storeIEntry(dst,Reg::$zero);
                     }else {
-                        output << "lw $t0, " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src2,Reg::$t0);
                         output << "sne $t0,$t0,0\n";
-                        output << "sw $t0, " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                 }else if (src2->canGetValue){
                     if (src2->imm == 0){
-                        output << "li $t0,0\n";
-                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                        storeIEntry(dst,Reg::$zero);
                     }else {
-                        output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "sne $t0,$t0,0\n";
-                        output << "sw $t0, " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                 }else{
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "sne $t0,$t0,0\n";
-                    output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src2,Reg::$t1);
                     output << "sne $t1,$t1,0\n";
                     output << "and $t0 , $t0, $t1"<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }
                 break;
             }
             case I_Or:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << (src1->imm!=0| src2->imm!=0) << endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src1->canGetValue){
                     if (src1->imm == 1){
                         output << "li $t0,1\n";
-                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else{
-                        output << "lw $t0, " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src2,Reg::$t0);
                         output << "sne $t0,$t0,0\n";
-                        output << "sw $t0, " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                 }else if (src2->canGetValue){
                     if (src2->imm == 1){
                         output << "li $t0,1\n";
-                        output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else{
                         output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
                         output << "sne $t0,$t0,0\n";
-                        output << "sw $t0, " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                 }else{
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    /**
+                     * %%%%
+                     */
+                    loadIEntry(src1,Reg::$t0);
                     output << "sne $t0,$t0,0\n";
-                    output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src2,Reg::$t1);
                     output << "sne $t1,$t1,0\n";
                     output << "or $t0 , $t0, $t1"<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }
                 break;
             }
@@ -321,66 +346,60 @@ str_5:  .asciiz   "ha"
             case I_Eq:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << (src1->imm == src2->imm)<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src1->canGetValue){
-                    //src2需要lw
-//                    output << "li $t0, "<< src1->imm<<endl;
-                    output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src2,Reg::$t0);
                     output << "seq $t0 , $t0,"<<src1->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src2->canGetValue){
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "seq $t0 , $t0,"<<src2->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else{
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                    output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
+                    loadIEntry(src2,Reg::$t1);
                     output << "seq $t0 , $t0, $t1"<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }
                 break;
             }
             case I_Grt_eq:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << (src1->imm  >= src2->imm )<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src1->canGetValue){
-                    //src2需要lw
-//                    output << "li $t0, "<< src1->imm<<endl;
-                    output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src2,Reg::$t0);
                     output << "sle $t0 , $t0,"<<src1->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src2->canGetValue){
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "sge $t0 , $t0,"<<src2->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else{
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                    output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
+                    loadIEntry(src2,Reg::$t1);
                     output << "sge $t0 , $t0, $t1"<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }
                 break;
             }
             case I_Less_eq:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << (src1->imm  <= src2->imm )<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src1->canGetValue){
-                    //src2需要lw
-//                    output << "li $t0, "<< src1->imm<<endl;
-                    output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src2,Reg::$t0);
                     output << "sge $t0 , $t0,"<<src1->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src2->canGetValue){
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "sle $t0 , $t0,"<<src2->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else{
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                    output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
+                    loadIEntry(src2,Reg::$t1);
                     output << "sle $t0 , $t0, $t1"<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }
                 break;
             }
@@ -388,64 +407,62 @@ str_5:  .asciiz   "ha"
             case I_Grt:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << (src1->imm  > src2->imm )<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src1->canGetValue){
-                    //src2需要lw
-//                    output << "li $t0, "<< src1->imm<<endl;
-                    output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src2,Reg::$t0);
                     output << "li $t1, "<<src1->imm<< endl;
                     output << "slt $t0 , $t0, $t1"<<endl;//故意反一下符号 结果正确   slti不适用
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src2->canGetValue){
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "sgt $t0 , $t0,"<<src2->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else{
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                    output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
+                    loadIEntry(src2,Reg::$t1);
                     output << "sgt $t0 , $t0, $t1"<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }
                 break;
             }
             case I_Less:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << (src1->imm  < src2->imm )<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src1->canGetValue){
-                    output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src2,Reg::$t0);
                     output << "sgt $t0 , $t0,"<<src1->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src2->canGetValue){
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "li $t1, "<<src2->imm<< endl;
                     output << "slt $t0 , $t0, $t1"<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else{
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                    output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
+                    loadIEntry(src2,Reg::$t1);
                     output << "slt $t0 , $t0, $t1"<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }
                 break;
             }
             case I_not_eq:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << (src1->imm  != src2->imm )<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src1->canGetValue){
-                    output << "lw $t0, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src2,Reg::$t0);
                     output << "sne $t0 , $t0,"<<src1->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else if (src2->canGetValue){
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "sne $t0 , $t0,"<<src2->imm<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else{
-                    output << "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-                    output << "lw $t1, "<<src2->startAddress<<"($zero)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
+                    loadIEntry(src2,Reg::$t1);
                     output << "sne $t0 , $t0, $t1"<<endl;
-                    output <<"sw $t0, "<<dst->startAddress <<"($zero)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                 }
                 break;
             }
@@ -464,12 +481,11 @@ syscall
                      */
                     if (IEntries.at(id)->str == "%d"){//lw  li  1 syscall
                         IEntry * p = IEntries.at( src2->values_Id->at(cnt_param++));
-//                        IEntry * p_val = IEntries.at(p->values_Id->at(0));//VALUE!!!
                         IEntry * p_val = p;
                         if (p_val->canGetValue){
                             output << "li $a0, " << p_val->imm << endl;
                         }else{
-                            output << "lw $a0, " << p_val->startAddress << "($zero)" << endl;
+                            loadIEntry(p_val,Reg::$a0);
                         }
                         output << "li $v0, 1" << endl;
                         output << "syscall" << endl;
@@ -486,21 +502,21 @@ syscall
             case Add:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << src1->imm + src2->imm<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else {
                     if (src1->canGetValue){
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src2,Reg::$t1);
                         output << "addu " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }else if (src2->canGetValue){
-                        output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t1);
                         output << "addu " << "$t2" << ", " << "$t1" << ", " << src2->imm<< endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }else{
-                        output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "addu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }
                 }
             }
@@ -508,22 +524,22 @@ syscall
             case Sub:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << src1->imm - src2->imm<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else {
                     if (src1->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm << endl;
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src2,Reg::$t1);
                         output << "subu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }else if (src2->canGetValue){
-                        output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t1);
                         output << "subu " << "$t2" << ", " << "$t1" << ", " << src2->imm<< endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }else{
-                        output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "subu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }
                 }
             }
@@ -532,23 +548,23 @@ syscall
                 output << "#执行乘法\n";
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << src1->imm * src2->imm<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else {
                     if (src1->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm << endl;
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src2,Reg::$t1);
                         output << "mul " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }else if (src2->canGetValue){
                         output << "li " << "$t0" << ", " << src2->imm << endl;
-                        output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t1);
                         output << "mul " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }else{
-                        output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "mul " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }
                 }
             }
@@ -558,26 +574,26 @@ syscall
                 output << "#执行div：\n";
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << src1->imm / src2->imm<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else {
                     if (src1->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm << endl;
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src2,Reg::$t1);
                         output << "div " << "$t0" << ", " << "$t1" << endl;
                         output << "mflo " << "$t2" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }else if (src2->canGetValue){
                         output << "li " << "$t1" << ", " << src2->imm << endl;
-                        output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "div " << "$t0" << ", " << "$t1" << endl;
                         output << "mflo " << "$t2" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }else{
-                        output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "div " << "$t0" << ", " << "$t1" << endl;
                         output << "mflo " << "$t2" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }
                 }
             }
@@ -586,18 +602,18 @@ syscall
             case Mod:{
                 if (src1->canGetValue && src2->canGetValue){
                     output << "li " << "$t0" << ", " << src1->imm % src2->imm<< endl;
-                    output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                    storeIEntry(dst,Reg::$t0);
                 }else {
                     if (src1->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm << endl;
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src2,Reg::$t1);
                         output << "div " << "$t0" << ", " << "$t1" << endl;
                         output << "mfhi " << "$t2" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }else if (src2->canGetValue){
                         int d = src2->imm;
                         if ((d&(d-1)) == 0 &&d >0) {
-                            output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
+                            loadIEntry(src1,Reg::$t0);
                             output << "sgt $t1, $t0, $zero"<< endl;
                             output << "beqz $t1, "<<"Mod_"<<src1->Id<<endl;
 
@@ -609,21 +625,21 @@ syscall
                             output << "andi $t0, $t0, "<< ((1<< log2OfPowerOfTwo(d))-1)<< endl;
                             output << "subu $t0, $zero, $t0"<< endl;
                             output << "Mod_end_"<<src1->Id<<":"<<endl;
-                            output << "sw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                            storeIEntry(dst,Reg::$t0);
                         }
                         else{
                             output << "li " << "$t1" << ", " << src2->imm << endl;
-                            output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
+                            loadIEntry(src1,Reg::$t0);
                             output << "div " << "$t0" << ", " << "$t1" << endl;
                             output << "mfhi " << "$t2" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }
                     }else{
-                        output << "lw " << "$t0" << ", " << src1->startAddress << "($zero)" << endl;
-                        output << "lw " << "$t1" << ", " << src2->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "div " << "$t0" << ", " << "$t1" << endl;
                         output << "mfhi " << "$t2" << endl;
-                        output << "sw " << "$t2" << ", " << dst->startAddress << "($zero)" << endl;
+                        storeIEntry(dst,Reg::$t2);
                     }
                 }
             }
@@ -637,13 +653,11 @@ syscall
                 output << "#getint:\n";
                 output << "\nli $v0, 5\n";
                 output << "syscall\n";
-                if(dst->type == 6){
-                    output << "sw $v0,"<<dst->imm*4<<"($sp)"<<endl;
-                }else if (dst->type == 2){
-                    output << "lw " << "$t0" << ", " << dst->startAddress << "($zero)" << endl;
+                if (dst->type == 2){
+                    loadIEntry(dst,Reg::$t0);
                     output << "sw " << "$v0" << ", " << "0($t0)" << endl;
                 }else{
-                    output << "sw " << "$v0" << ", " << dst->startAddress << "($zero)" << endl;//基本不会再被用到了？
+                    storeIEntry(dst,Reg::$v0);
                 }
                 dst->canGetValue = false;
                 break;
@@ -651,9 +665,7 @@ syscall
             case GetAddress:{
                 output<< "#GetTheAddress  sw in dst 's address\n";
                 if (src2->type == 1){
-                    output<< "lw $t0,"<<IEntries.at(src2->values_Id->at(0))->startAddress<<"($zero)"<<endl;
-                }else if(src2->type == 7){
-                    output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
+                    loadIEntry(IEntries.at(src2->values_Id->at(0)),Reg::$t0);
                 }else{
                     if (src2->isGlobal){
                         output<< "la $t0,"<<src2->original_Name<<endl;
@@ -665,12 +677,12 @@ syscall
                     if (src1->canGetValue){
                         output<< "addu $t0,$t0,"<<src1->imm*4<<endl;
                     }else{
-                        output<< "lw, $t1,"<<src1->startAddress<<"($zero)"<<endl;
+                        loadIEntry(src1,Reg::$t1);
                         output << "sll $t1,$t1,2"<<endl;
                         output<< "addu $t0,$t0,$t1"<<endl;
                     }
                 }
-                output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                storeIEntry(dst,Reg::$t0);
                 break;
             }
             case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
@@ -685,16 +697,13 @@ syscall
                             output << "li " << "$t1" << ", " << index * 4 << endl;
                             output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                         }else{
-                            if(src2->type ==7){
-                                output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
-                            }else{
                                 output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
-                            }
                         }
                         //dst——type  1    0
                         if (dst->type ==0){
+                            //TODO: 搜寻startaddress    由于全局是不需要管理的  地址一定知道
                             output << "lw " << "$t0" << ", 0($t0)" << endl;
-                            output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
+                            storeIEntry(dst,Reg::$t0);
                         }else{
                             //采用地址传递  内容是地址
                             output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
@@ -704,45 +713,37 @@ syscall
                         if (src2->isGlobal){
                             output << "la " << "$t0" << ", " << src2->original_Name << endl;
                         }else{
-                            if (src2->type ==7){
-                                output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
-                            }else{
                                 output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
-                            }
-
                         }
-                        output << "lw " << "$t1" << ", " << src1->startAddress << "($zero)" << endl;
+                        loadIEntry(src1,Reg::$t1);
                         output << "sll " << "$t1" << ", " << "$t1" << ", 2" << endl;
                         output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                         if (dst->type ==0){
+                            //把附近长度的都清空  而不是所有清空
                             output << "lw " << "$t0" << ", 0($t0)" << endl;
-                            output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
+                            storeIEntry(dst,Reg::$t0);
                         }else{
                             //t0地址
-                            output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
-//                                dst->type = 0;
+                            storeIEntry(dst,Reg::$t0);
                         }
                     }
                 }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
-                    if (src2->type == 7){
-                        output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
-                    }else{
-                        output<< "lw $t0,"<<src2->startAddress<<"($zero)"<<endl;
-                    }
+                    loadIEntry(src2,Reg::$t0);
                     if (src1){
                         if (src1->canGetValue){
                             output<< "addu $t0,$t0,"<<src1->imm*4<<endl;
                         }else{
-                            output<< "lw $t1,"<<src1->startAddress<<"($zero)"<<endl;
+                            loadIEntry(src1,Reg::$t1);
                             output << "sll $t1,$t1,2"<<endl;
                             output<< "addu $t0,$t0,$t1"<<endl;
                         }
                     }
                     if(dst->type == 0){
+                        //todo: 需要分情况进行  同时把不是数组的get 化简
                         output<< "lw $t0,0($t0)"<<endl;
-                        output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else{
-                        output<< "sw $t0,"<<dst->startAddress<<"($zero)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                 }
                 break;
@@ -764,6 +765,8 @@ syscall
                     output << "error!!!!  rParam_ids->size() = " << rParam_ids->size() << "fParam_ids->size() = " << fParam_ids->size() << "\n";
                 }
                 output << "#调用函数" << src1->original_Name << ": \n";
+                output << "#before jal clearRegPool for better lw args\n";
+                clearRegPool();
                 //ra 在sp中压栈
                 output << "addiu $sp, $sp, -100000\n";
                 output << "sw $ra, 0($sp)\n";
@@ -774,11 +777,14 @@ syscall
                         if (r->canGetValue){
                             output << "li " << "$t1, " << r->imm << endl;
                         }else{
-                            output << "lw " << "$t1, " << r->startAddress << "($zero)" << endl;
+                            output << "lw " << "$t1, " << r->startAddress<<"($zero)" << endl;
+//                            loadIEntry(r,Reg::$t1);
                         }
+//                        storeIEntry(IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0)),Reg::$t1);
                         output << "sw " << "$t1, " <<  IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<<"($sp)" << endl;
                     }else {// only == 1
                         output << "lw $t0, " << src1->startAddress << "($zero)" << endl;
+//                        loadIEntry(src1,Reg::$t0);
                         output << "sw " << "$t0, " <<  IEntries.at( IEntries.at(fParam_ids->at(i))->values_Id->at(0))->startAddress<< "($sp)" << endl;
                     }
                 }
@@ -799,10 +805,8 @@ addiu $sp, $sp, 100000
                 output << "#返回函数"<<endl;
                 output << "lw $ra, 0($sp)\n";
                 output << "addiu $sp, $sp, 100000\n";
-                //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
-//                    output << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($zero)"<< endl;//src2 = IEntries.at(func->id)
                 if (dst != nullptr){
-                    output << "sw " << "$v0" << ", " << dst->startAddress << "($zero)" << endl;//src2 = IEntries.at(func->id)
+                    storeIEntry(dst,Reg::$v0);
                 }
                 break;
 
@@ -824,6 +828,7 @@ addiu $sp, $sp, 100000
                 }
                 output << endl;
                 break;
+
                 /**
                  * 非全局变量的初始化定义
                  */
@@ -858,18 +863,7 @@ addiu $sp, $sp, 100000
                 for (auto init_id:*(src1->values_Id)) {
                     output << IEntries.at(init_id)->imm << " ";
                 }
-                cnt = 0;
                 output << endl;
-                //const的使用读取 也许不用再使用lw
-                for (auto id_init_value:*(src1->values_Id)) {
-                    if (IEntries.at(id_init_value)->canGetValue){ //认为数组内存是连续存储？
-                        output << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
-                    }else{
-                        output << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($zero)" << endl;
-                    }
-                    output << "sw " << "$t0, " << src1->startAddress + cnt * 4 << "($zero)" << endl;
-                    cnt++;
-                }
                 break;
             case ARRAY_CONST_Def_Has_Value:
                 output << "#array_const@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "def   " ;
@@ -885,62 +879,63 @@ addiu $sp, $sp, 100000
     }
 
 
+
+
     /**
      * 输出其他函数的代码ICode
      */
-     assignSp  =true;
+
     output << "#自定义函数的代码ICode\n";
     for (const auto& func_codes:otherFuncICodes) {
-
+        cnt = 0;//for optimize
+    output<< "#clearRegPool()\n";
+/**
+ * 寄存器池需要清空
+ */
+        clearRegPool();
+        assignSp  =true;
 //        output << "_" << func_codes.first << ":\n";  第一行总是函数的定义头
         for (auto ICode: func_codes.second) {
             IntermediateCodeType type = ICode->type;
             IEntry *src1 = ICode->src1;
             IEntry *src2 = ICode->src2;
             IEntry *dst = ICode->dst;
-            IEntry **dst_ptr = &dst;
             int cnt_param;//for printf_exp
-            int cnt = 0;//for def sw address
             vector<int> *rParam_ids;
             vector<int> *fParam_ids;
 
             switch (type) {
                 case Right_Shift:{
-                    output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "slt $t1,$t0,$zero"<<endl;
                     output << "beqz $t1, "<<"Test_neg_"<<src1->Id<<endl;
                     output << "addu $t0,$t0,"<< (1<<src2->imm)-1<<endl;
                     output << "Test_neg_"<<src1->Id<<":"<<endl;
                     output << "sra $t0, $t0," <<src2->imm<< endl;
-                    output << "sw $t0, "<<dst->startAddress<<"($sp)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                     break;
                 }
                 case Left_Shift:{
-                    output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-//                    output << "li " << "$t1" << ", " << src2->imm << endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "sll $t0, $t0," << src2->imm <<endl;
-                    output << "sw $t0, "<<dst->startAddress<<"($sp)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                     break;
                 }
                 //#############################################
                 case I_Not:{
-                    output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "seq $t0, $t0,0"<<endl;//0
-                    output << "sw $t0, "<<dst->startAddress<<"($sp)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                     break;
                 }
                 case Beqz:{
-                    output << "lw $t0," << src1->startAddress<<"($sp)" <<endl;
+                    loadIEntry(src1,Reg::$t0);
                     output << "beqz $t0, "<<src2->name<<endl;
                     break;
                 }
                 case Beq:{
-                    if (src1->canGetValue){
-                        output << "li $t0," << src1->imm <<endl;
-                    }else{
-                        output << "lw $t0," << src1->startAddress<<"($sp)" <<endl;
-                    }
-                    output << "lw $t1," << src2->startAddress<<"($sp)" <<endl;
+                    loadIEntry(src1,Reg::$t0);
+                    loadIEntry(src2,Reg::$t1);
                     output << "beq $t0, $t1,"<<dst->name<<endl;
                     break;
                 }
@@ -956,64 +951,63 @@ addiu $sp, $sp, 100000
                     output << "##################I_And###########\n";
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << (src1->imm!=0  & src2->imm!=0 ) << endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src1->canGetValue){
                         if (src1->imm ==0){
-                            output << "li $t0,0\n";
-                            output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                            storeIEntry(dst,Reg::$zero);
                         }else{
-                            output << "lw $t0, " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src2,Reg::$t0);
                             output << "sne $t0,$t0,0\n";
-                            output << "sw $t0, " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t0);
                         }
                     }else if (src2->canGetValue){
                         if (src2->imm ==0){
                             output << "li $t0,0\n";
-                            output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                            storeIEntry(dst,Reg::$t0);
                         }else{
-                            output << "lw $t0, " << src1->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t0);
                             output << "sne $t0,$t0,0\n";
-                            output << "sw $t0, " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t0);
                         }
                     }else{
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "sne $t0,$t0,0\n";
-                        output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src2,Reg::$t1);
                         output << "sne $t1,$t1,0\n";
                         output << "and $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                     break;
                 }
                 case I_Or:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << (src1->imm !=0 | src2->imm !=0) << endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src1->canGetValue){
                         if (src1->imm == 1){
                             output << "li $t0,1\n";
-                            output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                            storeIEntry(dst,Reg::$t0);
                         }else{
-                            output << "lw $t0, " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src2,Reg::$t0);
                             output << "sne $t0,$t0,0\n";
-                            output << "sw $t0, " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t0);
                         }
                     }else if (src2->canGetValue){
                         if (src2->imm == 1){
                             output << "li $t0,1\n";
-                            output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                            storeIEntry(dst,Reg::$t0);
                         }else{
-                            output << "lw $t0, " << src1->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t0);
                             output << "sne $t0,$t0,0\n";
-                            output << "sw $t0, " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t0);
                         }
                     }else{
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "sne $t0,$t0,0\n";
-                        output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src2,Reg::$t1);
                         output << "sne $t1,$t1,0\n";
                         output << "or $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                     break;
                 }
@@ -1021,66 +1015,60 @@ addiu $sp, $sp, 100000
                 case I_Eq:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << (src1->imm == src2->imm)<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src1->canGetValue){
-                        //src2需要lw
-//                    output << "li $t0, "<< src1->imm<<endl;
-                        output << "lw $t0, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src2,Reg::$t0);
                         output << "seq $t0 , $t0,"<<src1->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src2->canGetValue){
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "seq $t0 , $t0,"<<src2->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else{
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                        output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "seq $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                     break;
                 }
                 case I_Grt_eq:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << (src1->imm  >= src2->imm )<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src1->canGetValue){
-                        //src2需要lw
-//                    output << "li $t0, "<< src1->imm<<endl;
-                        output << "lw $t0, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src2,Reg::$t0);
                         output << "sle $t0 , $t0,"<<src1->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src2->canGetValue){
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "sge $t0 , $t0,"<<src2->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else{
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                        output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "sge $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                     break;
                 }
                 case I_Less_eq:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << (src1->imm  <= src2->imm )<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src1->canGetValue){
-                        //src2需要lw
-//                    output << "li $t0, "<< src1->imm<<endl;
-                        output << "lw $t0, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src2,Reg::$t0);
                         output << "sge $t0 , $t0,"<<src1->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src2->canGetValue){
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "sle $t0 , $t0,"<<src2->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else{
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                        output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "sle $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                     break;
                 }
@@ -1088,64 +1076,62 @@ addiu $sp, $sp, 100000
                 case I_Grt:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << (src1->imm  > src2->imm )<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src1->canGetValue){
-                        //src2需要lw
-//                    output << "li $t0, "<< src1->imm<<endl;
-                        output << "lw $t0, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src2,Reg::$t0);
                         output << "li $t1, "<<src1->imm<< endl;
                         output << "slt $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src2->canGetValue){
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "sgt $t0 , $t0,"<<src2->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else{
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                        output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "sgt $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                     break;
                 }
                 case I_Less:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << (src1->imm  < src2->imm )<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src1->canGetValue){
-                        output << "lw $t0, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src2,Reg::$t0);
                         output << "sgt $t0 , $t0,"<<src1->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src2->canGetValue){
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "li $t1, "<<src2->imm<< endl;
                         output << "slt $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else{
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                        output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "slt $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                     break;
                 }
                 case I_not_eq:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << (src1->imm  != src2->imm )<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src1->canGetValue){
-                        output << "lw $t0, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src2,Reg::$t0);
                         output << "sne $t0 , $t0,"<<src1->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else if (src2->canGetValue){
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
                         output << "sne $t0 , $t0,"<<src2->imm<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else{
-                        output << "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-                        output << "lw $t1, "<<src2->startAddress<<"($sp)"<<endl;
+                        loadIEntry(src1,Reg::$t0);
+                        loadIEntry(src2,Reg::$t1);
                         output << "sne $t0 , $t0, $t1"<<endl;
-                        output <<"sw $t0, "<<dst->startAddress <<"($sp)"<<endl;
+                        storeIEntry(dst,Reg::$t0);
                     }
                     break;
                 }
@@ -1163,12 +1149,11 @@ addiu $sp, $sp, 100000
                          */
                         if (IEntries.at(id)->str == "%d") {//lw  li  1 syscall
                             IEntry *p = IEntries.at(src2->values_Id->at(cnt_param++));
-//                        IEntry * p_val = IEntries.at(p->values_Id->at(0));//VALUE!!!
                             IEntry *p_val = p;
                             if (p_val->canGetValue) {
                                 output << "li $a0, " << p_val->imm << endl;
                             } else {
-                                output << "lw $a0, " << p_val->startAddress << "($sp)" << endl;
+                                loadIEntry(p_val,Reg::$a0);
                             }
                             output << "li $v0, 1" << endl;
                             output << "syscall" << endl;
@@ -1185,21 +1170,21 @@ addiu $sp, $sp, 100000
                 case Add:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm + src2->imm<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else {
                         if (src1->canGetValue){
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src2,Reg::$t1);
                             output << "addu " << "$t2" << ", " << "$t1" << ", " << src1->imm<< endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }else if (src2->canGetValue){
-                            output << "lw " << "$t1" << ", " << src1->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t1);
                             output << "addu " << "$t2" << ", " << "$t1" << ", " << src2->imm<< endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }else{
-                            output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t0);
+                            loadIEntry(src2,Reg::$t1);
                             output << "addu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }
                     }
                 }
@@ -1207,22 +1192,22 @@ addiu $sp, $sp, 100000
                 case Sub:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm - src2->imm<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else {
                         if (src1->canGetValue){
                             output << "li " << "$t0" << ", " << src1->imm << endl;
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src2,Reg::$t1);
                             output << "subu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }else if (src2->canGetValue){
-                            output << "lw " << "$t1" << ", " << src1->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t1);
                             output << "subu " << "$t2" << ", " << "$t1" << ", " << src2->imm<< endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }else{
-                            output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t0);
+                            loadIEntry(src2,Reg::$t1);
                             output << "subu " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }
                     }
                 }
@@ -1231,23 +1216,23 @@ addiu $sp, $sp, 100000
                     output << "#执行乘法\n";
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm * src2->imm<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else {
                         if (src1->canGetValue){
                             output << "li " << "$t0" << ", " << src1->imm << endl;
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src2,Reg::$t1);
                             output << "mul " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }else if (src2->canGetValue){
                             output << "li " << "$t0" << ", " << src2->imm << endl;
-                            output << "lw " << "$t1" << ", " << src1->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t1);
                             output << "mul " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }else{
-                            output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t0);
+                            loadIEntry(src2,Reg::$t1);
                             output << "mul " << "$t2" << ", " << "$t0" << ", " << "$t1" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }
                     }
                 }
@@ -1257,26 +1242,26 @@ addiu $sp, $sp, 100000
                     output << "#执行div：\n";
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm / src2->imm<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else {
                         if (src1->canGetValue){
                             output << "li " << "$t0" << ", " << src1->imm << endl;
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src2,Reg::$t1);
                             output << "div " << "$t0" << ", " << "$t1" << endl;
                             output << "mflo " << "$t2" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }else if (src2->canGetValue){
                             output << "li " << "$t1" << ", " << src2->imm << endl;
-                            output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t0);
                             output << "div " << "$t0" << ", " << "$t1" << endl;
                             output << "mflo " << "$t2" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }else{
-                            output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t0);
+                            loadIEntry(src2,Reg::$t1);
                             output << "div " << "$t0" << ", " << "$t1" << endl;
                             output << "mflo " << "$t2" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }
                     }
                 }
@@ -1285,18 +1270,18 @@ addiu $sp, $sp, 100000
                 case Mod:{
                     if (src1->canGetValue && src2->canGetValue){
                         output << "li " << "$t0" << ", " << src1->imm % src2->imm<< endl;
-                        output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                        storeIEntry(dst,Reg::$t0);
                     }else {
                         if (src1->canGetValue){
                             output << "li " << "$t0" << ", " << src1->imm << endl;
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src2,Reg::$t1);
                             output << "div " << "$t0" << ", " << "$t1" << endl;
                             output << "mfhi " << "$t2" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }else if (src2->canGetValue){
                             int d = src2->imm;
                             if ((d&(d-1)) == 0 && d>0) {
-                                output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
+                                loadIEntry(src1,Reg::$t0);
                                 output << "sgt $t1, $t0, $zero"<< endl;
                                 output << "beqz $t1, "<<"Mod_"<<src1->Id<<endl;
 
@@ -1309,22 +1294,21 @@ addiu $sp, $sp, 100000
                                 output << "subu $t0, $zero, $t0"<< endl;
 
                                 output << "Mod_end_"<<src1->Id<<":"<<endl;
-                                output << "sw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                                storeIEntry(dst,Reg::$t2);
                             }
                             else{
                                 output << "li " << "$t1" << ", " << src2->imm << endl;
-                                output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
-                                //TOdo  除法优化
+                                loadIEntry(src1,Reg::$t0);
                                 output << "div " << "$t0" << ", " << "$t1" << endl;
                                 output << "mfhi " << "$t2" << endl;
-                                output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                                storeIEntry(dst,Reg::$t2);
                             }
                         }else{
-                            output << "lw " << "$t0" << ", " << src1->startAddress << "($sp)" << endl;
-                            output << "lw " << "$t1" << ", " << src2->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t0);
+                            loadIEntry(src2,Reg::$t1);
                             output << "div " << "$t0" << ", " << "$t1" << endl;
                             output << "mfhi " << "$t2" << endl;
-                            output << "sw " << "$t2" << ", " << dst->startAddress << "($sp)" << endl;
+                            storeIEntry(dst,Reg::$t2);
                         }
                     }
                 }
@@ -1337,22 +1321,18 @@ addiu $sp, $sp, 100000
                     output << "#getint:\n";
                     output << "li $v0, 5\n";
                     output << "syscall\n";
-                    if(dst->type == 6){
-                        output << "sw $v0,"<<dst->imm*4<<"($sp)"<<endl;
-                    }else if (dst->type == 2){
-                        output << "lw " << "$t0" << ", " << dst->startAddress << "($sp)" << endl;
+                    if (dst->type == 2){
+                        loadIEntry(dst,Reg::$t0);
                         output << "sw " << "$v0" << ", " << "0($t0)" << endl;
                     }else{
-                        output << "sw " << "$v0" << ", " << dst->startAddress << "($sp)" << endl;//基本不会再被用到了？
+                        storeIEntry(dst,Reg::$v0);
                     }
                     dst->canGetValue = false;
                     break;
                 case GetAddress:{
                     output<< "#GetTheAddress  sw in dst 's address\n";
                     if (src2->type == 1){
-                        output<< "lw $t0,"<<IEntries.at(src2->values_Id->at(0))->startAddress<<"($sp)"<<endl;
-                    }else if(src2->type == 7){
-                        output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
+                        loadIEntry(IEntries.at(src2->values_Id->at(0)),Reg::$t0);
                     }else{
                         if (src2->isGlobal){
                             output<< "la $t0,"<<src2->original_Name<<endl;
@@ -1365,12 +1345,12 @@ addiu $sp, $sp, 100000
                         if (src1->canGetValue){
                             output<< "addu $t0,$t0,"<<src1->imm*4<<endl;
                         }else{
-                            output<< "lw, $t1,"<<src1->startAddress<<"($sp)"<<endl;
+                            loadIEntry(src1,Reg::$t1);
                             output << "sll $t1,$t1,2"<<endl;
                             output<< "addu $t0,$t0,$t1"<<endl;
                         }
                     }
-                    output<< "sw $t0,"<<dst->startAddress<<"($sp)"<<endl;
+                    storeIEntry(dst,Reg::$t0);
                     break;
                 }
                     //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
@@ -1386,67 +1366,51 @@ addiu $sp, $sp, 100000
                                 output << "li " << "$t1" << ", " << index * 4 << endl;
                                 output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                             }else{
-                                if(src2->type ==7){
-                                    output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
-                                }else{
-                                    output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
-                                    output << "addu $t0, $t0,$sp\n";
-                                }
+                                output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                                output << "addu $t0, $t0,$sp\n";
                             }
                             //dst——type  1    0
                             if (dst->type ==0){
                                 output << "lw " << "$t0" << ", 0($t0)" << endl;
-                                output << "sw " << "$t0, " << dst->startAddress << "($sp)" << endl;
+                                storeIEntry(dst,Reg::$t0);
                             }else{
                                 //采用地址传递  内容是地址
-                                output << "sw " << "$t0, " << dst->startAddress << "($sp)" << endl;
-//                                dst->type = 0;
+                                storeIEntry(dst,Reg::$t0);
                             }
                         }else{
                             if (src2->isGlobal){
                                 output << "la " << "$t0" << ", " << src2->original_Name << endl;
                             }else{
-                                if (src2->type ==7){
-                                    output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
-                                }else{
-                                    output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
-                                    output << "addu $t0, $t0,$sp\n";
-                                }
-
+                                output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                                output << "addu $t0, $t0,$sp\n";
                             }
-                            output << "lw " << "$t1" << ", " << src1->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$t1);
                             output << "sll " << "$t1" << ", " << "$t1" << ", 2" << endl;
                             output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                             if (dst->type ==0){
                                 output << "lw " << "$t0" << ", 0($t0)" << endl;
-                                output << "sw " << "$t0, " << dst->startAddress << "($sp)" << endl;//此时dst_ptr的IEntry false  需要lw address 来使用
+                                storeIEntry(dst,Reg::$t0);
                             }else{
                                 //t0地址
-                                output << "sw " << "$t0, " << dst->startAddress << "($sp)" << endl;
-//                                dst->type = 0;
+                                storeIEntry(dst,Reg::$t0);
                             }
                         }
                     }else{//不是normal  出现在自定义函数内部的引用数组  此时src2 会是startAddress offset_Entry
-                        if (src2->type == 7){
-                            output << "lw " << "$t0" << ", " << src2->imm*4 <<"($sp)" << endl;
-                        }else{
-                            output<< "lw $t0,"<<src2->startAddress<<"($sp)"<<endl;
-//                            output << "addu $t0, $t0,$sp\n";
-                        }
+                        loadIEntry(src2,Reg::$t0);
                         if (src1){
                             if (src1->canGetValue){
                                 output<< "addu $t0,$t0,"<<src1->imm*4<<endl;
                             }else{
-                                output<< "lw $t1,"<<src1->startAddress<<"($sp)"<<endl;
+                                loadIEntry(src1,Reg::$t1);
                                 output << "sll $t1,$t1,2"<<endl;
                                 output<< "addu $t0,$t0,$t1"<<endl;
                             }
                         }
                         if(dst->type == 0){
                             output<< "lw $t0,0($t0)"<<endl;
-                            output<< "sw $t0,"<<dst->startAddress<<"($sp)"<<endl;
+                            storeIEntry(dst,Reg::$t0);
                         }else{
-                            output<< "sw $t0,"<<dst->startAddress<<"($sp)"<<endl;
+                            storeIEntry(dst,Reg::$t0);
                         }
                     }
                     break;
@@ -1456,7 +1420,7 @@ addiu $sp, $sp, 100000
                         if (src1->canGetValue) {
                             output << "li " << "$v0" << ", " << src1->imm << endl;
                         } else {
-                            output << "lw " << "$v0" << ", " << src1->startAddress << "($sp)" << endl;
+                            loadIEntry(src1,Reg::$v0);
                         }
                     }
                     output << "jr " << "$ra" << endl;
@@ -1473,6 +1437,8 @@ addiu $sp, $sp, 100000
                         output << "error!!!!  rParam_ids->size() = " << rParam_ids->size() << "fParam_ids->size() = " << fParam_ids->size() << "\n";
                     }
                     output << "#调用函数" << src1->original_Name << ": \n";
+                    output << "#before jal clearRegPool for better lw args\n";
+                    clearRegPool();
                     //ra 在sp中压栈
                     output << "addiu $sp, $sp, -100000\n";
                     output << "sw $ra, 0($sp)\n";
@@ -1509,10 +1475,9 @@ addiu $sp, $sp, 100000
                     output << "#返回函数"<<endl;
                     output << "lw $ra, 0($sp)\n";
                     output << "addiu $sp, $sp, 100000\n";
-                    //函数返回值在v0中  要sw   其实这里的sw v0 to somewhere 没有用
-//                    output << "sw " << "$v0" << ", " << src1->return_IEntry->startAddress << "($sp)"<< endl;//src2 = IEntries.at(func->id)
+
                     if (dst != nullptr){
-                        output << "sw " << "$v0" << ", " << dst->startAddress << "($sp)" << endl;//src2 = IEntries.at(func->id)
+                        storeIEntry(dst,Reg::$v0);
                     }
                     break;
 
@@ -1559,7 +1524,6 @@ addiu $sp, $sp, 100000
                         }
                     }
                     output << endl;
-                    cnt = 0;
                     break;
                 case ARRAY_Def_No_Value:
                     output << "#local_array_@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "_def\n  " ;
@@ -1569,18 +1533,7 @@ addiu $sp, $sp, 100000
                     for (auto init_id:*(src1->values_Id)) {
                         output << IEntries.at(init_id)->imm << " ";
                     }
-                    cnt = 0;
                     output << endl;
-                    //const的使用读取 也许不用再使用lw
-                    for (auto id_init_value:*(src1->values_Id)) {
-                        if (IEntries.at(id_init_value)->canGetValue){ //认为数组内存是连续存储？
-                            output << "li " << "$t0" << ",  " << IEntries.at(id_init_value)->imm << endl;
-                        }else{
-                            output << "lw " << "$t0" << ",  " << IEntries.at(id_init_value)->startAddress << "($sp)" << endl;
-                        }
-                        output << "sw " << "$t0, " << src1->startAddress + cnt * 4 << "($sp)" << endl;
-                        cnt++;
-                    }
                     break;
                 case ARRAY_CONST_Def_Has_Value:
                     output << "#array_const@" + to_string(ICode->src1->Id) << "_" + src1->original_Name << "def   " ;
@@ -1595,9 +1548,135 @@ addiu $sp, $sp, 100000
             }
         }
     }
-// 重定向结束后，可以将outputFile的流恢复到原始状态
-//    std::output.rdbuf(outputFileBuffer);
-
 }
+
+
+//TODO:还需要注意 la 全局变量的地址
+void MipsCode::loadIEntry(IEntry *iEntry, Reg toReg) {
+    int id;
+    id = iEntry->Id;
+    Reg fromReg = canFindInReg(iEntry);
+    if( fromReg != Reg::$zero){
+        output << "#loadIEntry\n";
+        output << "move " << reg2s.at(toReg)<< ", " << reg2s.at(fromReg) << endl;
+    }else{
+        if (iEntry->canGetValue) {
+            output << "li " << reg2s.at(toReg) << ", " << iEntry->imm << endl;
+        } else {
+            if (assignSp){
+                output << "lw " << reg2s.at(toReg) << ", " << iEntry->startAddress << "($sp)" << endl;
+            }else{
+                output << "lw " << reg2s.at(toReg) << ", " << iEntry->startAddress << "($zero)" << endl;
+            }
+        }
+        //TODO：对寄存器池进行优化 不是替换    而是记录 把这个寄存器的值存到RegInfo中   可能move 的利益更大  也不一定
+    }
+}
+
+void MipsCode::storeIEntry(IEntry *to_iEntry, Reg fromReg) {
+    int id;
+    id = to_iEntry->Id;
+    Reg toReg = hasOneRegToStore();
+//    if (inForLoop) {
+//        if (assignSp){
+//            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($sp)" << endl;
+//        }else{
+//            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;
+//        }
+//    }else
+        if( toReg != Reg::$zero){
+        output<<"#find a reg to store:\n";
+        output << "move " << reg2s.at(toReg)<< ", " << reg2s.at(fromReg) << endl;
+//        regPoolsUsed.push(toReg);
+        delSameIdInRegInfo(id);
+        RegInfo[toReg] = id;
+    }else{
+            //TODO:   根据计数来判断是否能替换  不能就是正常
+            if (assignSp){
+                output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($sp)" << endl;
+            }else{
+                output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;
+            }
+    }
+}
+
+Reg MipsCode::hasOneRegToStore() {
+    //搜索RegInfo的寄存器池  还有没有可以存的寄存器
+    Reg ans = Reg::$zero;
+    for (auto regInfo:RegInfo) {
+        if (regInfo.second == -1) {
+            return regInfo.first;
+        }
+    }
+    //需要根据引用进行计数 替换
+    if (ans == Reg::$zero){
+        output<< "#replace registers that not using anymore\n";
+        for (auto regInfo:RegInfo) {
+            IEntry * reg = IEntries.at(regInfo.second);
+            if (reg->cnt_use_til < cnt) {
+                output << "#kick out reg:" << reg2s.at(regInfo.first) << endl;
+                if (ans == Reg::$zero) {
+                    ans = regInfo.first;
+                }
+            }
+        }
+    }
+
+    return ans;
+}
+
+
+Reg MipsCode::canFindInReg(IEntry *iEntry) {
+    //搜索RegInfo的寄存器池  second有没有等于iEntry的id
+    int id = iEntry->Id;
+    for (auto regInfo:RegInfo) {
+        if (regInfo.second == id) {
+            return regInfo.first;
+        }
+    }
+    return Reg::$zero;
+}
+
+void MipsCode::clearRegPool() {
+    output <<"#clearRegPool\n";
+    for (auto &item: RegInfo) {
+        if (item.second != -1) {
+            Reg outReg = item.first;
+            IEntry * toSwIEntry = IEntries.at(item.second);
+            /**
+             * sw 返回
+             */
+            if (toSwIEntry->cnt_use_til < cnt){
+                //不用再存进内存
+            }else {
+                if (assignSp) {
+                    output << "sw " << reg2s.at(outReg) << ", " << toSwIEntry->startAddress << "($sp)" << endl;
+                } else {
+                    output << "sw " << reg2s.at(outReg) << ", " << toSwIEntry->startAddress << "($zero)" << endl;
+                }
+            }
+            item.second = -1;
+        }
+
+    }
+}
+
+void MipsCode::delSameIdInRegInfo(int id) {
+    for (auto & item: RegInfo) {
+        if (item.second == id) {
+            item.second = -1;
+        }
+    }
+}
+
+//void MipsCode::loadAddress(int iEntry_address, Reg toReg) {
+//    for (auto &item: RegInfo) {
+//        IEntry * iEntry = IEntries.at(item.second);
+//        if (iEntry->startAddress == iEntry_address
+//
+//        }
+//    }
+//    output << "lw " << reg2s.at(toReg) << ", " << iEntry_address << endl;
+//}
 
 

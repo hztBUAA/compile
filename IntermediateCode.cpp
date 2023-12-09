@@ -129,7 +129,7 @@ void IntermediateCode::addDef(bool isGlobal, IntermediateCodeType type, IEntry *
 }
 
 void IntermediateCode::addICode(IntermediateCodeType type, IEntry *src1, IEntry *src2, IEntry *dst) {
-
+    unsigned int cnt = 0;
     iCode = new ICode();
     iCode->type = type;
     iCode->src1 = src1;
@@ -139,14 +139,32 @@ void IntermediateCode::addICode(IntermediateCodeType type, IEntry *src1, IEntry 
         if (otherFuncICodes.find(funcLabel) == otherFuncICodes.end()) {
             otherFuncICodes.insert(pair<string, vector<ICode *>>(funcLabel, vector<ICode *>()));
         }
+
         otherFuncICodes.at(funcLabel).push_back(iCode);
+        cnt = otherFuncICodes.at(funcLabel).size();
     } else {
+
         mainICodes.push_back(iCode);
+        cnt = mainICodes.size();
     }
+
+    //TODO:  计数  内存访问计数
+
+    if (type == Add || type == Sub || type == Mult || type == Div || type == Mod || type == GetArrayElement || type == GetAddress || type == I_Not || type == I_Eq || type
+                                                                                                                                                               == I_not_eq || type == I_Grt || type == I_Grt_eq || type == I_Or || type == I_And || type == I_Less || type == I_Less_eq || type == Right_Shift || type == Left_Shift) {
+        src1->cnt_use_til = cnt;
+        src2->cnt_use_til = cnt;
+    } else if (type == Assign) {
+        src1->cnt_use_til = cnt;
+    }
+//    else if (type == FuncCall) {
+//        src1->cnt_use_til++;
+//    }
 }
 
 //TODO:dst需要运行时才知道value了   dst确保进入时已经new过
 void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src2, IEntry *dst) {
+    unsigned int cnt = 0;
     iCode = new ICode();
     iCode->type = type;
     auto* s1 = new IEntry;
@@ -160,8 +178,20 @@ void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src
             otherFuncICodes.insert(pair<string,vector<ICode*>>(funcLabel,vector<ICode*>()));
         }
         otherFuncICodes.at(funcLabel).push_back(iCode);
+        cnt = otherFuncICodes.at(funcLabel).size();
     }else{
         mainICodes.push_back(iCode);
+        cnt = mainICodes.size();
+    }
+
+    //TODO:  计数  内存访问计数
+
+    if (type == Add || type == Sub || type == Mult || type == Div || type == Mod || type == GetArrayElement || type == GetAddress || type == I_Not || type == I_Eq || type
+                                                                                                                                                                      == I_not_eq || type == I_Grt || type == I_Grt_eq || type == I_Or || type == I_And || type == I_Less || type == I_Less_eq || type == Right_Shift || type == Left_Shift) {
+        s1->cnt_use_til = cnt;
+        src2->cnt_use_til = cnt;
+    } else if (type == Assign) {
+        s1->cnt_use_til = cnt;
     }
 }
 

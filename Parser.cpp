@@ -1603,6 +1603,7 @@ void Parser::Stmt() {
             mainFor = new IEntry("For_main");
             opFor = new IEntry("For_op");
             condFor = new IEntry("For_cond");
+            intermediateCode.addICode(For_START_LOOP, nullptr, nullptr, nullptr);
             //condFor在后面定义了
             intermediateCode.addICode(Insert_Label, startFor, nullptr, nullptr);
             PRINT_WORD;//PRINT FOR
@@ -1675,6 +1676,7 @@ void Parser::Stmt() {
             intermediateCode.addICode(Insert_Label,mainFor, nullptr, nullptr);
             Stmt();
             intermediateCode.addICode(Jump_Label, opFor, nullptr, nullptr);//跳转到for_stmt_2
+            intermediateCode.addICode(FOR_END_LOOP, nullptr, nullptr, nullptr);
             tableManager.cur->loop_count--;
             tableManager.upTable();
             tableManager.cur->entries->erase(ident);//for 结束了就不需要再留位置 给之后的for让路
