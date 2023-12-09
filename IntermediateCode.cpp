@@ -183,7 +183,7 @@ void IntermediateCode::optimize1() {
                 auto cur = *it;
                 auto next = *std::next(it);
                 if (cur->type == Assign && next->type == Assign && cur->dst->Id == next->src1->Id ) {
-                    // 合并
+                    // 合并optimize
                     cur->dst = next->dst;
                     it = mainICodes.erase(std::next(it));
                     --it;  // 回退迭代器，保证不会跳过元素
@@ -287,6 +287,19 @@ void IntermediateCode::optimize3() {
                     it = mainICodes.erase(std::next(it));
                     --it;  // 回退迭代器，保证不会跳过元素
                 }
+                //void 函数的返回值iEntry不需要assign
+                if (cur->type == FuncCall && !cur->src1->has_return && next->type == Assign ) {
+                    // del assign
+                    it = mainICodes.erase(std::next(it));
+                    --it;  // 回退迭代器，保证不会跳过元素
+                }else if(cur->type == FuncCall && cur->src1->has_return && next->type == Assign && cur->dst->Id == next->src1->Id && next->dst->type != 2){
+                    // merge assign
+                    cur->dst = next->dst;
+                    it = mainICodes.erase(std::next(it));
+                    --it;  // 回退迭代器，保证不会跳过元素
+                }
+
+
             }
         }
         after_main_cnt = mainICodes.size();
@@ -305,6 +318,17 @@ void IntermediateCode::optimize3() {
                                                                                                                                                                                                                                    == I_not_eq || cur->type == I_Grt || cur->type == I_Grt_eq || cur->type == I_Or || cur->type == I_And || cur->type == I_Less || cur->type == I_Less_eq || cur->type == Right_Shift || cur->type == Left_Shift)
                         && next->type == Assign && next->dst->type != 2&& cur->dst->Id == next->src1->Id ) {
                         // 合并
+                        cur->dst = next->dst;
+                        it = func.second.erase(std::next(it));
+                        --it;  // 回退迭代器，保证不会跳过元素
+                    }
+                    //void 函数的返回值iEntry不需要assign
+                    if (cur->type == FuncCall && !cur->src1->has_return && next->type == Assign) {
+                        // del assign
+                        it = func.second.erase(std::next(it));
+                        --it;  // 回退迭代器，保证不会跳过元素
+                    }else if(cur->type == FuncCall && cur->src1->has_return && next->type == Assign && cur->dst->Id == next->src1->Id && next->dst->type != 2){
+                        // merge assign
                         cur->dst = next->dst;
                         it = func.second.erase(std::next(it));
                         --it;  // 回退迭代器，保证不会跳过元素

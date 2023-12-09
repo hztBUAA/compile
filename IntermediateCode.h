@@ -109,6 +109,9 @@ public:
     vector<int> * strings_iEntry_id;
     string str;
 
+    //------for optimize------//
+
+
     static int generateId();
     IEntry();
     explicit IEntry(const string& s);
