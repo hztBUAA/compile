@@ -95,8 +95,8 @@ string IntermediateCode::iCode2str(ICode *iCode) {
         case GetInt:
             return "GetInt :" + var1->name + "type:" + to_string(var1->type)  ;
             break;
-        case GetArrayElement:
-            return "GetArrayElement :" + var1->name + "type:" + to_string(var1->type)  ;
+        case GetElement:
+            return "GetElement :" + var1->name + "type:" + to_string(var1->type)  ;
             break;
         case FuncCall:
             return "FuncCall :" + var1->name + "type:" + to_string(var1->type)  ;
@@ -150,12 +150,23 @@ void IntermediateCode::addICode(IntermediateCodeType type, IEntry *src1, IEntry 
 
     //TODO:  计数  内存访问计数
 
-    if (type == Add || type == Sub || type == Mult || type == Div || type == Mod || type == GetArrayElement || type == GetAddress || type == I_Not || type == I_Eq || type
-                                                                                                                                                               == I_not_eq || type == I_Grt || type == I_Grt_eq || type == I_Or || type == I_And || type == I_Less || type == I_Less_eq || type == Right_Shift || type == Left_Shift) {
-        src1->cnt_use_til = cnt;
-        src2->cnt_use_til = cnt;
+    if (type == Add || type == Sub || type == Mult || type == Div || type == Mod || type == GetElement || type == GetAddress || type == I_Not || type == I_Eq || type
+                                                                                                                                                                 == I_not_eq || type == I_Grt || type == I_Grt_eq || type == I_Or || type == I_And || type == I_Less || type == I_Less_eq || type == Right_Shift || type == Left_Shift) {
+        if (src1){
+            src1->cnt_use_til = cnt;
+        }
+        if(src2){
+            src2->cnt_use_til = cnt;
+        }
+
+
     } else if (type == Assign) {
-        src1->cnt_use_til = cnt;
+        if (src1){
+            src1->cnt_use_til = cnt;
+        }
+        if (dst && dst->type == 2){
+            dst->cnt_use_til  = cnt;
+        }
     }
 //    else if (type == FuncCall) {
 //        src1->cnt_use_til++;
@@ -186,12 +197,17 @@ void IntermediateCode::addICode(IntermediateCodeType type, int src1, IEntry *src
 
     //TODO:  计数  内存访问计数
 
-    if (type == Add || type == Sub || type == Mult || type == Div || type == Mod || type == GetArrayElement || type == GetAddress || type == I_Not || type == I_Eq || type
-                                                                                                                                                                      == I_not_eq || type == I_Grt || type == I_Grt_eq || type == I_Or || type == I_And || type == I_Less || type == I_Less_eq || type == Right_Shift || type == Left_Shift) {
+    if (type == Add || type == Sub || type == Mult || type == Div || type == Mod || type == GetElement || type == GetAddress || type == I_Not || type == I_Eq || type
+    == I_not_eq || type == I_Grt || type == I_Grt_eq || type == I_Or || type == I_And || type == I_Less || type == I_Less_eq || type == Right_Shift || type == Left_Shift) {
         s1->cnt_use_til = cnt;
-        src2->cnt_use_til = cnt;
+        if(src2){
+           src2->cnt_use_til = cnt;
+       }
     } else if (type == Assign) {
         s1->cnt_use_til = cnt;
+        if(dst && dst->type ==2){
+            dst->cnt_use_til == cnt;
+        }
     }
 }
 
@@ -309,8 +325,8 @@ void IntermediateCode::optimize3() {
             if (std::next(it) != mainICodes.end()) {
                 auto cur = *it;
                 auto next = *std::next(it);
-                if ((cur->type == Add || cur->type == Sub || cur->type == Mult || cur->type == Div || cur->type == Mod || cur->type == GetArrayElement || cur->type == GetAddress || cur->type == I_Not || cur->type == I_Eq ||cur->type
-                                                                                                                                                                                                                               == I_not_eq || cur->type == I_Grt || cur->type == I_Grt_eq || cur->type == I_Or || cur->type == I_And || cur->type == I_Less || cur->type == I_Less_eq || cur->type == Right_Shift || cur->type == Left_Shift)
+                if ((cur->type == Add || cur->type == Sub || cur->type == Mult || cur->type == Div || cur->type == Mod || cur->type == GetElement || cur->type == GetAddress || cur->type == I_Not || cur->type == I_Eq || cur->type
+                                                                                                                                                                                                                           == I_not_eq || cur->type == I_Grt || cur->type == I_Grt_eq || cur->type == I_Or || cur->type == I_And || cur->type == I_Less || cur->type == I_Less_eq || cur->type == Right_Shift || cur->type == Left_Shift)
                     && next->type == Assign && next->dst->type != 2 && cur->dst->Id == next->src1->Id ) {
                     // 合并
                     cur->dst = next->dst;
@@ -344,8 +360,8 @@ void IntermediateCode::optimize3() {
                 if (std::next(it) != func.second.end()) {
                     auto cur = *it;
                     auto next = *std::next(it);
-                    if ((cur->type == Add || cur->type == Sub || cur->type == Mult || cur->type == Div || cur->type == Mod || cur->type == GetArrayElement || cur->type == GetAddress || cur->type == I_Not || cur->type == I_Eq ||cur->type
-                                                                                                                                                                                                                                   == I_not_eq || cur->type == I_Grt || cur->type == I_Grt_eq || cur->type == I_Or || cur->type == I_And || cur->type == I_Less || cur->type == I_Less_eq || cur->type == Right_Shift || cur->type == Left_Shift)
+                    if ((cur->type == Add || cur->type == Sub || cur->type == Mult || cur->type == Div || cur->type == Mod || cur->type == GetElement || cur->type == GetAddress || cur->type == I_Not || cur->type == I_Eq || cur->type
+                                                                                                                                                                                                                               == I_not_eq || cur->type == I_Grt || cur->type == I_Grt_eq || cur->type == I_Or || cur->type == I_And || cur->type == I_Less || cur->type == I_Less_eq || cur->type == Right_Shift || cur->type == Left_Shift)
                         && next->type == Assign && next->dst->type != 2&& cur->dst->Id == next->src1->Id ) {
                         // 合并
                         cur->dst = next->dst;

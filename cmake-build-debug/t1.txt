@@ -1,0 +1,15 @@
+int func(){
+int a;
+return a
+
+
+
+}
+
+int main(){
+    int a;
+    func = 1;
+   }
+
+//int array[2] = {1,2};   定义时 填表Entry  包含类型   之后还要记录数组的第一维长度  内存中的存放位置
+//int b = array[1]+1;

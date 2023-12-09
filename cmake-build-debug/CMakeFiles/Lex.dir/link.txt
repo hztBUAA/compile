@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/Lex.dir/main.cpp.o CMakeFiles/Lex.dir/Lexer.cpp.o CMakeFiles/Lex.dir/Parser.cpp.o CMakeFiles/Lex.dir/ErrorHandler.cpp.o CMakeFiles/Lex.dir/TableManager.cpp.o CMakeFiles/Lex.dir/Semantic.cpp.o CMakeFiles/Lex.dir/MipsCode.cpp.o CMakeFiles/Lex.dir/IntermediateCode.cpp.o -o Lex 

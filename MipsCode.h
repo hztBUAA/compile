@@ -97,6 +97,11 @@ public:
     void testRe();
     void clearRegPool();
     Reg hasOneRegToStore();
+
+    void loadIEntry(int startAddress, Reg toReg);
+
+    static Reg canFindInReg(int startAddress);
+    void clearSpecifiedRegs(IEntry * array);
 };
 
 

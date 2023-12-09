@@ -164,5 +164,9 @@ int main()
     printf("%d\n",n-m);
     printf("%d\n",n*m);
     printf("%d\n",n%m);
+    int i =0;
+    for (i = 0;i<6;i=i+1) {
+        printf("%d\n",i);
+    }
     return 0;
 }

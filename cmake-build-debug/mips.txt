@@ -1,0 +1,107 @@
+.data 0x10010000
+temppppppppppppp:  .space  160000
+
+#strings in printf
+str_49: .asciiz "%d"
+str_50: .asciiz "\n"
+.text 0x00400000 
+#主函数main的代码ICode
+main:
+#assign
+li $t1, 0
+#find a reg to store:
+move $v1, $t1
+#local_var_@0_i_def:  @(4) 
+#FOR_START_LOOP
+Labellllll_For_start_5:
+Labellllll_for_stmt_10:
+#Get Element
+li $t0, 268500992
+#find a reg to store:
+move $a1, $t0
+#assign
+li $t1, 0
+#loadIEntry
+move $t2, $a1
+sw $t1, 0($t2)
+Labellllll_For_cond_9:
+#Get Element
+#loadIEntry
+#find 268500992 in reg $v1
+move $t0, $v1
+#find a reg to store:
+move $a2, $t0
+#loadIEntry
+move $t0, $a2
+li $t1, 6
+slt $t0 , $t0, $t1
+#find a reg to store:
+move $a3, $t0
+#loadIEntry
+move $t0, $a3
+beqz $t0, Labellllll_LAnd_end_31
+Labellllll_LAnd_end_31:
+#assign
+#loadIEntry
+move $t1, $a3
+#find a reg to store:
+move $t3, $t1
+li $t0, 1
+#loadIEntry
+move $t1, $t3
+beq $t0, $t1,Labellllll_LOr_end_32
+Labellllll_LOr_end_32:
+#assign
+#loadIEntry
+move $t1, $t3
+#find a reg to store:
+move $t4, $t1
+#loadIEntry
+move $t0, $t4
+beqz $t0, Labellllll_For_end_6
+j Labellllll_For_main_7
+Labellllll_For_op_8:
+Labellllll_for_stmt_34:
+#Get Element
+li $t0, 268500992
+#find a reg to store:
+move $t5, $t0
+#Get Element
+#loadIEntry
+#find 268500992 in reg $v1
+move $t0, $v1
+#find a reg to store:
+move $t6, $t0
+#loadIEntry
+move $t1, $t6
+addu $t2, $t1, 1
+#find a reg to store:
+move $t7, $t2
+#assign
+#loadIEntry
+move $t1, $t7
+#loadIEntry
+move $t2, $t5
+sw $t1, 0($t2)
+j Labellllll_For_cond_9
+Labellllll_For_main_7:
+#Get Element
+#loadIEntry
+#find 268500992 in reg $v1
+move $t0, $v1
+#find a reg to store:
+move $t8, $t0
+#printf语句:1个exp参数
+#loadIEntry
+move $a0, $t8
+li $v0, 1
+syscall
+la $a0, str_50
+li $v0, 4
+syscall
+j Labellllll_For_op_8
+#FOR_END_LOOP
+Labellllll_For_end_6:
+li $v0, 10
+syscall 
+#自定义函数的代码ICode

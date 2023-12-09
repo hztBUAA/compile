@@ -903,23 +903,23 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
             }else{
                 if(array_exps[2]->canGetValue && array_exps[1]->canGetValue){
                     index = array_exps[1]->imm*dim1_length + array_exps[2]->imm;
-                    intermediateCode.addICode(GetArrayElement,index,_val,*iEntry);
+                    intermediateCode.addICode(GetElement, index, _val, *iEntry);
                 }else{
                     if (array_exps[1]->canGetValue){
                         int t = array_exps[1]->imm*dim1_length;
                         intermediateCode.addICode(IntermediateCodeType::Add,t,array_exps[2],index_entry);
-                        intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);//此时iEntry在getArrayElement中会储存对应的address 方便之后的lw
+                        intermediateCode.addICode(GetElement, index_entry, _val, *iEntry);//此时iEntry在getArrayElement中会储存对应的address 方便之后的lw
                     }
                     else if(array_exps[2]->canGetValue){
                         auto *t = new IEntry;
                         intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
                         intermediateCode.addICode(IntermediateCodeType::Add,array_exps[2],t,index_entry);
-                        intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);
+                        intermediateCode.addICode(GetElement, index_entry, _val, *iEntry);
                     }else{
                         auto *t = new IEntry;
                         intermediateCode.addICode(IntermediateCodeType::Mult,dim1_length,array_exps[1],t);
                         intermediateCode.addICode(IntermediateCodeType::Add,array_exps[2],t,index_entry);
-                        intermediateCode.addICode(GetArrayElement,index_entry,_val,*iEntry);
+                        intermediateCode.addICode(GetElement, index_entry, _val, *iEntry);
                     }
                 }//FIXME:数组定义时的IEntry （src2）   偏移index（不乘4）index_entry-》能get就get 不能就lw address
             }
@@ -934,7 +934,7 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
                 (*iEntry)->canGetValue = true;
             }
             else{
-                intermediateCode.addICode(GetArrayElement,array_exps[1],_val,*iEntry);
+                intermediateCode.addICode(GetElement, array_exps[1], _val, *iEntry);
             }
         }else if(op == 0){//TODO:统一都在values_Id
             if (WORD_TYPE == Type::ASSIGN){//决定iEntry的内容是地址还是值  进行assign
@@ -946,7 +946,7 @@ void Parser::LVal(IEntry ** iEntry,int & value,bool inOtherFunc) { // 这里面�
                 (*iEntry)->imm = IEntries.at(_val->values_Id->at(0))->imm;
                 (*iEntry)->canGetValue = true;
             }else{
-                intermediateCode.addICode(GetArrayElement,0,_val,*iEntry);
+                intermediateCode.addICode(GetElement, 0, _val, *iEntry);
             }
         }
     }else if(Exp_type == 1){ //find就是对应的曾经定义过的Entry   iEntry标识直接传递地址  非值的地址变量  只出现在函数形参中

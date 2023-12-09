@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/GrammarAnalyzer.cpp" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/GrammarAnalyzer.h" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/LexicalAnalyzer.h" charset="GB2312" />
+    <file url="file://$PROJECT_DIR$/SemanticAnalyzer.cpp" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/SemanticAnalyzer.h" charset="GB2312" />
+    <file url="file://$PROJECT_DIR$/SymbolTableManager.cpp" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/SymbolTableManager.h" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/cmake-build-debug/output.txt" charset="GB2312" />
+    <file url="file://$PROJECT_DIR$/type.h" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/../../../college/大三上/编译/BUAA-Compiler-Pascal-to-x86/06_代码生成程序/代码生成程序源码/SemanticAnalyzer.h" charset="GB2312" />
+  </component>
+</project>

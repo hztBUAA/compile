@@ -63,71 +63,31 @@ void MipsCode::assign(IEntry *src1,IEntry *src2,IEntry *dst) { //传进来需要
      * */
     output << "#assign" << endl;
     //TODO:  参数废弃
-    if (src1->type == 6){
-        output << "lw $t1," <<src1->imm*4<<"($sp)"<<endl;
-        if (dst->type == 6){
-            output << "sw " << "$t1, " << dst->imm*4 << "($sp)" << endl;
-        }else{
-            if (assignSp){
-                output << "sw " << "$t1, " << dst->startAddress << "($sp)" << endl;
-            }else{
-                output << "sw " << "$t1, " << dst->startAddress << "($zero)" << endl;
-            }
-        }
-    }else if (src1->type == 0){
+     if (src1->type == 0){
         if (src1->isGlobal){
             output << "la $t1," << src1->original_Name << endl;
         }else if (src1->canGetValue){
             output << "li " << "$t1, " << src1->imm << endl;
         }else{
-            if (assignSp){
-                output << "lw " << "$t1, " << src1->startAddress << "($sp)" << endl;
-            }else{
-                output << "lw " << "$t1, " << src1->startAddress << "($zero)" << endl;
-            }
+            loadIEntry(src1,Reg::$t1);
         }
-        if (dst->type == 6) {//dst放在sp中  可能地址 也可能值  我们不区分  就是参数
-            output << "sw " << "$t1, " << dst->imm*4 << "($sp)" << endl;
-        }else if (dst->type == 2){//dst存储的是地址
+        if (dst->type == 2){//dst的值 是地址 即使是函数中也已经由于GETARRAY 加上了sp  正在考虑是不是可以和type == 1合并 不能！！
             if (assignSp){
-                output << "lw " << "$t2, " << dst->startAddress << "($sp)" << endl;
-                //output << "addu $t2,$t2,$sp\n";
+                loadIEntry(dst,Reg::$t2);
                 output << "sw " << "$t1, " <<  "0($t2)" << endl;
             }else{
-                output << "lw " << "$t2, " << dst->startAddress << "($zero)" << endl;
+                loadIEntry(dst,Reg::$t2);
                 output << "sw " << "$t1, " << "0($t2)" << endl; //  需要从变量的IEntry的values_Id中取得的  t0  地址  为写语句而生
             }
         }else{
-            if (assignSp){
-                output << "sw " << "$t1, " << dst->startAddress << "($sp)" << endl;
-            }else{
-                output << "sw " << "$t1, " << dst->startAddress << "($zero)" << endl; //dst是值   需要从变量的IEntry的values_Id中取得的
-            }
-
-
+            storeIEntry(dst,Reg::$t1);
         }
             dst->canGetValue =  false;//后台更新
     }else{
         output << "#地址拷贝\n";
-        if (assignSp){
-            output<< "lw $t0, "<<src1->startAddress<<"($sp)"<<endl;
-        }
-        else{
-            output<< "lw $t0, "<<src1->startAddress<<"($zero)"<<endl;
-        }
-        if (dst->type == 6){
-            output<< "sw $t0, "<< dst->imm*4<< "($sp)"<<endl;
-        }else{
-            if (assignSp){
-                output<< "sw $t0, "<< dst->startAddress<< "($sp)"<<endl;
-            }else{
-                output<< "sw $t0, "<< dst->startAddress<< "($zero)"<<endl;
-            }
-
-        }
-
+         loadIEntry(src1,Reg::$t0);
+         storeIEntry(dst,Reg::$t0);
     }
-
 }
 
 void MipsCode::testRe(){
@@ -685,8 +645,8 @@ syscall
                 storeIEntry(dst,Reg::$t0);
                 break;
             }
-            case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
-                output << "#GetArray Element\n";
+            case GetElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
+                output << "#Get Element\n";
                 int index = 0;
                 int isNormalArray = src2->type;
                 if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引  s7存放数组元素地址
@@ -694,20 +654,29 @@ syscall
                         index += src1->imm;
                         if (src2->isGlobal){
                             output << "la " << "$t0" << ", " << src2->original_Name << endl;
-                            output << "li " << "$t1" << ", " << index * 4 << endl;
-                            output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
+                            if (index != 0){
+                                output << "li " << "$t1" << ", " << index * 4 << endl;
+                                output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
+                            }
+                            if (dst->type ==0){
+                                //TODO: 搜寻startaddress    由于全局是不需要管理的  地址一定知道
+                                clearSpecifiedRegs(src2);
+                                output << "lw " << "$t0" << ", 0($t0)" << endl;
+                                storeIEntry(dst,Reg::$t0);
+                            }else{
+                                //采用地址传递  内容是地址
+                                storeIEntry(dst,Reg::$t0);
+                            }
+
                         }else{
+                            if (dst->type ==0){
+                                loadIEntry(src2->startAddress+index*4,Reg::$t0);
+                                storeIEntry(dst,Reg::$t0);
+                            }else{
+                                //采用地址传递  内容是地址
                                 output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
-                        }
-                        //dst——type  1    0
-                        if (dst->type ==0){
-                            //TODO: 搜寻startaddress    由于全局是不需要管理的  地址一定知道
-                            output << "lw " << "$t0" << ", 0($t0)" << endl;
-                            storeIEntry(dst,Reg::$t0);
-                        }else{
-                            //采用地址传递  内容是地址
-                            output << "sw " << "$t0, " << dst->startAddress << "($zero)" << endl;
-//                                dst->type = 0;
+                                storeIEntry(dst,Reg::$t0);
+                            }
                         }
                     }else{
                         if (src2->isGlobal){
@@ -719,7 +688,8 @@ syscall
                         output << "sll " << "$t1" << ", " << "$t1" << ", 2" << endl;
                         output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                         if (dst->type ==0){
-                            //把附近长度的都清空  而不是所有清空
+                            //把附近数组长度的都清空  而不是所有清空
+                            clearSpecifiedRegs(src2);
                             output << "lw " << "$t0" << ", 0($t0)" << endl;
                             storeIEntry(dst,Reg::$t0);
                         }else{
@@ -739,7 +709,8 @@ syscall
                         }
                     }
                     if(dst->type == 0){
-                        //todo: 需要分情况进行  同时把不是数组的get 化简
+                        //todo: 需要分情况进行  同时把不是数组的get 化简   需要将函数地址参数 的 长度补充
+                        clearRegPool();
                         output<< "lw $t0,0($t0)"<<endl;
                         storeIEntry(dst,Reg::$t0);
                     }else{
@@ -1354,8 +1325,8 @@ addiu $sp, $sp, 100000
                     break;
                 }
                     //TODO：检查格式统一 全都是IEntry格式   可以进行一个canGetElement的优化
-                case GetArrayElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
-                    output << "#GetArray Element\n";
+                case GetElement:{//FIXME:数组元素的get需要找到元素地址！！！  即本身  而不是值的副本   又或者说成是让定义的数组记住它！！
+                    output << "#Get Element\n";
                     int index = 0;
                     int isNormalArray = src2->type;
                     if (isNormalArray == 0){//表示array并不是通过函数传递地址而来  即offsetEntry没用 或者认为就是0 即index就是最终索引  s7存放数组元素地址
@@ -1363,19 +1334,29 @@ addiu $sp, $sp, 100000
                             index += src1->imm;
                             if (src2->isGlobal){
                                 output << "la " << "$t0" << ", " << src2->original_Name << endl;
-                                output << "li " << "$t1" << ", " << index * 4 << endl;
-                                output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
+                                if (index !=0){
+                                    output << "li " << "$t1" << ", " << index * 4 << endl;
+                                    output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
+                                }
+                                if (dst->type ==0){
+                                    //TODO:     GLOBAL不在优化范围       搜寻startaddress    由于全局是不需要管理的  地址一定知道
+                                    clearSpecifiedRegs(src2);
+                                    output << "lw " << "$t0" << ", 0($t0)" << endl;
+                                    storeIEntry(dst,Reg::$t0);
+                                }else{
+                                    //采用地址传递  内容是地址
+                                    storeIEntry(dst,Reg::$t0);
+                                }
                             }else{
-                                output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
-                                output << "addu $t0, $t0,$sp\n";
-                            }
-                            //dst——type  1    0
-                            if (dst->type ==0){
-                                output << "lw " << "$t0" << ", 0($t0)" << endl;
-                                storeIEntry(dst,Reg::$t0);
-                            }else{
-                                //采用地址传递  内容是地址
-                                storeIEntry(dst,Reg::$t0);
+                                if (dst->type ==0){
+                                    loadIEntry(src2->startAddress+index*4,Reg::$t0);
+                                    storeIEntry(dst,Reg::$t0);
+                                }else{
+                                    //采用地址传递  内容是地址
+                                    output << "li " << "$t0" << ", " << src2->startAddress + index * 4 << endl;
+                                    output << "addu $t0, $t0,$sp\n";
+                                    storeIEntry(dst,Reg::$t0);
+                                }
                             }
                         }else{
                             if (src2->isGlobal){
@@ -1388,6 +1369,8 @@ addiu $sp, $sp, 100000
                             output << "sll " << "$t1" << ", " << "$t1" << ", 2" << endl;
                             output << "addu " << "$t0" << ", " << "$t0" << ", " << "$t1" << endl; //value's address in $t2
                             if (dst->type ==0){
+                                //把附近数组长度的都清空  而不是所有清空
+                                clearSpecifiedRegs(src2);
                                 output << "lw " << "$t0" << ", 0($t0)" << endl;
                                 storeIEntry(dst,Reg::$t0);
                             }else{
@@ -1407,6 +1390,7 @@ addiu $sp, $sp, 100000
                             }
                         }
                         if(dst->type == 0){
+                            clearRegPool();
                             output<< "lw $t0,0($t0)"<<endl;
                             storeIEntry(dst,Reg::$t0);
                         }else{
@@ -1573,30 +1557,41 @@ void MipsCode::loadIEntry(IEntry *iEntry, Reg toReg) {
     }
 }
 
+void MipsCode::loadIEntry(int startAddress, Reg toReg) {
+    output << "#loadIEntry\n";
+    int id;
+    Reg fromReg = canFindInReg(startAddress);
+    if( fromReg != Reg::$zero){
+        output << "#find "<< startAddress <<" in reg "<<reg2s.at(fromReg)<<"\n";
+        output << "move " << reg2s.at(toReg)<< ", " << reg2s.at(fromReg) << endl;
+    }else{
+        output << "#DO NOT find "<< startAddress << " and just lw from memory"<<"\n";
+        if (assignSp){
+            output << "lw " << reg2s.at(toReg) << ", " << startAddress << "($sp)" << endl;
+        }else{
+            output << "lw " << reg2s.at(toReg) << ", " << startAddress << "($zero)" << endl;
+        }
+        //TODO：对寄存器池进行优化 不是替换    而是记录 把这个寄存器的值存到RegInfo中   可能move 的利益更大  也不一定
+    }
+}
+
 void MipsCode::storeIEntry(IEntry *to_iEntry, Reg fromReg) {
     int id;
     id = to_iEntry->Id;
     Reg toReg = hasOneRegToStore();
-//    if (inForLoop) {
-//        if (assignSp){
-//            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($sp)" << endl;
-//        }else{
-//            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;
-//        }
-//    }else
-        if( toReg != Reg::$zero){
+    if( toReg != Reg::$zero){
         output<<"#find a reg to store:\n";
         output << "move " << reg2s.at(toReg)<< ", " << reg2s.at(fromReg) << endl;
-//        regPoolsUsed.push(toReg);
         delSameIdInRegInfo(id);
         RegInfo[toReg] = id;
     }else{
-            //TODO:   根据计数来判断是否能替换  不能就是正常
-            if (assignSp){
-                output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($sp)" << endl;
-            }else{
-                output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;
-            }
+        //TODO:   根据计数来判断是否能替换  不能就是正常
+        output<<"#DO not find a reg to store "<< to_iEntry->startAddress<<"and just store into memory\n";
+        if (assignSp){
+            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($sp)" << endl;
+        }else{
+            output << "sw " << reg2s.at(fromReg) << ", " << to_iEntry->startAddress << "($zero)" << endl;
+        }
     }
 }
 
@@ -1636,6 +1631,17 @@ Reg MipsCode::canFindInReg(IEntry *iEntry) {
     }
     return Reg::$zero;
 }
+Reg MipsCode::canFindInReg(int startAddress) {
+    //搜索RegInfo的寄存器池  second有没有等于iEntry的id
+    for (auto regInfo:RegInfo) {
+        if (regInfo.second == -1)
+            continue;
+        if (IEntries.at(regInfo.second)->startAddress == startAddress) {
+            return regInfo.first;
+        }
+    }
+    return Reg::$zero;
+}
 
 void MipsCode::clearRegPool() {
     output <<"#clearRegPool\n";
@@ -1665,6 +1671,32 @@ void MipsCode::delSameIdInRegInfo(int id) {
     for (auto & item: RegInfo) {
         if (item.second == id) {
             item.second = -1;
+        }
+    }
+}
+
+void MipsCode::clearSpecifiedRegs(IEntry *array) {
+
+    int init_addr = array->startAddress;
+    int length = array->total_length;
+    int end_addr = init_addr + length *4;
+    int check_addr = 0;
+    Reg outReg;
+    IEntry * toSwIEntry;
+    output << "# clear SpecifiedRegs:"<<"base_addr: "<<array->startAddress<<",length: "<<length<<endl;
+    for (auto regInfo: RegInfo) {
+        if (regInfo.second == -1){
+            continue;
+        }
+        check_addr = IEntries.at(regInfo.second)->startAddress;
+        outReg = regInfo.first;
+        toSwIEntry =IEntries.at(regInfo.second);
+        if(check_addr  >= init_addr && check_addr <= end_addr){
+            if (assignSp) {
+                output << "sw " << reg2s.at(outReg) << ", " << toSwIEntry->startAddress << "($sp)" << endl;
+            } else {
+                output << "sw " << reg2s.at(outReg) << ", " << toSwIEntry->startAddress << "($zero)" << endl;
+            }
         }
     }
 }

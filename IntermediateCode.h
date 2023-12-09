@@ -36,7 +36,7 @@ enum IntermediateCodeType{
     Mod,
     Assign,//还是需要的  LVal = Exp中  ---想了想还是不需要  直接把iEntry放进去即可 TODO:really?  好像不是这样子的！  会引起按值传递时的错误
     GetInt,//只有dst参数   表示放进dst
-    GetArrayElement,
+    GetElement,
     GetAddress,
     FuncCall,//调用时要进行参数压栈和临时内存上堆
     FuncDef,//定义函数时 形式参数需要当成local定义   进入符号表生成Entry的同时生成IEntry 并记录两者的映射

@@ -1,0 +1,16 @@
+
+const int const_1=1+3*1,const_array_1[3]={1+const_1,2,3},const_array_2[2][2]={{1,2},{3,4}};
+
+
+int main(){
+int t ;
+t =  getint();
+printf("hello! t =  %d\n",t);
+printf("hello! const_1 =  %d\n",const_1);
+printf("hello! const_array_1 =  {%d,%d,%d}\n",const_array_1[0],const_array_1[1],const_array_1[2]);
+printf("hello! const_array_2 =  {{%d,%d},{%d,%d}}\n",const_array_2[0][0],const_array_2[0][1],const_array_2[1][0],const_array_2[1][1]);
+int arr[4] = {1,2,6,4};
+t  = arr[2]+t;
+printf("hello! t =  %d\n",t);
+
+}

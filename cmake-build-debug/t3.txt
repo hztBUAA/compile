@@ -1,0 +1,62 @@
+
+
+const int c_common = 10, c_array[3] = {1, 2, 3};
+const int  c_matrix[3][3] = {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}};
+int v_common, v_array[3], v_matrix[3][3];
+int v_commonInit = 10;
+int v_arrayInit[3] = {1, 2, 3};
+int v_matrixInit[3][3] = {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}};
+
+
+
+void print(int output) {
+    printf("\nf2() flag : %d", output);
+    return;
+}
+
+int f0() {
+	return 1;
+}
+
+int f1(int a[], int b[][3], int c[]) {
+    return a[0] + b[0][0] + c[0];
+}
+
+int f2(int a, int b) {
+    int c;
+    int flag;
+    int a1[2] = {1, 2};
+    int a2[3][3] = {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}};
+    c = -(a*b) + a/b + (a%b) -1 + f1(a1, a2, a2[0]) - +f0();
+    printf("in f2, c = %d\n",c);
+
+    return flag;
+}
+
+int main() {
+
+     printf("in main:\n",c);
+
+    ;
+    {
+	}
+    int a,b,flag1,flag2,flag,i;
+    a = getint();
+    b = getint();
+    i=0;
+    int d = a*b-(a+b);
+    printf("in main:d = %d\n",d);
+    return 0;
+}
+
+
+
+int main(){
+    int t;
+    t = getint();
+    int arr[2][2] = {{t,t+1}{t,t-t}};
+    //int arr[2][2] = {{1,2},{3,4}};
+    //func1(arr[0],arr[0],arr);
+    //func2(arr[0][0]/1,arr[0][1],arr[1][0]+arr[0][0]);
+    return 0;
+}
